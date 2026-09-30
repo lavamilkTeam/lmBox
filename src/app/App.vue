@@ -39,7 +39,7 @@ onBeforeUnmount(()=>{ clearTimeout(toastTimeout); window.removeEventListener('ke
   <NConfigProvider :theme-overrides="overrides"><NDialogProvider><NMessageProvider>
     <main class="studio" @dragenter.prevent="dropDepth++" @dragleave.prevent="dropDepth=Math.max(0,dropDepth-1)" @dragover.prevent @drop.prevent="drop">
       <header class="app-header">
-        <a class="brand" href="#" @click.prevent="store.openDemo()"><span class="brand-mark"><Layers :size="21" :stroke-width="1.8"/></span><strong>STENCIL<span>STUDIO</span></strong></a>
+        <a class="brand" href="#" @click.prevent="store.openDemo()"><strong>lm</strong>Box</a>
         <span class="header-divider"/><ImportButton ref="importer" :busy="busy" @files="importFiles"/>
         <div class="header-right"><button class="export-button" :disabled="!store.active" title="导出当前参数配置（⌘ / Ctrl + S）" @click="exportParams"><Download :size="15"/>导出参数<ChevronDown :size="13"/></button></div>
       </header>

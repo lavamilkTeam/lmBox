@@ -1,8 +1,8 @@
+<h1 align="center"><img src="docs/images/lmbox-logo.png" alt="" width="36" height="36" align="absmiddle"> lmBox</h1>
+
 <p align="center">
   <a href="README.md">English</a> · <a href="README.ko.md">한국어</a> · <strong>中文</strong>
 </p>
-
-<h1 align="center">lmBox</h1>
 
 <p align="center">让 Gerber 一键变成可 3D 打印的钢网模板。</p>
 

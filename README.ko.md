@@ -1,8 +1,8 @@
+<h1 align="center"><img src="docs/images/lmbox-logo.png" alt="" width="36" height="36" align="absmiddle"> lmBox</h1>
+
 <p align="center">
   <a href="README.md">English</a> · <strong>한국어</strong> · <a href="README.zh-CN.md">中文</a>
 </p>
-
-<h1 align="center">lmBox</h1>
 
 <p align="center">Gerber 파일 하나로, 한 번에 3D 프린팅용 스텐실까지.</p>
 

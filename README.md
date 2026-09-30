@@ -1,8 +1,8 @@
+<h1 align="center"><img src="docs/images/lmbox-logo.png" alt="" width="36" height="36" align="absmiddle"> lmBox</h1>
+
 <p align="center">
   <strong>English</strong> · <a href="README.ko.md">한국어</a> · <a href="README.zh-CN.md">中文</a>
 </p>
-
-<h1 align="center">lmBox</h1>
 
 <p align="center">Building a one-click path from Gerber to 3D-printable solder paste stencils.</p>
 

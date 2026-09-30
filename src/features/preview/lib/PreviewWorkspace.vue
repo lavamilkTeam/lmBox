@@ -1,25 +1,59 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Box, Scan, CodeXml, MousePointer2, Move, ZoomIn, ZoomOut, Maximize, Focus, Layers, FileBox, Upload, Grid2X2, CircleHelp } from '@lucide/vue'
 import { useProjectStore } from '../../../domain/project'
+import { observeViewportSize } from '../../../platform/desktop'
 const ModelScene = defineAsyncComponent(() => import('./ModelScene.vue'))
 const store = useProjectStore()
 const emit = defineEmits<{ import: [] }>()
 const doc = computed(() => store.active)
 const zoom = ref(1)
 const pan = ref({ x: 0, y: 0 })
+const viewport = ref<HTMLDivElement>()
+const viewportSize = ref({ width: 1, height: 1 })
+let stopObserving: (() => void) | undefined
+onMounted(() => {
+  if (viewport.value) stopObserving = observeViewportSize(viewport.value, (width, height) => {
+    viewportSize.value = { width: Math.max(1, width - 23), height: Math.max(1, height - 23) }
+  })
+})
+onBeforeUnmount(() => stopObserving?.())
 const resetKey = ref(0)
 const panMode = ref(false)
 const dragging = ref(false)
 let start = { x: 0, y: 0, px: 0, py: 0 }
 const modes = [{ id:'2d' as const, title:'2D 图层', icon: Scan, label:'2D' }, { id:'3d' as const, title:'3D 模型', icon:Box, label:'3D' }, { id:'gcode' as const, title:'G-code 路径', icon:CodeXml, label:'G代码' }]
 const modeTitle = computed(() => modes.find(m => m.id === doc.value?.mode)?.title ?? '预览')
-const viewBox = computed(() => { const size=140/zoom.value; return `${50-size/2-pan.value.x} ${50-size/2-pan.value.y} ${size} ${size}` })
+// Geometry, grid and rulers share one millimetre-to-screen transform.
+const pixelsPerMm = computed(() => Math.min(viewportSize.value.width, viewportSize.value.height) / 140 * zoom.value)
+const bounds = computed(() => {
+  const width = viewportSize.value.width / pixelsPerMm.value
+  const height = viewportSize.value.height / pixelsPerMm.value
+  return { x: 50 - width / 2 - pan.value.x, y: 50 - height / 2 - pan.value.y, width, height }
+})
+const viewBox = computed(() => `${bounds.value.x} ${bounds.value.y} ${bounds.value.width} ${bounds.value.height}`)
+const gridStep = computed(() => {
+  const minimum = 14 / pixelsPerMm.value
+  const decade = 10 ** Math.floor(Math.log10(minimum))
+  return [1, 2, 5, 10].find(step => step * decade >= minimum)! * decade
+})
+function ticks(start: number, length: number) {
+  const step = gridStep.value
+  const first = Math.ceil(start / step)
+  const last = Math.floor((start + length) / step)
+  return Array.from({ length: last - first + 1 }, (_, offset) => {
+    const index = first + offset
+    const value = Number((index * step).toFixed(6))
+    return { value, major: index % 5 === 0, position: (value - start) * pixelsPerMm.value }
+  })
+}
+const xTicks = computed(() => ticks(bounds.value.x, bounds.value.width))
+const yTicks = computed(() => ticks(bounds.value.y, bounds.value.height))
 const paths = computed(() => Array.from({length: 21}, (_, i) => 1+i*4.8))
 function fit() { zoom.value=1; pan.value={x:0,y:0}; resetKey.value++ }
 function changeZoom(delta: number) { zoom.value=Math.max(0.4, Math.min(5,zoom.value+delta)) }
 function pointerDown(e: PointerEvent) { if (!panMode.value && e.button !== 1) return; dragging.value=true; start={x:e.clientX,y:e.clientY,px:pan.value.x,py:pan.value.y}; (e.currentTarget as SVGElement).setPointerCapture(e.pointerId) }
-function pointerMove(e: PointerEvent) { if (!dragging.value) return; const el=e.currentTarget as SVGElement; const scale=140/zoom.value/Math.min(el.clientWidth,el.clientHeight); pan.value={x:start.px+(e.clientX-start.x)*scale,y:start.py+(e.clientY-start.y)*scale} }
+function pointerMove(e: PointerEvent) { if (!dragging.value) return; pan.value={x:start.px+(e.clientX-start.x)/pixelsPerMm.value,y:start.py+(e.clientY-start.y)/pixelsPerMm.value} }
 watch(() => doc.value?.id, fit)
 </script>
 <template>
@@ -33,12 +67,16 @@ watch(() => doc.value?.id, fit)
     </nav>
     <section class="preview-main">
       <div class="viewport-toolbar"><div><span class="view-icon"><component :is="doc?.mode==='3d' ? Box : doc?.mode==='gcode' ? CodeXml : Layers" :size="15"/></span><strong>{{ modeTitle }}</strong></div><div><span v-if="doc?.demo" class="demo-badge">示例数据</span><button class="icon-button" title="重置视图" aria-label="重置视图" @click="fit"><Maximize :size="15"/></button></div></div>
-      <div class="viewport" :class="{ 'with-grid':(!doc || doc.params.grid) && (!doc?.demo || doc.mode!=='3d') }">
-        <div v-if="doc && doc.mode!=='3d'" class="ruler ruler-horizontal"><span v-for="n in 12" :key="n">{{ (n-2)*10 }}</span></div>
-        <div v-if="doc && doc.mode!=='3d'" class="ruler ruler-vertical"><span v-for="n in 10" :key="n">{{ (n-2)*10 }}</span></div>
+      <div ref="viewport" class="viewport">
+        <div v-if="doc?.demo && doc.mode!=='3d'" class="ruler ruler-horizontal"><span v-for="tick in xTicks" :key="tick.value" :class="{ major:tick.major }" :style="{ left:`${tick.position}px` }"><b v-if="tick.major">{{ tick.value }}</b></span></div>
+        <div v-if="doc?.demo && doc.mode!=='3d'" class="ruler ruler-vertical"><span v-for="tick in yTicks" :key="tick.value" :class="{ major:tick.major }" :style="{ top:`${tick.position}px` }"><b v-if="tick.major">{{ tick.value }}</b></span></div>
         <template v-if="doc?.demo">
           <ModelScene v-if="doc.mode==='3d'" :doc="doc" :reset-key="resetKey"/>
           <svg v-else class="board-canvas" :class="{ panning:panMode, dragging }" :viewBox="viewBox" @wheel.prevent="changeZoom($event.deltaY<0 ? 0.1 : -0.1)" @pointerdown="pointerDown" @pointermove="pointerMove" @pointerup="dragging=false" @pointercancel="dragging=false">
+            <g v-if="doc.params.grid" class="preview-grid" aria-hidden="true" pointer-events="none">
+              <line v-for="tick in xTicks" :key="`x-${tick.value}`" :x1="tick.value" :x2="tick.value" :y1="bounds.y" :y2="bounds.y+bounds.height" :stroke="tick.major ? '#343a43' : '#1c222a'" stroke-width="1" vector-effect="non-scaling-stroke"/>
+              <line v-for="tick in yTicks" :key="`y-${tick.value}`" :y1="tick.value" :y2="tick.value" :x1="bounds.x" :x2="bounds.x+bounds.width" :stroke="tick.major ? '#343a43' : '#1c222a'" stroke-width="1" vector-effect="non-scaling-stroke"/>
+            </g>
             <defs><pattern id="fill-lines" width="0.9" height="0.9" patternUnits="userSpaceOnUse" :patternTransform="`rotate(${doc.params.layer%2 ? 45 : -45})`"><line x1="0" y1="0" x2="0" y2="0.9" stroke="#649bb0" stroke-width="0.16"/></pattern><mask id="stencil-mask"><rect x="-5" y="-5" width="110" height="110" fill="white"/><g :transform="doc.params.mirror ? 'translate(100 0) scale(-1 1)' : undefined"><rect v-for="(p,i) in doc.apertures" :key="i" :x="p.x-doc.params.compensation" :y="p.y-doc.params.compensation" :width="p.width+2*doc.params.compensation" :height="p.height+2*doc.params.compensation" :rx="p.round ? 2 : 0" fill="black"/></g></mask></defs>
             <g v-if="doc.mode==='2d'">
               <rect v-if="doc.params.outline" x="0" y="0" width="100" height="100" fill="none" stroke="#7e8df5" stroke-width="0.22"/>

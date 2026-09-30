@@ -1,42 +1,46 @@
-# Stencil Studio
+<p align="center">
+  <strong>English</strong> · <a href="README.ko.md">한국어</a> · <a href="README.zh-CN.md">中文</a>
+</p>
 
-## 许可证
+<h1 align="center">lmBox</h1>
 
-项目自有代码采用 [lmBox 非商业使用与衍生源码公开许可证 v1.0](LICENSE)。
+<p align="center">Building a one-click path from Gerber to 3D-printable solder paste stencils.</p>
 
-- **禁止商用**，包括收费分发、商业服务、企业经营用途及使用本软件生产销售产品。
-- **原作者本人也不例外**：许可证包含原作者及贡献者的同等非商业承诺，不保留商业双重授权通道。权利人承诺的具体法律效力依适用法律确定。
-- **衍生作品须公开完整对应源码**：对外交付或通过网络提供功能时，须以同一许可证免费公开对应源码，保留许可与修改说明。仅本人私下使用的非商业修改无需发布。
-- 第三方依赖保持各自许可证；用户设计文件与普通生成结果无需因此公开。
+<p align="center">
+  <a href="package.json"><img src="docs/badges/version.svg" alt="Version 0.1.0" height="28"></a>
+  <a href="LICENSE"><img src="docs/badges/license.svg" alt="License: custom, noncommercial" height="28"></a>
+  <a href="https://lavamilk.club"><img src="docs/badges/website.svg" alt="Official website: lavamilk.club" height="28"></a>
+</p>
 
-这是限制商用的**源码可用许可证**，不属于 OSI 定义的开源许可证。完整条款以 LICENSE 为准。
+<p align="center"><sub>Custom source-available license: commercial use is prohibited; derivatives distributed or provided over a network must publish their source under the same license.<br>Read <a href="LICENSE">LICENSE</a> before use to understand the terms and avoid licensing risks. The Chinese license text is authoritative.</sub></p>
 
-Vue 3 desktop-workbench frontend for a Gerber-to-stencil application. Current delivery is the frontend, runnable in a browser for development. Rust/Tauri and Python runtime integration are not yet implemented.
+<p align="center"><img src="docs/images/stencil-3d.png" alt="lmBox showing a sample 3D solder paste stencil" width="1000"></p>
 
-## Run
+<p align="center"><strong>3D stencil model · STEP export planned</strong><br><sub>Sample geometry preview. STEP file generation is not available yet.</sub></p>
 
-```sh
-npm install
-npm run dev
+<p align="center"><img src="docs/images/solder-paste-layer.png" alt="lmBox showing the sample Top Paste layer and its apertures" width="1000"></p>
+
+<p align="center"><strong>Solder paste layer preview</strong><br><sub>Apertures from the sample Top Paste layer. Geometry parsing for imported Gerber files is planned.</sub></p>
+
+<p align="center"><img src="docs/images/export-gerber.png" alt="PCB editor menu with the Gerber export option highlighted" width="760"></p>
+
+<p align="center"><strong>Start with Gerber</strong><br><sub>Export Gerber files from your PCB editor. Our goal: generate 3D-printable stencil files in one click, with slicing and G-code export to follow.</sub></p>
+
+## Architecture
+
+A modular monolith organized by capability. The Vue frontend is implemented; the Rust/Python backend and slicer integration are planned.
+
+```text
+Vue → Rust → Python geometry
+           → Slicer → G-code
 ```
 
-Open http://127.0.0.1:1420. Build with `npm run build`; verify with `npm run check`.
+| Component | Responsibility | Documentation |
+| --- | --- | --- |
+| Vue | Feature-first UI, document state, 2D/3D/toolpath previews | [Frontend](src/AGENTS.md) |
+| Rust / Tauri | Import, Gerber/DXF parsing, projects, jobs, process management and export | [Backend](src-tauri/AGENTS.md) |
+| Python | Geometry evaluation, contour operations, stencil models and validation | [Geometry engine](engine/AGENTS.md) |
+| Slicer | Slicing and G-code generation, invoked by Rust | [Slicer integration](src-tauri/AGENTS.md#工程任务与产物) |
+| contracts | Versioned data, commands, events and artifact formats | [Cross-language contracts](contracts/AGENTS.md) |
 
-## Implemented
-
-- Browser-style independent document tabs, close confirmation for changed parameters.
-- Multi-file selection and drag/drop; ZIP directory inventory with size/count limits.
-- Explicit example geometry, 2D zoom/pan, Three.js 3D rotation and actual example mesh thickness/hole compensation.
-- Contextual 2D/3D/G-code parameter panels, example toolpath layer display.
-- Per-document logs, severity filter, clear/collapse, parameter JSON export.
-- Cmd/Ctrl+O import and Cmd/Ctrl+S parameter export.
-
-Actual imported files show their file inventory without a rendered model. They do not receive fabricated geometry. G-code export remains disabled until a real slicer is connected. Example geometry is not ceshi.zip. The browser adapter inventories files only and does not retain source payloads; reopening/reselecting will be necessary when adding the native import flow. Tabs and parameters are in memory; JSON parameter export is not a full project save.
-
-## Boundaries
-
-`app` orchestrates features. `features/{project,import-board,stencil,preview,slicing,logs}` own their UI. Feature internals stay in `lib/`; consumers import root `index.ts` only. Features never import one another. `domain/project` owns documents and parameter state. `platform/desktop` owns I/O, presently via an explicit browser development adapter. `ui` is reserved for reusable non-domain UI if needed.
-
-`npm run lint:boundaries` enforces private-entry-point restrictions, independent features, domain/platform direction and no cycles, including Vue SFC imports. Domain tests exercise the public entry point.
-
-Future native flow: Vue → Rust commands → Python geometry or slicer. Rust owns ZIP handling, files, project persistence, process lifecycle, task cancellation and export. Python owns Gerber/DXF interpretation, geometry and mesh generation. Do not move manufacturing geometry into Vue.
+[Project guidelines](AGENTS.md)

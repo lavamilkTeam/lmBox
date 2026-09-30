@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="28" viewBox="0 0 128 28" role="img" aria-label="Version 0.1.0">
+  <title>Version 0.1.0</title>
+  <defs><clipPath id="rounded"><rect width="128" height="28" rx="4"/></clipPath></defs>
+  <g clip-path="url(#rounded)">
+    <rect width="64" height="28" fill="#555"/>
+    <rect x="64" width="64" height="28" fill="#e9692c"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="Verdana,DejaVu Sans,sans-serif" font-size="12">
+    <text x="32" y="18">version</text>
+    <text x="96" y="18">v0.1.0</text>
+  </g>
+</svg>

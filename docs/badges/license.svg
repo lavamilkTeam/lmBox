@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="166" height="28" viewBox="0 0 166 28" role="img" aria-label="Custom noncommercial license">
+  <title>Custom noncommercial license</title>
+  <defs><clipPath id="rounded"><rect width="166" height="28" rx="4"/></clipPath></defs>
+  <g clip-path="url(#rounded)">
+    <rect width="64" height="28" fill="#555"/>
+    <rect x="64" width="102" height="28" fill="#7651b6"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="Verdana,DejaVu Sans,sans-serif" font-size="12">
+    <text x="32" y="18">license</text>
+    <text x="115" y="18">Custom NC</text>
+  </g>
+</svg>

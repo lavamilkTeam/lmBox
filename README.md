@@ -1,7 +1,5 @@
 # Stencil Studio
 
-Repository: [lavamilkTeam/lmBox](https://github.com/lavamilkTeam/lmBox).
-
 ## 许可证
 
 项目自有代码采用 [lmBox 非商业使用与衍生源码公开许可证 v1.0](LICENSE)。

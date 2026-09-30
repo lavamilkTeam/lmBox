@@ -1,7 +1,70 @@
-# Project instructions
+# lmBox 项目工作规范
 
-Apply the code-boundary-standards skill for code changes. See README.md for module ownership.
-Frontend features live in src/features; each feature exposes only root entry points. lib/ is private.
-Features must not depend on other features. app/ orchestrates them. Domain has no UI or platform imports.
-Only platform/desktop may integrate Tauri or browser I/O. Python owns numerical geometry; Rust owns desktop operations.
-Run npm run check. Do not present example geometry or example toolpaths as parsed user data or production G-code.
+## 开始工作前必须阅读
+
+任何写代码、修改、修复、重构、测试、审查、搭建或架构设计任务，都必须先应用 `$code-boundary-standards` 技能。
+
+先读本文件和 [README.md](README.md)，再根据实际改动范围读取对应目录的说明；不能只读根文件就开始实现。
+
+| 工作范围 | 必须阅读 |
+| --- | --- |
+| Vue 界面、前端状态、桌面调用接口 | [src/AGENTS.md](src/AGENTS.md) |
+| Rust/Tauri、导入解析、工程管理、任务调度、切片器调用 | [src-tauri/AGENTS.md](src-tauri/AGENTS.md) |
+| Python 几何算法、模板生成、模型检查 | [engine/AGENTS.md](engine/AGENTS.md) |
+| 跨语言数据、命令、事件、模型产物格式 | [contracts/AGENTS.md](contracts/AGENTS.md)，以及涉及的两端说明 |
+| 打包、集成测试或涉及多个模块的改动 | 所有受影响目录的说明 |
+
+子目录说明细化本文件的规则。改变职责或公开接口时，同步修改对应目录的架构说明；README 由用户维护，遵守下文的只读规则。若 README 的架构描述与用户最新决定冲突，以用户决定及对应目录的规范为准，告知差异，不自行改 README。
+
+## 确定的架构
+
+采用**模块化单体，按业务能力组织模块**。前端使用 Feature-first；Rust 按导入、工程、模板、切片划分 feature；Python 按模板生成、几何检查划分 feature。每个 feature 聚合自己的相关实现，通过小型公开入口被调用。
+
+- **Vue**：用户交互、显示状态、二维/三维/路径渲染。
+- **Rust**：文件导入和解包、Gerber/DXF 格式解析、图层识别、工程持久化、业务校验、任务调度、Python 和切片器进程管理、缓存、导出。
+- **Python**：已解析图形的几何求值、轮廓合成、开孔补偿、实体与网格生成、几何检查。不重复解析 Gerber/DXF 原文件。
+- **成熟切片器**：执行切片、生成 G-code；由 Rust 调用。项目自研几何算法归 Python。
+- **contracts/**：版本化协议的约定与后续 schema，不承担业务实现。
+
+基本调用方向：`Vue → Rust 业务 → Python 计算 / 切片器`。前端不直接启动 Python；Python 不反向调用前端或管理工程。
+
+当前只有前端实现。`src-tauri/`、`engine/`、`contracts/` 中的说明定义目标结构，文档中的目录树不表示代码、工具链或功能已存在。按实际用例逐步落地，不为匹配目录树创建空实现。
+
+## 全项目约束
+
+1. 跨模块只使用公开入口，禁止引用其他模块的私有实现；依赖必须单向且无环。
+2. 跨 feature 流程由各端的应用组装层协调，避免 feature 互相调用形成网状依赖。不要建立全局 `utils`、`services`、`managers` 大杂烩。
+3. 文件、进程等外部交互放在对应适配边界；算法与业务行为应能通过公开接口独立测试。
+4. Rust 是接入原生功能后的工程事实来源。任务结果必须携带工程、任务和输入版本标识，禁止旧结果覆盖新状态。
+5. 示例几何和路径必须保持可辨识，不能伪装成真实解析结果或可打印 G-code。
+6. 界面不显示“前端工作台”“引擎未连接”“等待接入 Rust/Python”、技术栈版本等开发说明，不添加装饰性状态灯。保留有助于操作的参数、必要的失败原因和真实任务日志。
+7. 保留 LICENSE 中禁止商用和衍生源码公开条款，第三方依赖遵守各自许可证。
+
+## 文档保护与隐私
+
+- **AI 默认不得修改任何 README 文件**，包括新增、重写、格式化、翻译、自动生成或通过脚本间接更新。可读取；需要更新时提供建议，由用户维护。只有用户针对该次 README 改动明确授权，才可在指定范围内修改，不能据此获得长期修改权限。
+- 所有层级的 README、AGENTS.md、AGENT.md、Agent.md 中都不得写入用户隐私信息：个人姓名与身份标识、邮箱、SSH 连接信息或密钥、账号/用户名、带账号的仓库地址、任意平台的账户信息、令牌、私人主机/IP、带本机用户名的绝对路径等。
+- 示例使用中性占位符、仓库相对路径或不对应用户的示例值。技术包名与不关联用户身份的通用本地开发地址不属于账户信息。
+- 提交身份、远程仓库、连接及认证配置仅使用用户指定的本地配置，不复制到 README 或 Agent 类文档；也不在 PR/合并说明中顺带暴露。
+- 发现已有隐私信息时，清理允许修改的文档；README 没有本次明确清理授权时，只报告所在位置，不自动重写。不要在报告中重复敏感值。
+
+## 验证、提交与推送
+
+- 运行 `npm run check`，它包含前端边界检查、单元测试、类型检查、构建和端到端测试。
+- Rust/Python 建立实现后，另按对应目录说明运行各自检查。尚无清单或工具链时，明确说明未执行，不能声称通过。
+- 文档改动检查相对链接、目录名及三端职责一致性；不为文案变更添加复述文案的测试。
+- 使用用户已设置的 Git 提交身份，不在受版本控制的文档中记录具体身份值。未经明确要求，不改写已发布提交历史。
+- Commit message **用英文撰写**，不强制 Conventional Commits 或固定格式。像维护者正常交流一样，用自然、具体的句子说明修改，避免模板腔、夸张措辞和无意义的 AI 自述。
+- 完成修改与验证后，主动准备可审阅的提交及推送摘要，**每次实际 push 前都必须询问用户并得到明确同意**。摘要说明本次提交、目标分支、改动范围和检查结果；远程目标从本地配置读取，不写进本规范。
+- **没有回答就不推送**。沉默、等待超时、默认选项、曾经同意其他推送，都不是本次 push 的授权。批准后若增加提交、改变范围或目标，重新询问；不能通过自动化、其他分支或后台进程绕过。
+
+## PR 与 AI 自动合并说明
+
+创建或更新 PR，以及在获得授权后进行 AI 自动合并时，面向用户和审阅者的说明统一包含以下四项，英文优先，尽量在每项英文后附中文：
+
+1. **Title / 标题**：概括最终修改目的。
+2. **Changes / 修改内容**：实际改动、涉及范围，以及必要的验证结果。
+3. **Before / 修改前的效果**：具体的原有行为或问题。
+4. **After / 修改后的效果**：修改后的行为及对使用者的影响。
+
+PR 标题字段使用自然、简洁的英文标题；正文采用上述结构。自动合并说明沿用同样结构并如实区分待合并与已合并，不能在操作完成前声称成功。范围变化时重写说明，去掉对话过程和废弃方案。上述格式要求本身不构成创建、合并或推送的授权。

@@ -1,4 +1,10 @@
-<h1 align="center"><img src="docs/images/lmbox-logo.png" alt="" width="36" height="36" align="absmiddle"> lmBox</h1>
+<h1 align="center">
+  <img src="docs/images/lmbox-logo.png" alt="" width="72" height="72" align="absmiddle">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/lmbox-wordmark-dark.svg">
+    <img src="docs/images/lmbox-wordmark.svg" alt="lmBox" width="190" height="80" align="absmiddle">
+  </picture>
+</h1>
 
 <p align="center">
   <a href="README.md">English</a> · <a href="README.ko.md">한국어</a> · <strong>中文</strong>

@@ -8,3 +8,7 @@ playwright-report/
 !.env.example
 *.pem
 *.key
+
+# Rust toolchain artifacts (local cache and build output)
+.cargo-home/
+src-tauri/target/

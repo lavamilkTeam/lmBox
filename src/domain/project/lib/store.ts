@@ -21,6 +21,8 @@ export const useProjectStore = defineStore('project', () => {
   const documents = ref<BoardDocument[]>([])
   const activeId = ref('')
   const active = computed(() => documents.value.find(d => d.id === activeId.value))
+  const activeLayer = computed(() => active.value?.files.find(file => file.name === active.value?.selectedLayer))
+  const activeIr = computed(() => activeLayer.value?.ir ?? active.value?.ir)
   let sequence = 0
   function log(doc: BoardDocument, message: string, level: LogEntry['level'] = 'info') {
     doc.logs.push({ id: ++sequence, time: new Date().toLocaleTimeString('zh-CN', { hour12: false }), level, message })
@@ -29,8 +31,10 @@ export const useProjectStore = defineStore('project', () => {
   function add(name: string, files: LayerFile[], demo = false, ir?: GraphicsIr) {
     const params = defaults()
     if (!files.some(f => f.role === 'top-paste') && files.some(f => f.role === 'bottom-paste')) params.side = 'bottom'
-    const doc: BoardDocument = { id: crypto.randomUUID(), name, demo, mode: '2d', dirty: false, files, params, logs: [], width: demo ? 100 : null, height: demo ? 100 : null, apertures: demo && ir ? exampleApertures(ir) : [], ir }
-    log(doc, demo ? '已打开示例板。' : `已导入 ${name}，发现 ${files.length} 个文件。`, 'success')
+    const selectedLayer = files.find(f=>f.ir && f.role===`${params.side}-paste`) ?? files.find(f=>f.ir) ?? files[0]
+    const doc: BoardDocument = { id: crypto.randomUUID(), name, demo, mode: '2d', dirty: false, files, params, logs: [], width: demo ? 100 : null, height: demo ? 100 : null, apertures: demo && ir ? exampleApertures(ir) : [], ir, selectedLayer:selectedLayer?.name ?? '', view:{zoom:1,panX:0,panY:0} }
+    log(doc, demo ? '已打开示例板。' : `已读取 ${name}，${files.filter(f=>f.ir).length} / ${files.length} 个图层已解析。`, demo || files.some(f=>f.ir) ? 'success' : 'warning')
+    for (const file of files) if(file.diagnostic) log(doc, `${file.name}${file.diagnostic.line ? ` 第 ${file.diagnostic.line} 行` : ''}：${file.diagnostic.message}`, 'warning')
     documents.value.push(doc); activeId.value = doc.id
     return doc.id
   }
@@ -47,12 +51,21 @@ export const useProjectStore = defineStore('project', () => {
     if (activeId.value === id) activeId.value = documents.value[Math.min(i, documents.value.length - 1)]?.id ?? ''
   }
   function setMode(mode: ViewMode) { if (active.value) active.value.mode = mode }
+  function selectLayer(name:string) {
+    const doc=active.value
+    const file=doc?.files.find(f=>f.name===name)
+    if(!doc || !file || doc.selectedLayer===name) return
+    doc.selectedLayer=name;doc.view={zoom:1,panX:0,panY:0}
+    if(file.role==='top-paste') doc.params.side='top'
+    if(file.role==='bottom-paste') doc.params.side='bottom'
+  }
   function update<K extends keyof Parameters>(key: K, value: Parameters[K]) {
     const doc = active.value
     if (!doc || doc.params[key] === value) return
     doc.params[key] = value; doc.dirty = true
+    if(key==='side') { const layer=doc.files.find(f=>f.role===`${value}-paste`);if(layer) selectLayer(layer.name) }
     if (key === 'thickness' || key === 'layerHeight') doc.params.layer = Math.min(doc.params.layer, Math.max(1, Math.ceil(doc.params.thickness / doc.params.layerHeight)))
   }
   function reset() { if (active.value) { active.value.params = defaults(); active.value.dirty = true; log(active.value, '已恢复默认参数。') } }
-  return { documents, activeId, active, add, activate, close, openDemo, setMode, update, reset, log }
+  return { documents, activeId, active, activeLayer, activeIr, selectLayer, add, activate, close, openDemo, setMode, update, reset, log }
 })

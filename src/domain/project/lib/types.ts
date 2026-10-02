@@ -1,7 +1,7 @@
-import type { GraphicsIr } from '../../../contracts'
+import type { GraphicsIr, ImportedLayer } from '../../../contracts'
 
 export type ViewMode = '2d' | '3d' | 'gcode'
-export interface LayerFile { name: string; role: 'top-paste' | 'bottom-paste' | 'outline' | 'other'; size: number }
+export type LayerFile = ImportedLayer
 export interface LogEntry { id: number; time: string; level: 'info' | 'success' | 'warning'; message: string }
 export interface Aperture { x: number; y: number; width: number; height: number; round?: boolean }
 export interface Parameters {
@@ -15,4 +15,6 @@ export interface BoardDocument {
   width: number | null; height: number | null; apertures: Aperture[];
   /** Parsed graphics IR from Rust; the 2D preview renders this. */
   ir?: GraphicsIr;
+  selectedLayer: string;
+  view: { zoom:number; panX:number; panY:number };
 }

@@ -1,6 +1,6 @@
 # Rust 桌面与业务层
 
-本目录已有单 crate Gerber 解析库、graphics v2 Rust 类型和测试；Tauri 桌面宿主、业务任务、工程存储及外部进程尚未实现。下列完整目录是目标结构，不代表全部已有能力。先读 [根 AGENTS.md](../AGENTS.md) 并应用 `code-boundary-standards`。后端采用**模块化单体，按业务能力组织（Feature-first）**，以单 crate 起步，不提前拆成多 crate 或微服务。
+本目录已有单 crate Gerber/ZIP 导入库、浏览器 WASM 薄入口、graphics v2 和 import v1 类型及测试；Tauri 桌面宿主、业务任务、工程存储及外部进程尚未实现。下列完整目录是目标结构，不代表全部已有能力。先读 [根 AGENTS.md](../AGENTS.md) 并应用 `code-boundary-standards`。后端采用**模块化单体，按业务能力组织（Feature-first）**，以单 crate 起步，不提前拆成多 crate 或微服务。
 
 ## 所有权与边界
 
@@ -46,6 +46,14 @@ src-tauri/
 - runtime 不反向依赖 features；contracts 不依赖 features、runtime、commands。不要通过协议模块绕过业务所有权。
 - `jobs` 管执行生命周期，`python`/`slicer` 管对应子进程和协议；业务中的失效判断、产物是否可导出等策略留在相应 feature，跨 feature 决策由 app 协调。
 - 不新建泛化的 `common`、`utils` 容器，不把跨模块协调下沉成相互引用。
+
+## 浏览器接入
+
+- `browser.rs` 是仅在 wasm32 启用的薄 ABI，通过 `features/board_import` 公开入口接收受控字节；不在 ABI 中实现解析、解包或业务策略。
+- `board_import::import_board` 处理 ZIP 及独立文件，按文件名识别图层并返回 IR 或文件级诊断。不支持的格式、空几何和失败图层不能伪报为成功几何。
+- ZIP 使用纯 Rust 解压依赖，在内存中处理；检查文件数量、单文件和展开总大小、实际读取大小、CRC、路径穿越、绝对路径、链接与重复文件名，不向磁盘解压。
+- 浏览器 Worker 管理本次计算的超时和取消；原生任务调度、工程保存仍未实现。源文件不会发送到远程服务。
+- 解析器保留 D01/D02/D03 模态，G54 仅选择孔径，不产生额外 flash。当前 G74 单象限圆弧和混合范围的重复块明确拒绝；仅支持全图重复，以防无声丢图。
 
 ## 解析与 IR
 

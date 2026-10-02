@@ -30,4 +30,19 @@ describe('independent document state', () => {
     const first=s.activeId;s.openDemo(sample)
     expect(s.documents).toHaveLength(1);expect(s.activeId).toBe(first)
   })
+  it('selects actual layer geometry and keeps view state with its document', () => {
+    const s=useProjectStore()
+    const first=s.add('board.zip',[
+      {name:'outline.gko',role:'outline',size:10,ir:sample},
+      {name:'top.gtp',role:'top-paste',size:20,ir:sample},
+      {name:'bottom.gbp',role:'bottom-paste',size:20,ir:{...sample,objects:[]}},
+    ])
+    expect(s.activeLayer?.name).toBe('top.gtp')
+    s.selectLayer('bottom.gbp');expect(s.activeIr?.objects).toEqual([])
+    expect(s.active?.params.side).toBe('bottom')
+    s.active!.view={zoom:2,panX:10,panY:20}
+    s.add('other.gbr',[]);s.activate(first)
+    expect(s.active?.view).toEqual({zoom:2,panX:10,panY:20})
+    expect(s.activeLayer?.name).toBe('bottom.gbp')
+  })
 })

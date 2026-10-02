@@ -297,3 +297,24 @@ fn revised_graphics_are_not_mislabeled_as_v1() {
         .validate(&serde_json::to_value(ir).unwrap())
         .is_err());
 }
+
+#[test]
+fn preserves_modal_draws_and_flashes_without_adding_a_g54_flash() {
+    let ir=parse_gerber("%FSLAX34Y34*%\n%MOMM*%\n%ADD10C,1*%\nG54D10*\nX0Y0D02*\nX10000Y0D01*\nX20000Y0*\nX30000Y0D03*\nX40000Y0*\nM02*").unwrap();
+    assert_eq!(ir.objects.len(), 3);
+    let GraphicObject::Stroke { segments, .. } = &ir.objects[0] else {
+        panic!("expected stroke")
+    };
+    assert_eq!(segments.len(), 2);
+    assert!(matches!(&ir.objects[2],GraphicObject::Flash{at,..} if at.x==4.0));
+}
+
+#[test]
+fn repeat_scope_and_single_quadrant_arcs_cannot_silently_change_geometry() {
+    let prefix = "%FSLAX34Y34*%\n%MOMM*%\n%ADD10C,1*%\nD10*\n";
+    assert!(parse_gerber(&format!("{prefix}G74*\nX0Y0D02*")).is_err());
+    assert!(parse_gerber(&format!("{prefix}X0Y0D03*\n%SRX2Y2I5J5*%")).is_err());
+    let repeated = format!("{prefix}%SRX2Y2I5J5*%\nX0Y0D03*\n%SR*%\n");
+    assert!(parse_gerber(&format!("{repeated}M02*")).is_ok());
+    assert!(parse_gerber(&format!("{repeated}X10000Y10000D03*")).is_err());
+}

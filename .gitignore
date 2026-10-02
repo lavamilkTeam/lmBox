@@ -12,3 +12,7 @@ playwright-report/
 # Rust toolchain artifacts (local cache and build output)
 .cargo-home/
 src-tauri/target/
+
+# Reproducible browser parser build and local build tools
+.tools/
+src/platform/desktop/lib/generated/

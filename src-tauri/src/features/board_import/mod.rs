@@ -6,3 +6,6 @@
 mod parser;
 
 pub use parser::{parse_gerber, ParseError};
+
+mod import;
+pub use import::import_board;

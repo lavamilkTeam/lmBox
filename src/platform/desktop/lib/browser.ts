@@ -1,39 +1,45 @@
-import { unzipSync } from 'fflate'
 import type { BoardDocument, LayerFile } from '../../../domain/project'
-import type { GraphicsIr } from '../../../contracts'
+import type { GraphicsIr, ImportResult } from '../../../contracts'
 import demoGraphics from './demo-ir.json'
 
-function role(name: string): LayerFile['role'] {
-  if (/\.gtp$|top.?paste|f[._-]paste/i.test(name)) return 'top-paste'
-  if (/\.gbp$|bottom.?paste|b[._-]paste/i.test(name)) return 'bottom-paste'
-  if (/\.gko$|\.gm1$|outline|edge[._-]cuts/i.test(name)) return 'outline'
-  return 'other'
-}
-// Browser development adapter. Replace this entry point with Tauri commands for desktop delivery.
-// This adapter only inventories files; it never claims to parse manufacturing geometry.
-export async function inspectFiles(files: File[]): Promise<{ name: string; layers: LayerFile[] }[]> {
-  const results: { name: string; layers: LayerFile[] }[] = []
-  const singles: LayerFile[] = []
-  for (const file of files) {
-    if (file.size > 30 * 1024 * 1024) throw new Error(`${file.name} 超过 30 MB，请使用较小的 Gerber 文件。`)
-    if (/\.zip$/i.test(file.name)) {
-      const layers: LayerFile[] = []
-      let expanded = 0
-      unzipSync(new Uint8Array(await file.arrayBuffer()), { filter: entry => {
-        if (entry.name.endsWith('/') || entry.name.startsWith('__MACOSX/')) return false
-        expanded += entry.originalSize
-        if (expanded > 150 * 1024 * 1024 || layers.length >= 500) throw new Error('压缩包超出文件数量或解压大小限制。')
-        layers.push({ name: entry.name, size: entry.originalSize, role: role(entry.name) })
-        return false // Read directory metadata only; do not decompress untrusted payloads.
-      } })
-      if (!layers.length) throw new Error(`${file.name} 是空的压缩包。`)
-      results.push({ name: file.name, layers })
-    } else if (/\.(gtp|gbp|gko|gm1|gbr|ger|dxf|drl)$/i.test(file.name)) {
-      singles.push({ name: file.name, role: role(file.name), size: file.size })
-    } else throw new Error(`不支持 ${file.name}，请选择 Gerber ZIP、图层文件或 DXF。`)
-  }
-  if (singles.length) results.push({ name: singles.length === 1 ? singles[0]!.name : `${singles[0]!.name} 等 ${singles.length} 个图层`, layers: singles })
-  return results
+export async function inspectFiles(files: File[], signal?: AbortSignal): Promise<{ name: string; layers: LayerFile[] }[]> {
+  if (!files.length) return []
+  if (files.length>500 || files.reduce((size,file)=>size+file.size,0)>150*1024*1024) throw new Error('所选文件超出数量或总大小限制。')
+  const worker=new Worker(new URL('./import.worker.ts',import.meta.url),{type:'module'})
+  const abort=()=>new DOMException('已取消导入。','AbortError')
+  const results: {name:string;layers:LayerFile[]}[]=[]
+  const singles:LayerFile[]=[]
+  try {
+    for(const file of files) {
+      if(signal?.aborted) throw abort()
+      if(file.size>30*1024*1024) throw new Error(`${file.name} 超过 30 MB。`)
+      const bytes=await file.arrayBuffer()
+      if(signal?.aborted) throw abort()
+      const id=crypto.randomUUID()
+      const result=await new Promise<ImportResult>((resolve,reject)=>{
+        const cleanup=()=>{ clearTimeout(timeout);signal?.removeEventListener('abort',cancel);worker.onmessage=null;worker.onerror=null }
+        const fail=(error:unknown)=>{cleanup();reject(error)}
+        const cancel=()=>fail(abort())
+        const timeout=setTimeout(()=>fail(new Error(`${file.name} 解析超时，请拆分较大的文件。`)),30000)
+        signal?.addEventListener('abort',cancel,{once:true})
+        worker.onerror=()=>fail(new Error('文件解析器加载失败，请刷新页面后重试。'))
+        worker.onmessage=(event:MessageEvent<{id:string;result?:ImportResult;error?:string}>)=>{
+          if(event.data.id!==id) return
+          if(event.data.error) return fail(new Error(event.data.error))
+          if(!event.data.result || event.data.result.protocolVersion!=='1') return fail(new Error('文件解析结果无效。'))
+          cleanup();resolve(event.data.result)
+        }
+        worker.postMessage({id,name:file.name,bytes},[bytes])
+      })
+      if(/\.zip$/i.test(file.name)) results.push({name:file.name,layers:result.layers})
+      else singles.push(...result.layers)
+    }
+    if(singles.length) {
+      if(new Set(singles.map(file=>file.name)).size!==singles.length) throw new Error('所选图层含有重复文件名，请分别导入。')
+      results.push({name:singles.length===1?singles[0]!.name:`${singles[0]!.name} 等 ${singles.length} 个图层`,layers:singles})
+    }
+    return results
+  } finally {worker.terminate()}
 }
 export function saveParameters(doc: BoardDocument) {
   const data = { version: 1, source: doc.name, demo: doc.demo, parameters: doc.params }
@@ -43,9 +49,7 @@ export function saveParameters(doc: BoardDocument) {
 }
 
 // Loads the sample graphics IR produced by the Rust parser for demo.gbr. This
-// exercises the 2D renderer against real parser output. When the Rust/WASM or
-// Tauri bridge lands, `parseGerber(source)` replaces this demo data source
-// while keeping the same `GraphicsIr` contract.
+// exercises the renderer against the same contract as imported files.
 export function loadDemoGraphics(): GraphicsIr {
   return demoGraphics as GraphicsIr
 }

@@ -14,9 +14,14 @@ const sides = computed(() => [{ label: '顶层锡膏 · Top Paste', value: 'top'
     <div class="parameter-content">
       <section class="parameter-section">
         <h3><Layers :size="14"/>源图层<span>01</span></h3>
-        <label class="field-label">锡膏面</label>
-        <NSelect :value="doc.params.side" :options="sides" size="small" @update:value="store.update('side', $event)"/>
-        <div class="source-file">{{ doc.files.find(f => f.role === `${doc!.params.side}-paste`)?.name ?? '未识别到锡膏层' }}</div>
+        <template v-if="!doc.demo">
+          <label class="field-label">预览图层</label>
+          <NSelect class="layer-picker" aria-label="预览图层" :value="doc.selectedLayer" :options="doc.files.map(file=>({label:file.name,value:file.name}))" size="small" @update:value="store.selectLayer"/>
+          <p v-if="store.activeLayer?.diagnostic" class="field-help layer-diagnostic">{{ store.activeLayer.diagnostic.line ? `第 ${store.activeLayer.diagnostic.line} 行：` : '' }}{{ store.activeLayer.diagnostic.message }}</p>
+        </template>
+        <label v-if="doc.demo" class="field-label">锡膏面</label>
+        <NSelect v-if="doc.demo" :value="doc.params.side" :options="sides" size="small" @update:value="store.update('side', $event)"/>
+        <div class="source-file">{{ doc.demo ? doc.files.find(f => f.role === `${doc!.params.side}-paste`)?.name : store.activeLayer?.name }}</div>
         <div class="switch-row"><span>水平镜像</span><NSwitch size="small" :value="doc.params.mirror" @update:value="store.update('mirror', $event)"/></div>
       </section>
       <section v-if="doc.mode === '2d'" class="parameter-section">
@@ -39,7 +44,7 @@ const sides = computed(() => [{ label: '顶层锡膏 · Top Paste', value: 'top'
       </section>
       <section class="parameter-section board-info">
         <h3>文件信息<span>03</span></h3>
-        <dl><dt>板框尺寸</dt><dd>{{ doc.width ? `${doc.width} × ${doc.height} mm` : '—' }}</dd><dt>开孔数量</dt><dd>{{ doc.demo ? doc.apertures.length : '—' }}</dd><dt>文件数量</dt><dd>{{ doc.files.length }}</dd></dl>
+        <dl><dt>板框尺寸</dt><dd>{{ doc.width ? `${doc.width} × ${doc.height} mm` : '—' }}</dd><dt>{{ doc.demo ? '开孔数量' : '图形对象' }}</dt><dd>{{ doc.demo ? doc.apertures.length : store.activeIr?.objects.length ?? '—' }}</dd><dt>文件数量</dt><dd>{{ doc.files.length }}</dd></dl>
       </section>
     </div>
   </template>

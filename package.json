@@ -9,7 +9,12 @@
     "test": "vitest run",
     "lint:boundaries": "depcruise src --config .dependency-cruiser.cjs",
     "check": "npm run lint:boundaries && npm run test && npm run build && npm run test:e2e",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "setup:wasm": "rustup target add wasm32-unknown-unknown && cargo install wasm-bindgen-cli --version 0.2.129 --locked --root .tools/wasm-bindgen",
+    "build:wasm": "node scripts/build-wasm.mjs",
+    "predev": "npm run build:wasm",
+    "prebuild": "npm run build:wasm",
+    "precheck": "npm run build:wasm"
   },
   "dependencies": {
     "@lucide/vue": "^1.49.0",

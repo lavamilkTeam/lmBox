@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lmbox.local/contracts/schemas/v1/import.schema.json",
+  "title": "Parsed board import result",
+  "type": "object",
+  "required": ["protocolVersion", "layers"],
+  "additionalProperties": false,
+  "properties": {
+    "protocolVersion": { "const": "1" },
+    "layers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "size", "role"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "size": { "type": "integer", "minimum": 0 },
+          "role": { "enum": ["top-paste", "bottom-paste", "outline", "other"] },
+          "ir": { "$ref": "../v2/graphics.schema.json" },
+          "diagnostic": {
+            "type": "object",
+            "required": ["code", "message"],
+            "additionalProperties": false,
+            "properties": {
+              "code": { "enum": ["unsupported_format", "invalid_encoding", "empty_geometry", "parse_error"] },
+              "message": { "type": "string" },
+              "line": { "type": "integer", "minimum": 1 }
+            }
+          }
+        },
+        "oneOf": [{"required":["ir"]}, {"required":["diagnostic"]}]
+      }
+    }
+  }
+}

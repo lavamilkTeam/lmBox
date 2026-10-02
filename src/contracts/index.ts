@@ -17,3 +17,4 @@ export type {
   Unit,
   ZeroSuppression,
 } from './graphics'
+export type { ImportedLayer, ImportResult } from './import'

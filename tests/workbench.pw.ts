@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test'
 import { zipSync, strToU8 } from 'fflate'
+import { readFileSync } from 'node:fs'
+const gerber=readFileSync('src-tauri/tests/fixtures/basic.gbr')
+const outline=strToU8('%FSLAX34Y34*%\n%MOMM*%\n%ADD10C,0.1*%\nD10*\nX0Y0D02*\nX100000Y0D01*\nX100000Y100000D01*\nX0Y100000D01*\nX0Y0D01*\nM02*')
 
 test('views switch with matching settings and an interactive 3D model', async ({ page }) => {
   const errors: string[]=[];page.on('pageerror',e=>errors.push(e.message))
@@ -22,13 +25,13 @@ test('ZIP import and per-tab state remain independent', async ({ page }) => {
   await page.getByRole('button',{name:'3D 模型',exact:true}).click()
   await page.getByLabel('模板厚度',{exact:true}).fill('0.35')
   await page.getByLabel('模板厚度',{exact:true}).press('Enter')
-  const zip=zipSync({ 'TopPaste.GTP':strToU8('G04 fixture*'), 'Board.GKO':strToU8('G04 fixture*') })
+  const zip=zipSync({ 'TopPaste.GTP':gerber, 'Board.GKO':outline })
   await page.getByLabel('选择 Gerber 文件').setInputFiles({ name:'board.zip',mimeType:'application/zip',buffer:Buffer.from(zip) })
   await expect(page.getByRole('tab')).toHaveCount(2)
-  await expect(page.locator('.imported-layers')).toContainText('TopPaste.GTP')
-  await expect(page.locator('.file-summary')).toContainText('2 个文件')
+  await expect(page.locator('.viewport-top-info')).toContainText('TopPaste.GTP')
+  await expect(page.locator('.outline-layers .ir-layer')).toHaveCount(1)
   await expect(page.locator('.panel-heading')).toContainText('2D 图层参数')
-  await expect(page.locator('.board-canvas')).toHaveCount(0)
+  await expect(page.locator('.board-canvas')).toBeVisible()
   await page.getByRole('tab',{name:'示例板 · 100 × 100'}).click()
   await expect(page.getByLabel('模板厚度',{exact:true})).toHaveValue('0.35')
   await page.getByRole('button',{name:'关闭 示例板 · 100 × 100',exact:true}).click()
@@ -68,15 +71,15 @@ test('empty workspace, invalid file, and compact window are usable', async ({ pa
 
 test('sample IR is rendered after reopening from either empty state', async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('.ir-layer > defs > mask')).toHaveCount(125)
+  await expect(page.locator('.ir-layer path')).toHaveCount(124)
   await page.getByRole('button',{name:'关闭 示例板 · 100 × 100',exact:true}).click()
   await page.getByRole('button',{name:'打开示例',exact:true}).click()
-  await expect(page.locator('.ir-layer > defs > mask')).toHaveCount(125)
+  await expect(page.locator('.ir-layer path')).toHaveCount(124)
   await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'board.gtp',mimeType:'text/plain',buffer:Buffer.from('G04 fixture*')})
   await expect(page.locator('.ir-layer')).toHaveCount(0)
   await page.getByRole('button',{name:'关闭 示例板 · 100 × 100',exact:true}).click()
   await page.getByRole('button',{name:'打开示例',exact:true}).click()
-  await expect(page.locator('.ir-layer > defs > mask')).toHaveCount(125)
+  await expect(page.locator('.ir-layer path')).toHaveCount(124)
   await page.screenshot({path:test.info().outputPath('ir-preview.png')})
 })
 
@@ -118,6 +121,45 @@ test('IR masks preserve drawing order, transparency and local macro holes', asyn
   expect(samples[1]).toEqual([154,200,203,255]) // later dark restores material
   expect(samples[2]![3]).toBe(0) // layer clear stays transparent
   expect(samples[3]).toEqual([154,200,203,255]) // macro hole preserves earlier material
-  await page.getByRole('button',{name:'3D 模型',exact:true}).click()
+  await expect(page.getByRole('button',{name:'3D 模型',exact:true})).toBeDisabled()
   await expect(page.locator('.model-scene')).toHaveCount(0)
+})
+
+test('real ZIP layers switch, mirror and retain the document view at narrow widths', async ({page}) => {
+  await page.setViewportSize({width:760,height:940})
+  await page.goto('/')
+  const zip=zipSync({'TopPaste.GTP':gerber,'BottomPaste.GBP':readFileSync('src-tauri/tests/fixtures/inches.gbr'),'Board.GKO':outline})
+  await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'layers.zip',mimeType:'application/zip',buffer:Buffer.from(zip)})
+  await expect(page.locator('.viewport-top-info')).toContainText('TopPaste.GTP')
+  await expect(page.locator('.viewport-status')).toContainText('3 个图形对象')
+  await expect(page.locator('.demo-badge')).toHaveCount(0)
+  const layers=page.locator('.layer-picker')
+  await layers.click()
+  await page.getByText('BottomPaste.GBP',{exact:true}).click()
+  await expect(page.locator('.viewport-top-info')).toContainText('BottomPaste.GBP')
+  await expect(page.locator('.viewport-status')).toContainText('1 个图形对象')
+  await page.getByRole('switch').first().click()
+  await expect(page.locator('.ir-layer').first().locator('..')).toHaveAttribute('transform',/scale\(-1 -1\)/)
+  await page.getByRole('button',{name:'放大',exact:true}).click()
+  const box=await page.locator('.board-canvas').getAttribute('viewBox')
+  await page.getByRole('tab',{name:'示例板 · 100 × 100'}).click()
+  await page.getByRole('tab',{name:/layers.zip/}).click()
+  await expect(page.locator('.board-canvas')).toHaveAttribute('viewBox',box!)
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true)
+  await page.screenshot({path:test.info().outputPath('real-layers.png')})
+})
+
+test('bad layers report a located error while valid layers remain selectable', async ({page}) => {
+  await page.goto('/')
+  const zip=zipSync({'TopPaste.GTP':gerber,'bad.gbr':strToU8('%FSLAX34Y34*%\n%ZZ*%')})
+  await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'mixed.zip',mimeType:'application/zip',buffer:Buffer.from(zip)})
+  await expect(page.locator('.viewport-top-info')).toContainText('TopPaste.GTP')
+  await page.locator('.layer-picker').click()
+  await page.getByText('bad.gbr',{exact:true}).click()
+  await expect(page.locator('.layer-diagnostic')).toContainText('第 2 行')
+  await expect(page.locator('.board-canvas')).toHaveCount(0)
+  await expect(page.getByRole('log')).toContainText('bad.gbr 第 2 行')
+  await page.locator('.layer-picker').click()
+  await page.locator('.n-base-select-option__content').filter({hasText:/^TopPaste\.GTP$/}).click()
+  await expect(page.locator('.board-canvas')).toBeVisible()
 })

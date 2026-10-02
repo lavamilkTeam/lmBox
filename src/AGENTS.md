@@ -58,7 +58,7 @@ features/stencil/
 ## 外部交互与真实模型迁移
 
 - 组件可捕获用户点击、拖放等 DOM 事件，但文件选择 API、文件读取、写盘、Tauri 命令与任务事件订阅必须封装在 `platform/desktop`。
-- 当前 `browser.ts` 仅识别 ZIP 文件清单，没有保存原始输入。接入原生导入后，需要重新选择文件，不能假设旧标签里已有完整源数据。
+- `browser.ts` 负责读取用户选中的文件字节，通过每次导入独占的 Worker 调用 Rust/WASM；ZIP 解包、图层识别和 Gerber 解析均在 Rust。当前只保留会话内的解析快照，没有工程持久化；接入原生工程保存时仍需重新选择源文件。
 - `ModelScene.vue` 中的挤出仅为明确标记的示例。真实链路加载 Python 生成的模型，不在 Three.js 里复制制造几何、开孔补偿或网格生成算法。
 - 前端只渲染二维轮廓和模型；圆弧近似等制造精度由协议和 Python 决定，不随画布缩放改变。
 - 浏览器开发适配与原生适配保持相同公开接口，不能在每个 feature 中散布环境判断。
@@ -68,10 +68,19 @@ features/stencil/
 
 - `app` 从 `platform/desktop` 加载示例 IR，传给 domain；预览组件通过 `demo` 事件请求应用层打开示例，不自行加载或跨 feature 调用。
 - `contracts/index.ts` 是前端协议的公开入口；协议层不得依赖业务模块。当前类型手工映射 graphics v2，Rust 测试校验示例 JSON 与解析输出一致；尚无三端自动类型生成。
-- `preview/lib/render.ts` 只生成 SVG 显示指令；`IrLayer.vue` 用独立孔径遮罩与图层遮罩保留宏内曝光和图层绘制顺序。支持 flash、region、无孔圆孔径 stroke、全图重复及宏旋转；非圆或带孔孔径 stroke 明确报错，不能用近似线宽替代。
+- `preview/lib/render.ts` 只生成 SVG 显示指令；`IrLayer.vue` 对普通 dark 图元直接绘制，仅为带局部 clear 的宏和含图层 clear 的合成建立必要遮罩，保留曝光和绘制顺序。支持 flash、region、无孔圆孔径 stroke、全图重复及宏旋转；非圆或带孔孔径 stroke 明确报错，不能用近似线宽替代。
 - 预览边界是包含孔径和完整圆弧的保守范围，用于适应画布，不是制造尺寸。图形含热焊盘不支持的间隙尺寸或超限重复时明确失败。
 - 示例二维与三维共享 `demo.gbr` 解析数据；domain 只将固定示例的 dark 圆形/矩形 flash 映射为演示孔，不能扩展成生产几何算法。真实 IR 不使用示例三维或路径代替计算结果。
 - SVG 私有计算的窄回归测试位于 `preview/lib/render.test.ts`，作为复杂内部算法测试的局部例外，不扩大 feature 公开接口。界面和遮罩合成通过浏览器行为验证。
+
+## 真实文件显示
+
+- 导入协议类型来自 `contracts/index.ts`。每个 `LayerFile` 保存对应 IR 或定位诊断，domain 的 `activeLayer`、`activeIr`、`selectLayer` 管理选择；预览模块不重新解释文件格式。
+- 首次导入优先显示可解析的锡膏层，也允许选择板框、铜层和失败图层查看诊断。板框以独立颜色叠加；显示范围用于画布适应，不冒充真实板框尺寸。
+- 每个文档保存二维 zoom/pan；切换文档恢复视图，切换图层重置以适应新图形。未生成真实模型和路径时禁用对应入口，不展示示例产物。
+- 导入最多 500 个文件、单文件 30 MB、选择总大小 150 MB；Worker 请求携带关联 ID，单文件解析限时 30 秒，取消/超时/完成均终止本次 Worker 并释放临时内存。
+- WASM 绑定及二进制位于 `platform/desktop/lib/generated/`，由 `npm run build:wasm` 生成并忽略提交。该目录是工具生成代码的局部边界例外，不手改。`scripts/build-wasm.mjs` 仅负责构建。
+- 首次配置运行 `npm run setup:wasm`；`dev`、`build`、`check` 的前置脚本自动构建 WASM。绑定工具版本与 Cargo 依赖固定一致，生成产物随 Vite 打包，可在静态部署中运行，无解析服务器。
 
 ## 界面约束
 

@@ -28,7 +28,7 @@
 
 基本调用方向：`Vue → Rust 业务 → Python 计算 / 切片器`。前端不直接启动 Python；Python 不反向调用前端或管理工程。
 
-当前已有前端工作台、Rust Gerber 解析库及 graphics v2 schema。二维示例使用 Rust 解析产出的 IR；真实文件导入仍只读取清单，Tauri 接入、Python 引擎、工程持久化和切片器尚未实现。各目录中的目标结构不表示全部代码或功能已存在，按实际用例逐步落地。
+当前已有前端工作台、Rust Gerber 解析库及 graphics v2 schema。浏览器通过 Web Worker 中的 Rust/WASM 导入 Gerber/ZIP 并显示真实 IR；Tauri 接入、Python 引擎、工程持久化和切片器尚未实现。各目录中的目标结构不表示全部代码或功能已存在，按实际用例逐步落地。
 
 ## 全项目约束
 

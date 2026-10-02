@@ -9,6 +9,6 @@ function change(event: Event) { const el = event.target as HTMLInputElement; if 
 defineExpose({ open })
 </script>
 <template>
-  <button class="import-button" :disabled="busy" @click="open"><Upload :size="16"/><span>{{ busy ? '正在读取…' : '导入文件' }}</span><span class="button-divider"/><ChevronDown :size="13"/></button>
-  <input ref="input" class="sr-only" type="file" multiple accept=".zip,.gtp,.gbp,.gko,.gm1,.gbr,.ger,.dxf,.drl" aria-label="选择 Gerber 文件" @change="change">
+  <button class="import-button" :disabled="busy" @click="open"><Upload :size="16"/><span>{{ busy ? '正在解析…' : '导入文件' }}</span><span class="button-divider"/><ChevronDown :size="13"/></button>
+  <input ref="input" class="sr-only" type="file" multiple accept=".zip,.gtp,.gbp,.gko,.gm1,.gbr,.ger,.gtl,.gbl,.gts,.gbs,.gto,.gbo" aria-label="选择 Gerber 文件" @change="change">
 </template>

@@ -8,3 +8,6 @@ pub mod contracts;
 pub mod features;
 
 pub use features::board_import::parse_gerber;
+
+#[cfg(target_arch = "wasm32")]
+mod browser;

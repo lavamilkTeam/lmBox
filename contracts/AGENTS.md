@@ -1,6 +1,6 @@
 # 跨语言协议架构与注意事项
 
-先读 [根规范](../AGENTS.md)，再读实际涉及的 [前端](../src/AGENTS.md)、[Rust](../src-tauri/AGENTS.md)、[Python](../engine/AGENTS.md) 说明。当前已有 `schemas/v2/graphics.schema.json` 及 Rust/TypeScript 手工映射；project、job、artifact schema 和自动生成工具尚未实现。
+先读 [根规范](../AGENTS.md)，再读实际涉及的 [前端](../src/AGENTS.md)、[Rust](../src-tauri/AGENTS.md)、[Python](../engine/AGENTS.md) 说明。当前已有 `schemas/v2/graphics.schema.json` 、`schemas/v1/import.schema.json` 及 Rust/TypeScript 手工映射；project、job、artifact schema 和自动生成工具尚未实现。
 
 ## 所有权与结构
 
@@ -43,9 +43,13 @@ contracts/
 
 v2 为 stroke 增加起点，将 region 轮廓改为包含 `start` 和 `segments` 的对象，避免预览猜测起始坐标。该变更不兼容 v1，因此保留原 v1 schema，解析器输出与前端预览切换到 v2。缺少起点的 v1 数据不能无损推断，预览明确拒绝，不静默迁移。
 
+## import v1
+
+浏览器和未来原生适配共享文件级导入结果：`protocolVersion` 为 1，每层包含名称、原始大小、角色，以及互斥的 graphics v2 IR 或结构化诊断（代码、消息、可用时的行号）。Worker 信封附带请求 ID 用于匹配结果；该短请求不代表已建立工程/长任务协议。
+
 ## 当前验证范围
 
-Rust 集成测试将示例、混合孔径、圆弧、区域和重复夹具的解析 JSON 交给 graphics schema 校验，并比较前端示例 JSON 与 Rust 解析结果。前端从 `src/contracts/index.ts` 使用类型；当前没有 Python 绑定或三端统一 fixture 验证，不能宣称已完成三端互通。
+Rust 集成测试将示例、混合孔径、圆弧、区域和重复夹具的解析 JSON 交给 graphics schema 校验，并比较前端示例 JSON 与 Rust 解析结果。导入成功和失败样例同时按 import schema 与所引用的 graphics schema 校验。前端从 `src/contracts/index.ts` 使用类型；当前没有 Python 绑定或三端统一 fixture 验证，不能宣称已完成三端互通。
 
 ## 兼容性和验证
 

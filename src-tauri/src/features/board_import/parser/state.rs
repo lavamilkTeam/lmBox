@@ -45,7 +45,8 @@ pub struct State {
     aperture: Option<u32>,
     interpolation: Interpolation,
     polarity: Polarity,
-    pending_flash: bool,
+    operation: u32,
+    repeat_closed: bool,
     region_mode: bool,
     region_offset: usize,
     region_contours: Vec<Contour>,
@@ -93,7 +94,8 @@ impl State {
             aperture: None,
             interpolation: Interpolation::Linear,
             polarity: Polarity::Dark,
-            pending_flash: false,
+            operation: 2,
+            repeat_closed: false,
             region_mode: false,
             region_offset: 0,
             region_contours: Vec::new(),
@@ -159,7 +161,21 @@ impl State {
                 }
             }
             "SR" => {
-                self.step_and_repeat = Some(parse_step_repeat(offset, head, self.scale)?);
+                self.flush_stroke();
+                if upper == "SR" {
+                    self.repeat_closed = self.step_and_repeat.is_some();
+                } else {
+                    if self.step_and_repeat.is_some()
+                        || !self.objects.is_empty()
+                        || self.region_mode
+                    {
+                        return Err(ParseError::new(
+                            offset,
+                            "only whole-layer step and repeat is supported",
+                        ));
+                    }
+                    self.step_and_repeat = Some(parse_step_repeat(offset, head, self.scale)?);
+                }
             }
             "IP" => {
                 if upper == "IPNEG" {
@@ -204,8 +220,8 @@ impl State {
         let words = scan_words(content);
         let mut x = self.pos.x;
         let mut y = self.pos.y;
-        let mut i = self.i;
-        let mut j = self.j;
+        let mut i = 0.0;
+        let mut j = 0.0;
         let mut g: Option<u32> = None;
         let mut d: Option<u32> = None;
 
@@ -230,10 +246,11 @@ impl State {
         self.j = j;
         if let Some(code) = d {
             self.apply_d(code, offset, x, y)?;
-        } else if x != self.pos.x || y != self.pos.y {
-            // Coordinates without a D-code: treat as a plain move.
-            self.flush_stroke();
-            self.pos = Point::new(x, y);
+        } else if words
+            .iter()
+            .any(|(letter, _)| matches!(letter.to_ascii_uppercase(), 'X' | 'Y' | 'I' | 'J'))
+        {
+            self.apply_d(self.operation, offset, x, y)?;
         }
         Ok(())
     }
@@ -286,9 +303,15 @@ impl State {
                 self.emit_region();
                 self.region_mode = false;
             }
-            54 | 55 => self.pending_flash = true,
-            74 | 75 => {} // quadrant mode; each D01 arc is recorded as its own segment
-            90 => {}      // absolute coordinates (the default)
+            54 => {} // legacy aperture selection prefix, not a flash
+            74 => {
+                return Err(ParseError::new(
+                    offset,
+                    "single-quadrant arcs are not supported; export multi-quadrant Gerber",
+                ))
+            }
+            75 => {} // multi-quadrant mode
+            90 => {} // absolute coordinates (the default)
             other => {
                 return Err(ParseError::new(
                     offset,
@@ -300,6 +323,15 @@ impl State {
     }
 
     fn apply_d(&mut self, code: u32, offset: usize, x: f64, y: f64) -> Result<(), ParseError> {
+        if self.repeat_closed && matches!(code, 1 | 3) {
+            return Err(ParseError::new(
+                offset,
+                "drawing after a closed repeat block is not supported",
+            ));
+        }
+        if matches!(code, 1..=3) {
+            self.operation = code;
+        }
         match code {
             1 => {
                 // draw
@@ -369,15 +401,6 @@ impl State {
                 }
                 self.aperture = Some(code);
                 self.pos = Point::new(x, y);
-                if self.pending_flash {
-                    self.pending_flash = false;
-                    self.objects.push(GraphicObject::Flash {
-                        polarity: self.polarity,
-                        aperture: code,
-                        at: Point::new(x, y),
-                        source_offset: offset,
-                    });
-                }
             }
             other => {
                 return Err(ParseError::new(

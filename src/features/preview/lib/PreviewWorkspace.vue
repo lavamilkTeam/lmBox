@@ -5,6 +5,7 @@ import { useProjectStore } from '../../../domain/project'
 import SelectionLayer from './SelectionLayer.vue'
 import IrLayer from './IrLayer.vue'
 import { renderIr, type RenderedIr } from './render'
+import { topFacePath } from './mesh-outline'
 import { observeViewportSize } from '../../../platform/desktop'
 const ModelScene = defineAsyncComponent(() => import('./ModelScene.vue'))
 const store = useProjectStore()
@@ -26,6 +27,13 @@ const processed = computed<RenderedIr|undefined>(() => {
 const displayGeometry=computed(()=>processed.value ?? rendered.value.geometry)
 const drawingTransform=computed(()=>`translate(${!processed.value && doc.value?.params.mirror ? geometryBounds.value.minX+geometryBounds.value.maxX : 0} ${flipY.value}) scale(${!processed.value && doc.value?.params.mirror ? -1 : 1} -1)`)
 const materialPath=computed(()=>doc.value?.model.mesh?.contours.map(r=>'M '+r.map(p=>p.join(' ')).join(' L ')+' Z').join(' ') ?? '')
+const showTopOutline=ref(true)
+const topOutline=computed(()=>{
+  const mesh=doc.value?.model.mesh,design=doc.value?.editing.design
+  if(!mesh || design?.kind!=='stencil')return ''
+  const hasTaper=design.optimization.taper!==100 || store.activeEdits.some(e=>!e.deleted && e.optimization && e.optimization.taper!==100)
+  return hasTaper ? topFacePath(mesh) : ''
+})
 const marquee=ref<{x:number;y:number;width:number;height:number}>()
 const canvas=ref<SVGSVGElement>()
 let selectStart:{x:number;y:number;clientX:number;clientY:number;id?:string;add:boolean}|undefined
@@ -165,6 +173,7 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
                 <path v-if="materialPath" :d="materialPath" fill="#17252d" fill-rule="evenodd" stroke="#577785" stroke-width="1" vector-effect="non-scaling-stroke" pointer-events="none"/>
                 <g :opacity="doc.params.opacity/100" pointer-events="none"><IrLayer :geometry="{...displayGeometry,operations:displayGeometry.operations.filter(o=>!o.deleted)}" :color="store.activeLayer?.role==='outline' ? '#8790ee' : undefined"/></g>
                 <SelectionLayer v-if="!doc.demo" :geometry="displayGeometry" :selected="doc.editing.selected"/>
+                <path v-if="showTopOutline && topOutline" class="top-mouth-outline" :d="topOutline" fill="none" stroke="#ffc46b" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke" pointer-events="none"/>
               </g>
               <g v-if="doc.params.outline" :transform="`translate(${doc.params.mirror ? geometryBounds.minX+geometryBounds.maxX : 0} ${flipY}) scale(${doc.params.mirror ? -1 : 1} -1)`" class="outline-layers">
                 <template v-for="outline in outlines" :key="outline.name"><IrLayer v-if="outline.geometry" :geometry="outline.geometry" color="#8790ee"/></template>
@@ -184,6 +193,7 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
           <div v-if="!doc.demo && doc.mode==='2d' && doc.model.status!=='ready'" class="edit-progress" :role="doc.model.status==='error'?'alert':'status'">{{ doc.model.status==='error' ? doc.model.error : doc.model.status==='cancelled' ? '已取消计算' : '正在计算编辑结果…' }}<button v-if="doc.model.status==='error' || doc.model.status==='cancelled'" @click="store.retryModel">重试</button></div>
           <div class="viewport-top-info">{{ doc.mode==='gcode' ? `路径演示 · 第 ${doc.params.layer} 层` : doc.mode==='3d' ? (doc.demo ? '透视视图' : doc.editing.design.kind==='base' ? '定位底板 · 透视视图' : '钢网 · 透视视图') : doc.demo ? '顶视图 · TOP' : store.activeLayer?.name ?? doc.name }}<span class="info-divider"/>{{ doc.mode==='3d' ? `${(!doc.demo && doc.editing.design.kind==='base' ? doc.editing.design.floor+doc.editing.design.boardThickness : doc.params.thickness).toFixed(2)} mm 厚度` : '单位：mm' }}</div>
           <div class="axis-widget"><span class="axis-y">Y</span><span class="axis-x">X</span><i/></div>
+          <div v-if="doc.mode==='2d' && topOutline" class="mouth-legend"><label><input v-model="showTopOutline" type="checkbox"/>显示上口轮廓</label><span>橙色虚线：上口 · 填充图形：贴板下口</span></div>
           <div class="canvas-hint">{{ doc.mode==='3d' ? '拖动旋转 · 滚轮缩放 · 右键平移' : '单击选择 · 拖动框选 · Shift 多选 · 中键平移' }}</div>
           <div v-if="doc.mode==='gcode'" class="toolpath-legend"><span><i style="background:#eca967"/>轮廓</span><span><i style="background:#649bb0"/>填充</span><span><i style="background:#bf84f2"/>空走</span></div>
           <div v-if="doc.mode!=='3d'" class="zoom-controls"><button aria-label="缩小" @click="changeZoom(-0.1)"><ZoomOut :size="16"/></button><span>{{ Math.round(zoom*100) }}%</span><button aria-label="放大" @click="changeZoom(0.1)"><ZoomIn :size="16"/></button><i/><button aria-label="缩放适应画布" @click="fit"><Maximize :size="14"/></button></div>

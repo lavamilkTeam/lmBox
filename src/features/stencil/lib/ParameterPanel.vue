@@ -96,7 +96,7 @@ function setDesign<K extends keyof DesignSettings>(key:K,value:DesignSettings[K]
               <NumberField label="XY 纵向比例" :value="opt.xyScaleY ?? 120" :min="10" :max="opt.xyMode==='opposed'?199:200" :step="1" unit="%" @change="opt!.xyScaleY=$event"/>
             </div>
             <p class="field-help" v-if="opt.xyMode==='whole'">整个焊盘：X {{ opt.xyScaleX ?? 80 }}%，Y {{ opt.xyScaleY ?? 120 }}%，中心不变。</p>
-            <p class="field-help" v-else>上半部：X {{ opt.xyScaleX ?? 80 }}%，Y {{ opt.xyScaleY ?? 120 }}%。{{ opt.xyMode==='opposed' ? `下半部：X ${200-(opt.xyScaleX ?? 80)}%，Y ${200-(opt.xyScaleY ?? 120)}%。` : '下半部保持原形。' }}上下半部独立缩放，中心处形成宽度台阶。</p>
+            <p class="field-help" v-else>顶端 X {{ opt.xyScaleX ?? 80 }}%，上半部 Y {{ opt.xyScaleY ?? 120 }}%。{{ opt.xyMode==='opposed' ? `底端 X ${200-(opt.xyScaleX ?? 80)}%，下半部 Y ${200-(opt.xyScaleY ?? 120)}%。左右两侧从底端到顶端连续渐变。` : '下半部保持原形，上半部宽度从中心 100% 渐变到顶端比例。' }}</p>
             <p class="field-help">以每个焊盘包围框中心为基准；上方为画布 +Y，横向为 X。应用后二维孔形和三维开孔同步变化，可与板厚方向喇叭口叠加。</p>
           </template>
         </section>

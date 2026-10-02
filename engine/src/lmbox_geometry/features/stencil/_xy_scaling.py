@@ -1,12 +1,11 @@
-"""Piecewise affine XY scaling about each edited aperture's bounding-box centre."""
+"""Continuous planar taper about each edited aperture's bounding-box centre."""
 
 import math
 
 from shapely import affinity
-from shapely.geometry import box
-from shapely.ops import unary_union
+from shapely.geometry import MultiPolygon, Polygon
 
-from ._contours import valid
+from ._contours import MAX_POINTS, TOLERANCE, valid
 
 
 def scale_xy(g, opt):
@@ -24,18 +23,60 @@ def scale_xy(g, opt):
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
     if mode == "whole":
         return valid(affinity.scale(g, sx, sy, origin=(cx, cy)))
-    # Clip before scaling, including all ring intersections with the centre line.
-    # Independent halves intentionally leave a shoulder at the join.
-    upper = g.intersection(box(x0 - 1, cy, x1 + 1, y1 + 1))
-    lower = g.intersection(box(x0 - 1, y0 - 1, x1 + 1, cy))
-    upper = affinity.scale(upper, sx, sy, origin=(cx, cy))
-    if mode == "opposed":
-        lower = affinity.scale(lower, 2 - sx, 2 - sy, origin=(cx, cy))
-    result = valid(unary_union([upper, lower]))
-    if result.geom_type not in ("Polygon", "MultiPolygon"):
-        raise ValueError("XY 分区缩放产生退化边缘，请调整比例。")
-    before = 1 if g.geom_type == "Polygon" else len(g.geoms)
-    after = 1 if result.geom_type == "Polygon" else len(result.geoms)
-    if before != after:
-        raise ValueError("XY 分区缩放导致开孔合并或分裂，请调整比例。")
-    return result
+    lower_y_scale = 2 - sy if mode == "opposed" else 1
+    bottom, top = cy + (y0 - cy) * lower_y_scale, cy + (y1 - cy) * sy
+
+    def warp(point):
+        x, y = point
+        yy = cy + (y - cy) * (sy if y >= cy else lower_y_scale)
+        if mode == "upper":
+            factor = 1 + (sx - 1) * max(0, (yy - cy) / (top - cy))
+        else:
+            # Interpolate in the stretched Y coordinate so vertical source sides
+            # remain single straight sloping sides, even when half lengths differ.
+            factor = 2 - sx + (2 * sx - 2) * (yy - bottom) / (top - bottom)
+        return (cx + (x - cx) * factor, yy)
+
+    count = 0
+
+    def warp_ring(ring):
+        nonlocal count
+        points = [warp(ring.coords[0])]
+
+        def append_segment(a, b):
+            nonlocal count
+            mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+            pa, pb, pm = warp(a), warp(b), warp(mid)
+            # Within each half the mapped segment is quadratic. Midpoint error
+            # bounds its deviation; subdivision keeps oblique edges within tolerance.
+            error = math.hypot(pm[0] - (pa[0] + pb[0]) / 2, pm[1] - (pa[1] + pb[1]) / 2)
+            if error > TOLERANCE / 4:
+                append_segment(a, mid)
+                append_segment(mid, b)
+            else:
+                count += 1
+                if count > MAX_POINTS:
+                    raise ValueError("XY 渐变轮廓顶点过多，请拆分图层或减小缩放。")
+                points.append(pb)
+
+        coords = list(ring.coords)
+        for a, b in zip(coords, coords[1:]):
+            crosses = (a[1] < cy < b[1]) or (b[1] < cy < a[1])
+            # Rotation can leave a vertex a few ulps from the centre line.
+            # Do not create an almost duplicate intersection beside that vertex.
+            if crosses and min(abs(a[1] - cy), abs(b[1] - cy)) > 1e-12:
+                t = (cy - a[1]) / (b[1] - a[1])
+                centre = (a[0] + t * (b[0] - a[0]), cy)
+                append_segment(a, centre)
+                append_segment(centre, b)
+            else:
+                append_segment(a, b)
+        return points
+
+    parts = [g] if g.geom_type == "Polygon" else list(g.geoms)
+    mapped = [Polygon(warp_ring(p.exterior), [warp_ring(r) for r in p.interiors]) for p in parts]
+    result = valid(mapped[0] if len(mapped) == 1 else MultiPolygon(mapped))
+    # The centre intersection on a straight tapered side is now redundant.
+    # Remove collinear round-off (<= 1e-12 mm) before triangulation, which would
+    # otherwise turn these almost collinear triples into zero-area triangles.
+    return valid(result.simplify(1e-12, preserve_topology=True))

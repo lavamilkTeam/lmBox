@@ -218,3 +218,38 @@ test('three XY modes change selected real geometry and remain independent of thi
   await apply.click();await ready(page)
   expect(await geometryBox(target)).toEqual(before)
 })
+
+test('rounded pads have continuously sloping sides instead of a centre shoulder',async({page})=>{
+  await page.goto('/')
+  const pads='%FSLAX34Y34*%\n%MOMM*%\n%ADD10O,1X3*%\nD10*\n'+
+    Array.from({length:7},(_,i)=>`X${i*18000}Y0D03*`).join('\n')+'\nM02*'
+  await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'rounded-pads.GTP',mimeType:'text/plain',buffer:Buffer.from(pads)})
+  await ready(page)
+  await page.getByRole('button',{name:'全选',exact:true}).click()
+  await page.getByRole('tab',{name:'打印优化',exact:true}).click()
+  await page.getByLabel('XY 缩放方式',{exact:true}).click()
+  await page.getByText('上下半部反向变化',{exact:true}).click()
+  const response=page.waitForResponse(r=>r.url().endsWith('/api/preview') && r.request().method()==='POST')
+  await page.getByRole('button',{name:'优化所选图形'}).click()
+  const result=await (await response).json();await ready(page)
+  const ring=result.mesh.objects[0].rings[0] as number[][]
+  // Intersections with the two long sides, measured in native millimetres.
+  function widthAt(y:number) {
+    const xs:number[]=[]
+    for(let i=1;i<ring.length;i++) {
+      const a=ring[i-1]!,b=ring[i]!
+      if((a[1]!<y && b[1]!>y)||(a[1]!>y && b[1]!<y)) {
+        xs.push(a[0]!+(b[0]!-a[0]!)*(y-a[1]!)/(b[1]!-a[1]!))
+      }
+    }
+    expect(xs).toHaveLength(2)
+    return Math.max(...xs)-Math.min(...xs)
+  }
+  for(const y of [-.6,-.01,.01,.6,1])expect(widthAt(y)).toBeCloseTo(1.04-.4*y/3,6)
+  const first=page.locator('[data-object-id="0:0:3"] path')
+  const centre=(await first.boundingBox())!
+  for(let i=0;i<6;i++)await page.getByRole('button',{name:'放大',exact:true}).click()
+  await expect.poll(async()=> (await first.boundingBox())!.height).toBeGreaterThan(centre.height*1.5)
+  await page.getByLabel('XY 缩放方式',{exact:true}).scrollIntoViewIfNeeded()
+  await page.screenshot({path:test.info().outputPath('continuous-xy-taper.png')})
+})

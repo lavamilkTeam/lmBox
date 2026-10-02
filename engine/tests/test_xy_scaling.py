@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 from jsonschema import ValidationError
 from shapely import affinity
-from shapely.geometry import MultiLineString, Polygon, box
+from shapely.geometry import LineString, MultiLineString, Point, Polygon, box
 from trimesh import Trimesh, load
 from trimesh.intersections import mesh_plane
 
@@ -33,9 +33,9 @@ def build(data):
 def expected(mode):
     return {
         "off": box(-1, -0.5, 1, 0.5),
-        "upper": box(-1, -0.5, 1, 0).union(box(-0.8, 0, 0.8, 0.6)),
+        "upper": Polygon([(-1, -0.5), (1, -0.5), (1, 0), (0.8, 0.6), (-0.8, 0.6), (-1, 0)]),
         "whole": box(-0.8, -0.6, 0.8, 0.6),
-        "opposed": box(-1.2, -0.4, 1.2, 0).union(box(-0.8, 0, 0.8, 0.6)),
+        "opposed": Polygon([(-1.2, -0.4), (1.2, -0.4), (0.8, 0.6), (-0.8, 0.6)]),
     }[mode]
 
 
@@ -47,7 +47,7 @@ def test_xy_modes_change_real_selected_contour_and_mesh(data, mode):
     assert Polygon(mesh.objects[0]["rings"][0]).symmetric_difference(shape).area < 1e-10
     assert Polygon(mesh.objects[1]["rings"][0]).equals(box(5, 3.5, 7, 4.5))
     assert summary["holeCount"] == 2
-    assert Polygon(mesh.contours[1]).equals(shape) or Polygon(mesh.contours[2]).equals(shape)
+    assert min(Polygon(r).symmetric_difference(shape).area for r in mesh.contours[1:]) < 1e-10
     assert summary["volume"] == pytest.approx((18 * 15 - shape.area - 2) * 0.2)
     stl = load(io.BytesIO(serialize(mesh, summary, "stl").encode()), file_type="stl")
     assert stl.is_watertight
@@ -88,7 +88,7 @@ def test_xy_defaults_rotation_translation_mirror_and_whole_layer(data):
     assert Polygon(mesh.objects[0]["rings"][0]).equals(expected("upper"))
     data["edits"][0].update(rotation=90, dx=1, dy=2)
     mesh, _ = build(data)
-    shape = box(0.5, 1, 1.5, 2).union(box(0.6, 2, 1.4, 3.2))
+    shape = Polygon([(0.5, 1), (1.5, 1), (1.5, 2), (1.4, 3.2), (0.6, 3.2), (0.5, 2)])
     assert Polygon(mesh.objects[0]["rings"][0]).symmetric_difference(shape).area < 1e-10
     data["settings"]["mirror"] = True
     mirrored, _ = build(data)
@@ -129,3 +129,39 @@ def test_xy_collision_is_rejected_and_rounded_pad_retains_lower_half(data):
     lower_half = box(-5, -5, 5, 0)
     lower = Polygon(before.objects[0]["rings"][0]).intersection(lower_half)
     assert Polygon(after.objects[0]["rings"][0]).intersection(lower_half).equals(lower)
+
+
+def test_obround_sides_slope_continuously_across_the_centre(data):
+    data["ir"]["apertures"][0]["shape"] = dict(type="obround", width=1, height=3)
+    data["edits"][0]["optimization"]["xyMode"] = "opposed"
+    data["settings"]["design"]["optimization"] = data["edits"][0]["optimization"]
+    data["edits"] = []
+    data["ir"]["objects"] = [
+        {**data["ir"]["objects"][0], "at": dict(x=i * 1.8 + 1.234, y=0)} for i in range(7)
+    ]
+    mesh, summary = build(data)
+    assert summary["holeCount"] == 7
+    # Straight sides interpolate between virtual endpoint widths 1.2 and 0.8
+    # over a total height of 3 mm, with the centre still at Y = 0.
+    for obj in mesh.objects:
+        shape = Polygon(obj["rings"][0])
+        for y in [-0.6, -0.01, 0, 0.01, 0.6, 1]:
+            cut = shape.intersection(LineString([(-20, y), (20, y)]))
+            assert cut.length == pytest.approx(1.04 - 0.4 * y / 3, abs=1e-9)
+        assert shape.bounds[1::2] == pytest.approx((-1.2, 1.8))
+
+
+def test_oblique_edges_are_subdivided_to_preserve_warped_contours(data):
+    data["ir"]["objects"] = data["ir"]["objects"][:1]
+    data["ir"]["apertures"][0]["shape"].update(width=2, height=2)
+    data["edits"][0].update(rotation=45)
+    data["edits"][0]["optimization"].update(xyMode="opposed", xyScaleX=50, xyScaleY=100)
+    mesh, _ = build(data)
+    shape = Polygon(mesh.objects[0]["rings"][0])
+    # A rotated square has diamond sides. The varying X factor bends those
+    # oblique edges; mapping only the original vertices would lose that curve.
+    radius = 2 ** 0.5
+    for y in np.linspace(-radius, radius, 101):
+        half_width = (radius - abs(y)) * (1 - y / (2 * radius))
+        for x in [-half_width, half_width]:
+            assert shape.boundary.distance(Point(x, y)) <= 0.0025

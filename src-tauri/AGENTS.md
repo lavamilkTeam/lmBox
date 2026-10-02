@@ -1,6 +1,6 @@
 # Rust 桌面与业务层
 
-本目录已有单 crate Gerber/ZIP 导入库、浏览器 WASM 薄入口、graphics v2 和 import v1 类型及测试；Tauri 桌面宿主、业务任务、工程存储及外部进程尚未实现。下列完整目录是目标结构，不代表全部已有能力。先读 [根 AGENTS.md](../AGENTS.md) 并应用 `code-boundary-standards`。后端采用**模块化单体，按业务能力组织（Feature-first）**，以单 crate 起步，不提前拆成多 crate 或微服务。
+本目录已有单 crate Gerber/ZIP 导入库、浏览器 WASM 薄入口、graphics v2 和 import v1 类型及测试；已有本地模型预览 CLI 和 Python 单次任务调用；Tauri 桌面宿主、持久任务队列及工程存储尚未实现。下列完整目录是目标结构，不代表全部已有能力。先读 [根 AGENTS.md](../AGENTS.md) 并应用 `code-boundary-standards`。后端采用**模块化单体，按业务能力组织（Feature-first）**，以单 crate 起步，不提前拆成多 crate 或微服务。
 
 ## 所有权与边界
 
@@ -91,3 +91,10 @@ src-tauri/
 - 当前解析器覆盖基本孔径、已求值宏、线/弧、区域、极性、单位归一化和全图重复字段；不能据此宣称完整 Gerber/DXF 支持。
 - `cargo run --example dump_ir` 输出 `tests/fixtures/demo.gbr` 的 IR；前端示例 JSON 必须与该输出一致，由集成测试验证。混合形状样例保留在 `preview-shapes.gbr`。
 - 新增能力时同步记录实际支持范围与验证结果。
+
+## 当前模型预览入口
+
+- `bin/preview.rs → app::build_preview → features/stencil + runtime/python`；应用层协调业务验证和外部进程，feature 不访问文件或启动 Python。
+- CLI 首行读取 preview v1 请求，stdin 关闭即取消。Python 由 Rust 启动并在取消或 60 秒超时后终止、回收。临时任务目录只包含固定名称文件，完成/失败后清理。
+- 大 IR 和网格通过任务目录交换，Python JSONL 只返回身份和产物名称；Rust 核对关联信息后读取受限大小的网格。浏览器适配最多同时运行两个任务。
+- 原生测试需要先运行 `npm run setup:geometry`。本入口面向本地开发预览，并非已完成 Tauri 桌面打包或工程持久化。

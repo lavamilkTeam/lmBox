@@ -4,7 +4,7 @@
 
 ## 当前状态与职责
 
-Python 引擎尚未实现。下面是目标目录与约束，不代表已有可调用的引擎、依赖或检查命令。按实际功能逐步建立模块，不创建空的抽象层。
+已实现 graphics v2 到矩形模板预览网格的计算、网格检查和单次 JSONL 进程入口。实体 CAD/STEP、板框随形模板和切片仍未实现。下方完整目录仍含后续规划，按实际功能逐步建立模块。
 
 Rust 负责导入、解包、Gerber/DXF 格式解析、图层识别和业务操作。Python 接收 Rust 输出的版本化图形中间表示（IR），负责图元求值、轮廓合成、开孔补偿、定位结构、实体网格及几何检查。
 
@@ -83,7 +83,7 @@ runtime/* → contracts
 
 ## 验证与维护
 
-创建 `pyproject.toml` 和实际引擎时，同步建立 `pytest`、`ruff`、`import-linter` 的配置、模块边界规则及可执行检查命令；当前这些工具尚未配置，不能宣称检查已通过。后续以实际配置为准运行检查，并保留根目录要求的 `npm run check`。
+创建 `pyproject.toml` 和实际引擎时，同步建立 `pytest`、`ruff`、`import-linter` 的配置、模块边界规则及可执行检查命令；当前已建立这些检查，后续以实际配置为准运行检查，并保留根目录要求的 `npm run check`。
 
 测试以各包公开入口和进程协议为主。只为复杂私有算法设置必要的局部测试，不为测试扩大公开接口，也不跨包导入私有实现。至少覆盖：
 
@@ -93,3 +93,12 @@ runtime/* → contracts
 - 不兼容协议、损坏输入、非法路径、输出失败及严格的 JSONL 输出。
 
 测试夹具使用仓库内可共享的数据，不能依赖开发者 Downloads 中的绝对路径。比较尺寸、拓扑和容差范围内的几何行为，不用会被浮点或三角形排序变化干扰的无意义快照锁死实现。
+
+## 当前实现与执行
+
+- `features/stencil` 公开 `build_preview`，用 Shapely 合成轮廓，用 trimesh/earcut 挤出网格。支持基本 flash、宏曝光、圆孔径 stroke、圆弧、区域、极性顺序及全图重复；非圆/带孔描画明确拒绝。
+- 外框以开孔图形范围加边距生成矩形；圆弧离散最大弦误差为 0.01 mm。此产物仅为预览网格，不是 STEP 实体，也不表示已验证可打印性。
+- 补偿导致孔消失、合并/分裂、开孔越界，或留下悬空材料孤岛时失败；不静默修复自交及未闭合轮廓。
+- `features/inspection` 只接收 contracts 中的网格数据，校验闭合性、法向、退化面和体积；`runner` 协调生成、检查，再由 `runtime/artifacts` 原子发布任务内固定产物。
+- `contracts` 校验共享 preview/graphics schema；`__main__` 只输出一条 JSONL 响应，失败诊断写 stderr。Rust 分配工作目录并管理进程。
+- 首次安装 `npm run setup:geometry`。运行 `npm run check:geometry`（ruff、import-linter、pytest）；预览跨端测试另运行 Rust 检查和 `npm run check`。

@@ -7,7 +7,7 @@ import { renderIr } from './render'
 import { observeViewportSize } from '../../../platform/desktop'
 const ModelScene = defineAsyncComponent(() => import('./ModelScene.vue'))
 const store = useProjectStore()
-const emit = defineEmits<{ import: []; demo: [] }>()
+const emit = defineEmits<{ import: []; demo: []; cancelModel: [] }>()
 const doc = computed(() => store.active)
 const rendered = computed(() => {
   if (!store.activeIr) return { geometry: undefined, error: '' }
@@ -24,7 +24,7 @@ const geometryBounds = computed(() => {
   return {minX:Math.min(...all.map(g=>g.bounds.minX)),minY:Math.min(...all.map(g=>g.bounds.minY)),maxX:Math.max(...all.map(g=>g.bounds.maxX)),maxY:Math.max(...all.map(g=>g.bounds.maxY))}
 })
 const flipY = computed(() => geometryBounds.value.minY + geometryBounds.value.maxY)
-const canPreview = computed(() => !!doc.value && (doc.value.demo || (doc.value.mode === '2d' && !!store.activeIr)))
+const canPreview = computed(() => !!doc.value && (doc.value.demo || ((doc.value.mode === '2d' || doc.value.mode === '3d') && !!store.activeIr)))
 const zoom = computed({get:()=>doc.value?.view.zoom ?? 1,set:value=>{if(doc.value) doc.value.view.zoom=value}})
 const pan = computed({get:()=>({x:doc.value?.view.panX ?? 0,y:doc.value?.view.panY ?? 0}),set:value=>{if(doc.value) {doc.value.view.panX=value.x;doc.value.view.panY=value.y}}})
 const viewport = ref<HTMLDivElement>()
@@ -79,7 +79,7 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
 <template>
   <div class="preview-layout">
     <nav class="mode-rail" aria-label="预览模式">
-      <button v-for="mode in modes" :key="mode.id" :class="{ selected:doc?.mode===mode.id }" :disabled="!doc || (!doc.demo && mode.id!=='2d')" :aria-label="mode.title" :aria-pressed="doc?.mode===mode.id" :title="mode.title" @click="store.setMode(mode.id)"><component :is="mode.icon" :size="21" :stroke-width="1.7"/><span>{{ mode.label }}</span></button>
+      <button v-for="mode in modes" :key="mode.id" :class="{ selected:doc?.mode===mode.id }" :disabled="!doc || (!doc.demo && (mode.id==='gcode' || (mode.id==='3d' && !store.activeIr)))" :aria-label="mode.title" :aria-pressed="doc?.mode===mode.id" :title="mode.title" @click="store.setMode(mode.id)"><component :is="mode.icon" :size="21" :stroke-width="1.7"/><span>{{ mode.label }}</span></button>
       <div class="rail-divider"/>
       <button :disabled="!doc || doc.mode==='3d'" :class="{ selected:panMode }" aria-label="平移工具" title="平移画布" @click="panMode=!panMode"><Move :size="19"/><span>平移</span></button>
       <button :disabled="!doc" aria-label="适应画布" title="适应画布" @click="fit"><Focus :size="19"/><span>适应</span></button>
@@ -91,7 +91,15 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
         <div v-if="canPreview && doc?.mode!=='3d'" class="ruler ruler-horizontal"><span v-for="tick in xTicks" :key="tick.value" :class="{ major:tick.major }" :style="{ left:`${tick.position}px` }"><b v-if="tick.major">{{ tick.value }}</b></span></div>
         <div v-if="canPreview && doc?.mode!=='3d'" class="ruler ruler-vertical"><span v-for="tick in yTicks" :key="tick.value" :class="{ major:tick.major }" :style="{ top:`${tick.position}px` }"><b v-if="tick.major">{{ tick.value }}</b></span></div>
         <template v-if="doc && canPreview">
-          <ModelScene v-if="doc.mode==='3d'" :doc="doc" :reset-key="resetKey"/>
+          <template v-if="doc.mode==='3d'">
+            <ModelScene v-if="doc.demo || doc.model.status==='ready'" :doc="doc" :reset-key="resetKey"/>
+            <div v-else class="preview-empty" :role="doc.model.status==='error' ? 'alert' : 'status'">
+              <Box :size="32"/><h2>{{ doc.model.status==='error' ? '模型生成失败' : doc.model.status==='cancelled' ? '已取消生成' : '正在生成三维模板' }}</h2>
+              <p>{{ doc.model.error || '正在计算开孔与模板网格…' }}</p>
+              <button v-if="doc.model.status==='building'" class="outline-button" @click="emit('cancelModel')">取消生成</button>
+              <button v-if="doc.model.status==='error' || doc.model.status==='cancelled'" class="outline-button" @click="store.retryModel">重新生成</button>
+            </div>
+          </template>
           <svg v-else class="board-canvas" :class="{ panning:panMode, dragging }" :viewBox="viewBox" @wheel.prevent="changeZoom($event.deltaY<0 ? 0.1 : -0.1)" @pointerdown="pointerDown" @pointermove="pointerMove" @pointerup="dragging=false" @pointercancel="dragging=false">
             <g v-if="doc.params.grid" class="preview-grid" aria-hidden="true" pointer-events="none">
               <line v-for="tick in xTicks" :key="`x-${tick.value}`" :x1="tick.value" :x2="tick.value" :y1="bounds.y" :y2="bounds.y+bounds.height" :stroke="tick.major ? '#343a43' : '#1c222a'" stroke-width="1" vector-effect="non-scaling-stroke"/>
@@ -117,7 +125,7 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
             </g>
           </svg>
           <div v-if="doc.mode==='2d' && rendered.error" class="preview-empty" role="alert"><p>{{ rendered.error }}</p></div><div v-else-if="doc.mode==='2d' && doc.params.outline && outlines.some(o=>o.error)" class="preview-warning" role="alert">{{ outlines.filter(o=>o.error).map(o=>`${o.name}：${o.error}`).join('；') }}</div>
-          <div class="viewport-top-info">{{ doc.mode==='gcode' ? `路径演示 · 第 ${doc.params.layer} 层` : doc.mode==='3d' ? '透视视图' : doc.demo ? '顶视图 · TOP' : store.activeLayer?.name ?? doc.name }}<span class="info-divider"/>{{ doc.mode==='3d' ? `${doc.params.thickness.toFixed(2)} mm 厚度` : '单位：mm' }}</div>
+          <div class="viewport-top-info">{{ doc.mode==='gcode' ? `路径演示 · 第 ${doc.params.layer} 层` : doc.mode==='3d' ? (doc.demo ? '透视视图' : '矩形模板 · 透视视图') : doc.demo ? '顶视图 · TOP' : store.activeLayer?.name ?? doc.name }}<span class="info-divider"/>{{ doc.mode==='3d' ? `${doc.params.thickness.toFixed(2)} mm 厚度` : '单位：mm' }}</div>
           <div class="axis-widget"><span class="axis-y">Y</span><span class="axis-x">X</span><i/></div>
           <div class="canvas-hint">{{ doc.mode==='3d' ? '拖动旋转 · 滚轮缩放 · 右键平移' : '滚轮缩放 · 选择平移工具拖动画布' }}</div>
           <div v-if="doc.mode==='gcode'" class="toolpath-legend"><span><i style="background:#eca967"/>轮廓</span><span><i style="background:#649bb0"/>填充</span><span><i style="background:#bf84f2"/>空走</span></div>

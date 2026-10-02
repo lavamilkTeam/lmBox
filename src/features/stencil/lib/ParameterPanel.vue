@@ -40,11 +40,11 @@ const sides = computed(() => [{ label: '顶层锡膏 · Top Paste', value: 'top'
         <NInputNumber :input-props="{ 'aria-label': '外扩边距' }" :value="doc.params.margin" :min="1" :max="30" :step="1" size="small" @update:value="v => v !== null && store.update('margin', v)"/>
         <label class="field-label">开孔补偿 <span>mm / 单边</span></label>
         <NInputNumber :input-props="{ 'aria-label': '开孔补偿' }" :value="doc.params.compensation" :min="-0.3" :max="0.5" :step="0.01" size="small" @update:value="v => v !== null && store.update('compensation', v)"/>
-        <p class="field-help">正值扩大开孔，负值缩小开孔。</p>
+        <p class="field-help">正值扩大开孔，负值缩小开孔。</p><p v-if="!doc.demo" class="field-help">矩形模板：按当前图层的图形范围加外扩边距生成。</p>
       </section>
       <section class="parameter-section board-info">
         <h3>文件信息<span>03</span></h3>
-        <dl><dt>板框尺寸</dt><dd>{{ doc.width ? `${doc.width} × ${doc.height} mm` : '—' }}</dd><dt>{{ doc.demo ? '开孔数量' : '图形对象' }}</dt><dd>{{ doc.demo ? doc.apertures.length : store.activeIr?.objects.length ?? '—' }}</dd><dt>文件数量</dt><dd>{{ doc.files.length }}</dd></dl>
+        <dl v-if="doc.mode==='3d' && !doc.demo && doc.model.mesh"><dt>模板尺寸</dt><dd>{{ (doc.model.mesh.summary.bounds[1]![0]!-doc.model.mesh.summary.bounds[0]![0]!).toFixed(2) }} × {{ (doc.model.mesh.summary.bounds[1]![1]!-doc.model.mesh.summary.bounds[0]![1]!).toFixed(2) }} mm</dd><dt>开孔数量</dt><dd>{{ doc.model.mesh.summary.holeCount }}</dd><dt>预览容差</dt><dd>{{ doc.model.mesh.summary.tolerance }} mm</dd></dl><dl v-else><dt>板框尺寸</dt><dd>{{ doc.width ? `${doc.width} × ${doc.height} mm` : '—' }}</dd><dt>{{ doc.demo ? '开孔数量' : '图形对象' }}</dt><dd>{{ doc.demo ? doc.apertures.length : store.activeIr?.objects.length ?? '—' }}</dd><dt>文件数量</dt><dd>{{ doc.files.length }}</dd></dl>
       </section>
     </div>
   </template>

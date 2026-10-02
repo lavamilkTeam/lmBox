@@ -1,0 +1,97 @@
+use crate::contracts::PreviewRequest;
+use serde_json::{json, Value};
+use std::{
+    fs,
+    io::Write,
+    path::Path,
+    process::{Command, Stdio},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    thread,
+    time::{Duration, Instant},
+};
+
+/// A task-local process with bounded lifetime and fixed artifact names.
+pub(crate) fn preview(
+    request: &PreviewRequest,
+    root: &Path,
+    cancelled: Arc<AtomicBool>,
+) -> Result<Value, String> {
+    let task = tempfile::tempdir().map_err(|_| "无法创建模型任务目录。")?;
+    fs::write(
+        task.path().join("input.json"),
+        serde_json::to_vec(request).map_err(|e| e.to_string())?,
+    )
+    .map_err(|_| "无法写入模型输入。")?;
+    let python = root.join(if cfg!(windows) {
+        "engine/.venv/Scripts/python.exe"
+    } else {
+        "engine/.venv/bin/python"
+    });
+    let output = fs::File::create(task.path().join("response.jsonl")).map_err(|e| e.to_string())?;
+    let errors = fs::File::create(task.path().join("errors.log")).map_err(|e| e.to_string())?;
+    let mut child = Command::new(python)
+        .arg("-m")
+        .arg("lmbox_geometry")
+        .env("PYTHONPATH", root.join("engine/src"))
+        .current_dir(task.path())
+        .stdin(Stdio::piped())
+        .stdout(output)
+        .stderr(errors)
+        .spawn()
+        .map_err(|_| "无法启动模型计算，请先运行 npm run setup:geometry。")?;
+    let envelope = json!({"protocolVersion":"1", "projectId":request.project_id,"jobId":request.job_id,"inputRevision":request.input_revision});
+    if let Err(error) = writeln!(child.stdin.take().expect("piped stdin"), "{envelope}") {
+        let _ = child.kill();
+        let _ = child.wait();
+        return Err(error.to_string());
+    }
+    let started = Instant::now();
+    loop {
+        if cancelled.load(Ordering::SeqCst) || started.elapsed() > Duration::from_secs(60) {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err("模型计算已取消或超时。".into());
+        }
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                if !status.success() {
+                    return Err("模型计算进程异常退出。".into());
+                }
+                break;
+            }
+            Ok(None) => thread::sleep(Duration::from_millis(20)),
+            Err(error) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(error.to_string());
+            }
+        }
+    }
+    let response: Value = serde_json::from_slice(
+        &fs::read(task.path().join("response.jsonl")).map_err(|e| e.to_string())?,
+    )
+    .map_err(|_| "模型计算响应无效。")?;
+    if let Some(error) = response.get("error").and_then(Value::as_str) {
+        return Err(error.into());
+    }
+    for key in ["protocolVersion", "projectId", "jobId", "inputRevision"] {
+        if response[key] != envelope[key] {
+            return Err("模型结果与请求不匹配。".into());
+        }
+    }
+    if response["artifact"] != "mesh.json" {
+        return Err("模型产物无效。".into());
+    }
+    let artifact = task.path().join("mesh.json");
+    if fs::metadata(&artifact).map_err(|e| e.to_string())?.len() > 32 * 1024 * 1024 {
+        return Err("模型产物超过大小限制。".into());
+    }
+    let mesh: Value = serde_json::from_slice(&fs::read(artifact).map_err(|e| e.to_string())?)
+        .map_err(|e| e.to_string())?;
+    Ok(
+        json!({"protocolVersion":"1","projectId":request.project_id,"jobId":request.job_id,"inputRevision":request.input_revision,"mesh":mesh}),
+    )
+}

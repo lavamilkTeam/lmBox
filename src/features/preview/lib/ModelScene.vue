@@ -11,13 +11,34 @@ let camera: THREE.PerspectiveCamera
 let controls: OrbitControls
 let observer: ResizeObserver
 let scene: THREE.Scene
-let mesh: THREE.Mesh<THREE.ExtrudeGeometry, THREE.MeshStandardMaterial> | undefined
+let mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial> | undefined
 let frame = 0
-function reset() { camera.position.set(105, -125, 125); controls.target.set(0, 0, 0); controls.update() }
+let span=110
+let grid:THREE.GridHelper|undefined
+function reset() {
+  const vertical=THREE.MathUtils.degToRad(camera.fov)
+  const horizontal=2*Math.atan(Math.tan(vertical/2)*camera.aspect)
+  const distance=span/(2*Math.tan(Math.min(vertical,horizontal)/2))*1.3
+  camera.position.copy(new THREE.Vector3(0.6,-0.9,0.85).normalize().multiplyScalar(distance))
+  camera.near=Math.max(0.001,span/100);camera.far=Math.max(100,span*50);camera.updateProjectionMatrix()
+  controls.minDistance=span*0.1;controls.maxDistance=span*20
+  controls.target.set(0,0,0);controls.update()
+}
 function rebuild() {
   if (!scene) return
   if (mesh) { scene.remove(mesh); mesh.geometry.dispose(); mesh.material.dispose() }
   const p = props.doc.params
+  if(!props.doc.demo) {
+    const data=props.doc.model.mesh
+    if(!data)return
+    const indexed=new THREE.BufferGeometry()
+    indexed.setAttribute('position',new THREE.Float32BufferAttribute(data.positions,3));indexed.setIndex(data.indices)
+    const geometry=indexed.toNonIndexed();indexed.dispose();geometry.computeVertexNormals();geometry.computeBoundingBox()
+    const bounds=geometry.boundingBox!,center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3())
+    geometry.translate(-center.x,-center.y,-center.z);span=Math.max(size.x,size.y,size.z)
+    mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:0xbac9d9,metalness:0.35,roughness:0.45}))
+    scene.add(mesh);updateDisplay();reset();return
+  }
   const size = 50 + p.margin
   const shape = new THREE.Shape()
   shape.moveTo(-size, -size); shape.lineTo(size, -size); shape.lineTo(size, size); shape.lineTo(-size, size); shape.closePath()
@@ -33,7 +54,7 @@ function rebuild() {
   }
   const geometry = new THREE.ExtrudeGeometry(shape, { depth: p.thickness, bevelEnabled: false, curveSegments: 16 })
   const material = new THREE.MeshStandardMaterial({ color: 0xbac9d9, metalness: 0.55, roughness: 0.38, side: THREE.DoubleSide })
-  mesh = new THREE.Mesh(geometry, material); scene.add(mesh)
+  mesh = new THREE.Mesh(geometry, material); scene.add(mesh);span=2*size;updateDisplay();reset()
 }
 onMounted(() => {
   try {
@@ -45,13 +66,17 @@ onMounted(() => {
     controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.minDistance = 25; controls.maxDistance = 500
     scene.add(new THREE.HemisphereLight(0xe5efff, 0x394054, 3))
     const light = new THREE.DirectionalLight(0xffffff, 4); light.position.set(-80,-20,150); scene.add(light)
-    const grid = new THREE.GridHelper(400, 40, 0xffffff, 0xffffff); grid.rotation.x = Math.PI/2; grid.position.z = -0.1; scene.add(grid)
+    grid = new THREE.GridHelper(1, 20, 0x343a43, 0x1c222a); grid.rotation.x = Math.PI/2; scene.add(grid)
     reset(); rebuild()
-    observer = new ResizeObserver(() => { const el = host.value; if (!el || !renderer) return; const w=el.clientWidth,h=el.clientHeight; if (!h) return; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix() }); observer.observe(host.value!)
+    observer = new ResizeObserver(() => { const el = host.value; if (!el || !renderer) return; const w=el.clientWidth,h=el.clientHeight; if (!h) return; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); reset() }); observer.observe(host.value!)
     const render = () => { controls.update(); renderer!.render(scene,camera); frame=requestAnimationFrame(render) }; render()
   } catch { error.value = '当前环境无法启动 3D 预览，请在支持 WebGL 的桌面环境中打开。' }
 })
-watch(() => [props.doc.id, props.doc.params.thickness, props.doc.params.margin, props.doc.params.compensation, props.doc.params.mirror], rebuild)
+function updateDisplay() {
+  if(grid){grid.visible=props.doc.params.grid;grid.scale.setScalar(span*3);grid.position.z=-props.doc.params.thickness/2-0.01}
+}
+watch(() => [props.doc.id, props.doc.model.mesh, ...(props.doc.demo ? [props.doc.params.thickness,props.doc.params.margin,props.doc.params.compensation,props.doc.params.mirror] : [])], rebuild)
+watch(() => props.doc.params.grid,updateDisplay)
 watch(() => props.resetKey, () => { if (camera) reset() })
 onBeforeUnmount(() => { cancelAnimationFrame(frame); observer?.disconnect(); controls?.dispose(); scene?.traverse(obj => { if (obj instanceof THREE.Mesh || obj instanceof THREE.LineSegments) { obj.geometry.dispose(); const materials = Array.isArray(obj.material) ? obj.material : [obj.material]; materials.forEach(m => m.dispose()) } }); renderer?.dispose() })
 </script>

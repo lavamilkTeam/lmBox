@@ -59,7 +59,7 @@ features/stencil/
 
 - 组件可捕获用户点击、拖放等 DOM 事件，但文件选择 API、文件读取、写盘、Tauri 命令与任务事件订阅必须封装在 `platform/desktop`。
 - `browser.ts` 负责读取用户选中的文件字节，通过每次导入独占的 Worker 调用 Rust/WASM；ZIP 解包、图层识别和 Gerber 解析均在 Rust。当前只保留会话内的解析快照，没有工程持久化；接入原生工程保存时仍需重新选择源文件。
-- `ModelScene.vue` 中的挤出仅为明确标记的示例。真实链路加载 Python 生成的模型，不在 Three.js 里复制制造几何、开孔补偿或网格生成算法。
+- `ModelScene.vue` 中的挤出仅为明确标记的示例。真实链路加载 Python 生成的预览网格，不在 Three.js 里复制制造几何、开孔补偿或网格生成算法。
 - 前端只渲染二维轮廓和模型；圆弧近似等制造精度由协议和 Python 决定，不随画布缩放改变。
 - 浏览器开发适配与原生适配保持相同公开接口，不能在每个 feature 中散布环境判断。
 - `platform/desktop` 的 `observeViewportSize` 公开入口封装浏览器尺寸观察并返回清理函数；预览 feature 拥有屏幕坐标换算和网格渲染。
@@ -77,7 +77,7 @@ features/stencil/
 
 - 导入协议类型来自 `contracts/index.ts`。每个 `LayerFile` 保存对应 IR 或定位诊断，domain 的 `activeLayer`、`activeIr`、`selectLayer` 管理选择；预览模块不重新解释文件格式。
 - 首次导入优先显示可解析的锡膏层，也允许选择板框、铜层和失败图层查看诊断。板框以独立颜色叠加；显示范围用于画布适应，不冒充真实板框尺寸。
-- 每个文档保存二维 zoom/pan；切换文档恢复视图，切换图层重置以适应新图形。未生成真实模型和路径时禁用对应入口，不展示示例产物。
+- 每个文档保存二维 zoom/pan；切换文档恢复视图，切换图层重置以适应新图形。可解析的真实图层开放三维预览；路径入口仍禁用，不展示示例产物。
 - 导入最多 500 个文件、单文件 30 MB、选择总大小 150 MB；Worker 请求携带关联 ID，单文件解析限时 30 秒，取消/超时/完成均终止本次 Worker 并释放临时内存。
 - WASM 绑定及二进制位于 `platform/desktop/lib/generated/`，由 `npm run build:wasm` 生成并忽略提交。该目录是工具生成代码的局部边界例外，不手改。`scripts/build-wasm.mjs` 仅负责构建。
 - 首次配置运行 `npm run setup:wasm`；`dev`、`build`、`check` 的前置脚本自动构建 WASM。绑定工具版本与 Cargo 依赖固定一致，生成产物随 Vite 打包，可在静态部署中运行，无解析服务器。
@@ -92,3 +92,11 @@ features/stencil/
 ## 验证
 
 在仓库根目录运行 `npm run check`。测试公共行为：多标签隔离、文件导入、视图切换、参数更新、关闭确认、事件取消及错误处理。后续原生接口测试使用 platform 适配替身，不直接 mock feature 私有实现。
+
+## 真实三维预览
+
+- `app/lib/useModelPreview` 协调模型任务；`platform/desktop::generatePreview` 是唯一浏览器请求入口，向同源 `/api/preview` 发送版本化请求。
+- domain 保存任务状态、修订号及 `markRaw` 网格；只有匹配工程、任务、修订号的运行中请求可发布结果。显示设置不使模型失效；图层、厚度、边距、补偿及镜像变化清除旧模型。
+- `ModelScene` 直接加载 Python 输出的顶点和三角索引，设置相机、材质和交互，不生成真实制造几何。固定示例仍保留演示路径。
+- 当前模板外框是图形范围外扩的矩形，并在参数面板说明；不宣称已根据板框生成随形模板。
+- 本地 `dev` 和 `vite preview` 通过 `scripts/preview-api.ts` 的受限适配调用 Rust CLI。静态文件独立部署不包含计算服务，返回明确错误。首次执行 `npm run setup:geometry`；启动前构建原生预览入口。

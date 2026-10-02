@@ -1,0 +1,52 @@
+{
+  "protocolVersion": "1",
+  "projectId": "test-project",
+  "jobId": "test-job",
+  "inputRevision": 1,
+  "settings": {
+    "thickness": 0.2,
+    "margin": 5,
+    "compensation": 0,
+    "mirror": false
+  },
+  "ir": {
+    "schemaVersion": "2",
+    "unit": "mm",
+    "source": {
+      "originalUnit": "MM",
+      "zeroSuppression": "L"
+    },
+    "apertures": [
+      {
+        "code": 10,
+        "shape": {
+          "type": "rectangle",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "objects": [
+      {
+        "kind": "flash",
+        "polarity": "dark",
+        "aperture": 10,
+        "at": {
+          "x": 0,
+          "y": 0
+        },
+        "sourceOffset": 0
+      },
+      {
+        "kind": "flash",
+        "polarity": "dark",
+        "aperture": 10,
+        "at": {
+          "x": 6,
+          "y": 4
+        },
+        "sourceOffset": 1
+      }
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-import type { GraphicsIr, ImportedLayer } from '../../../contracts'
+import type { GraphicsIr, ImportedLayer, PreviewMesh } from '../../../contracts'
 
 export type ViewMode = '2d' | '3d' | 'gcode'
 export type LayerFile = ImportedLayer
@@ -16,5 +16,8 @@ export interface BoardDocument {
   /** Parsed graphics IR from Rust; the 2D preview renders this. */
   ir?: GraphicsIr;
   selectedLayer: string;
+  model: ModelState;
   view: { zoom:number; panX:number; panY:number };
 }
+
+export interface ModelState { revision:number; jobId:string; status:"idle"|"building"|"ready"|"error"|"cancelled"; error:string; mesh?:PreviewMesh }

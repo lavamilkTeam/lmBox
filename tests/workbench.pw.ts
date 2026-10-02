@@ -121,7 +121,7 @@ test('IR masks preserve drawing order, transparency and local macro holes', asyn
   expect(samples[1]).toEqual([154,200,203,255]) // later dark restores material
   expect(samples[2]![3]).toBe(0) // layer clear stays transparent
   expect(samples[3]).toEqual([154,200,203,255]) // macro hole preserves earlier material
-  await expect(page.getByRole('button',{name:'3D 模型',exact:true})).toBeDisabled()
+  await expect(page.getByRole('button',{name:'3D 模型',exact:true})).toBeEnabled()
   await expect(page.locator('.model-scene')).toHaveCount(0)
 })
 
@@ -162,4 +162,41 @@ test('bad layers report a located error while valid layers remain selectable', a
   await page.locator('.layer-picker').click()
   await page.locator('.n-base-select-option__content').filter({hasText:/^TopPaste\.GTP$/}).click()
   await expect(page.locator('.board-canvas')).toBeVisible()
+})
+
+
+test('imported Gerber builds an actual 3D stencil and rebuilds thickness', async ({page}) => {
+  await page.goto('/')
+  await page.getByLabel('选择 Gerber 文件').setInputFiles('src-tauri/tests/fixtures/demo.gbr')
+  await expect(page.locator('.viewport-status')).toContainText('124 个图形对象')
+  await page.getByRole('button',{name:'3D 模型',exact:true}).click()
+  await expect(page.locator('.model-scene canvas')).toBeVisible({timeout:20000})
+  await expect(page.locator('.demo-badge')).toHaveCount(0)
+  await expect(page.locator('.viewport-top-info')).toContainText('矩形模板')
+  await expect(page.locator('.board-info')).toContainText('124')
+  const responsePromise=page.waitForResponse(response=>response.url().endsWith('/api/preview') && response.request().postDataJSON().settings.thickness===.6)
+  const thickness=page.getByLabel('模板厚度',{exact:true})
+  await thickness.fill('0.6');await thickness.press('Tab')
+  const result=await (await responsePromise).json()
+  expect(result.mesh.summary.bounds[1][2]).toBe(.6)
+  expect(result.mesh.summary.holeCount).toBe(124)
+  await expect(page.locator('.model-scene canvas')).toBeVisible()
+  await page.getByRole('tab',{name:'示例板 · 100 × 100'}).click()
+  await page.getByRole('tab',{name:/demo.gbr/}).click()
+  await expect(page.locator('.model-scene canvas')).toBeVisible()
+  await expect(thickness).toHaveValue('0.6')
+  await page.screenshot({path:test.info().outputPath('imported-3d-preview.png')})
+})
+
+test('3D build failure is actionable and can retry without sample geometry',async({page})=>{
+  await page.goto('/')
+  await page.getByLabel('选择 Gerber 文件').setInputFiles('src-tauri/tests/fixtures/demo.gbr')
+  await expect(page.locator('.viewport-status')).toContainText('124 个图形对象')
+  await page.route('**/api/preview',route=>route.fulfill({status:422,contentType:'application/json',body:JSON.stringify({error:'补偿导致开孔消失，请减小补偿。'})}))
+  await page.getByRole('button',{name:'3D 模型',exact:true}).click()
+  await expect(page.getByRole('alert')).toContainText('补偿导致开孔消失')
+  await expect(page.locator('.model-scene')).toHaveCount(0)
+  await page.unroute('**/api/preview')
+  await page.getByRole('button',{name:'重新生成'}).click()
+  await expect(page.locator('.model-scene canvas')).toBeVisible({timeout:20000})
 })

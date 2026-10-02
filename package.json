@@ -12,9 +12,12 @@
     "test:e2e": "playwright test",
     "setup:wasm": "rustup target add wasm32-unknown-unknown && cargo install wasm-bindgen-cli --version 0.2.129 --locked --root .tools/wasm-bindgen",
     "build:wasm": "node scripts/build-wasm.mjs",
-    "predev": "npm run build:wasm",
+    "predev": "npm run build:wasm && npm run build:preview",
     "prebuild": "npm run build:wasm",
-    "precheck": "npm run build:wasm"
+    "precheck": "npm run build:wasm && npm run build:preview",
+    "setup:geometry": "python3 -m venv engine/.venv && engine/.venv/bin/python -m pip install --upgrade pip && engine/.venv/bin/python -m pip install -e \"engine[dev]\"",
+    "build:preview": "cargo build --manifest-path src-tauri/Cargo.toml --bin preview --locked",
+    "check:geometry": "cd engine && .venv/bin/ruff check src tests && .venv/bin/lint-imports && .venv/bin/pytest"
   },
   "dependencies": {
     "@lucide/vue": "^1.49.0",

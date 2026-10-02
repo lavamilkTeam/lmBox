@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lmbox-geometry"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = ["shapely==2.0.7", "trimesh==4.5.3", "mapbox-earcut==1.0.3", "numpy==2.0.2", "jsonschema==4.23.0"]
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.5", "ruff==0.11.13", "import-linter==2.2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.importlinter]
+root_package = "lmbox_geometry"
+
+[[tool.importlinter.contracts]]
+name = "Application owns coordination"
+type = "layers"
+layers = ["lmbox_geometry.runner", "lmbox_geometry.features | lmbox_geometry.runtime", "lmbox_geometry.contracts"]
+
+[[tool.importlinter.contracts]]
+name = "Features stay independent"
+type = "independence"
+modules = ["lmbox_geometry.features.stencil", "lmbox_geometry.features.inspection"]
+
+[[tool.importlinter.contracts]]
+name = "Stencil internals stay private"
+type = "forbidden"
+source_modules = ["lmbox_geometry.runner", "lmbox_geometry.runtime", "lmbox_geometry.features.inspection"]
+forbidden_modules = ["lmbox_geometry.features.stencil._pipeline", "lmbox_geometry.features.stencil._contours"]
+allow_indirect_imports = true

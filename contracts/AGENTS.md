@@ -1,6 +1,6 @@
 # 跨语言协议架构与注意事项
 
-先读 [根规范](../AGENTS.md)，再读实际涉及的 [前端](../src/AGENTS.md)、[Rust](../src-tauri/AGENTS.md)、[Python](../engine/AGENTS.md) 说明。当前已有 `schemas/v2/graphics.schema.json` 、`schemas/v1/import.schema.json` 及 Rust/TypeScript 手工映射；project、job、artifact schema 和自动生成工具尚未实现。
+先读 [根规范](../AGENTS.md)，再读实际涉及的 [前端](../src/AGENTS.md)、[Rust](../src-tauri/AGENTS.md)、[Python](../engine/AGENTS.md) 说明。当前已有 `schemas/v2/graphics.schema.json` 、`schemas/v1/import.schema.json` 、`schemas/v1/preview.schema.json` 及三端映射/校验；完整 project/job 协议及自动生成工具尚未实现。
 
 ## 所有权与结构
 
@@ -49,7 +49,7 @@ v2 为 stroke 增加起点，将 region 轮廓改为包含 `start` 和 `segments
 
 ## 当前验证范围
 
-Rust 集成测试将示例、混合孔径、圆弧、区域和重复夹具的解析 JSON 交给 graphics schema 校验，并比较前端示例 JSON 与 Rust 解析结果。导入成功和失败样例同时按 import schema 与所引用的 graphics schema 校验。前端从 `src/contracts/index.ts` 使用类型；当前没有 Python 绑定或三端统一 fixture 验证，不能宣称已完成三端互通。
+Rust 集成测试将示例、混合孔径、圆弧、区域和重复夹具的解析 JSON 交给 graphics schema 校验，并比较前端示例 JSON 与 Rust 解析结果。导入成功和失败样例同时按 import schema 与所引用的 graphics schema 校验。前端从 `src/contracts/index.ts` 使用类型；预览请求使用 `fixtures/v1/preview.json` 在 Rust、Python 和前端状态测试中共享验证；尚无自动类型生成。
 
 ## 兼容性和验证
 
@@ -58,3 +58,10 @@ Rust 集成测试将示例、混合孔径、圆弧、区域和重复夹具的解
 - 同一 fixture 在三端接受/拒绝结果一致；几何语义还需行为测试，schema 校验不能代替几何正确性。
 - 缓存键包含源文件摘要、图层选择、建模参数、解析器版本、算法版本和精度设置；切片另包含模型摘要、打印配置及切片器版本。显示参数不进入制造几何缓存键。
 - 变更协议时一并更新受影响端和样例，并执行它们的检查；工具链尚未建立时明确记录，不能声称生成或互通已经通过。
+
+## preview v1
+
+- `preview.schema.json` 定义模型请求：版本、工程/任务 ID、输入修订、graphics v2 IR，以及毫米制厚度、边距、补偿和显式镜像。相同身份必须贯穿进程结果与浏览器结果。
+- Rust 将请求写入任务目录的 `input.json`，通过 JSONL 传身份；Python 只返回匹配身份和固定 `mesh.json` 产物名称。错误通过 `error` 消息返回，不返回半成品。
+- 网格产物包含扁平 XYZ 顶点、三角索引、二维环，以及毫米 bounds、体积、孔数、面数和容差。预览参数变化后旧修订产物失效，显示参数不改变输入修订。
+- 当前为单次本地预览协议；不包含 STEP、工程存储、切片或可打印性保证。

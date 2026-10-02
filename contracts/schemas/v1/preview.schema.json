@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lmbox.local/contracts/schemas/v1/preview.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocolVersion",
+    "projectId",
+    "jobId",
+    "inputRevision",
+    "ir",
+    "settings"
+  ],
+  "properties": {
+    "protocolVersion": {
+      "const": "1"
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "jobId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "inputRevision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "ir": {
+      "$ref": "https://lmbox.local/contracts/schemas/v2/graphics.schema.json"
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "thickness",
+        "margin",
+        "compensation",
+        "mirror"
+      ],
+      "properties": {
+        "thickness": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 3
+        },
+        "margin": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "compensation": {
+          "type": "number",
+          "minimum": -0.3,
+          "maximum": 0.5
+        },
+        "mirror": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

@@ -9,7 +9,7 @@ import { ParameterPanel } from '../features/stencil'
 import { SlicingPanel } from '../features/slicing'
 import { LogPanel } from '../features/logs'
 import { useProjectStore } from '../domain/project'
-import { inspectFiles, saveParameters } from '../platform/desktop'
+import { inspectFiles, saveParameters, loadDemoGraphics } from '../platform/desktop'
 const store = useProjectStore()
 const importer = ref<InstanceType<typeof ImportButton>>()
 const busy = ref(false)
@@ -32,19 +32,19 @@ function requestClose(id: string) { const doc=store.documents.find(d=>d.id===id)
 function drop(event: DragEvent) { dropDepth.value=0; if (event.dataTransfer?.files.length) void importFiles(Array.from(event.dataTransfer.files)) }
 function keydown(event: KeyboardEvent) { if ((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='o') { event.preventDefault(); importer.value?.open() }; if ((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='s') { event.preventDefault(); exportParams() }; if(event.key==='Escape') closeId.value='' }
 function beforeUnload(event: BeforeUnloadEvent) { if(store.documents.some(d=>d.dirty)) { event.preventDefault(); event.returnValue='' } }
-onMounted(()=>{ store.openDemo(); window.addEventListener('keydown',keydown); window.addEventListener('beforeunload',beforeUnload) })
+onMounted(()=>{ store.openDemo(loadDemoGraphics()); window.addEventListener('keydown',keydown); window.addEventListener('beforeunload',beforeUnload) })
 onBeforeUnmount(()=>{ clearTimeout(toastTimeout); window.removeEventListener('keydown',keydown); window.removeEventListener('beforeunload',beforeUnload) })
 </script>
 <template>
   <NConfigProvider :theme-overrides="overrides"><NDialogProvider><NMessageProvider>
     <main class="studio" @dragenter.prevent="dropDepth++" @dragleave.prevent="dropDepth=Math.max(0,dropDepth-1)" @dragover.prevent @drop.prevent="drop">
       <header class="app-header">
-        <a class="brand" href="#" @click.prevent="store.openDemo()"><strong>lm</strong>Box</a>
+        <a class="brand" href="#" @click.prevent="store.openDemo(loadDemoGraphics())"><strong>lm</strong>Box</a>
         <span class="header-divider"/><ImportButton ref="importer" :busy="busy" @files="importFiles"/>
         <div class="header-right"><button class="export-button" :disabled="!store.active" title="导出当前参数配置（⌘ / Ctrl + S）" @click="exportParams"><Download :size="15"/>导出参数<ChevronDown :size="13"/></button></div>
       </header>
       <DocumentTabs @import="importer?.open()" @close="requestClose"/>
-      <div class="work-area"><PreviewWorkspace @import="importer?.open()"/><aside class="inspector" aria-label="参数面板"><SlicingPanel v-if="store.active?.mode==='gcode'"/><ParameterPanel v-else-if="store.active"/><div v-else class="inspector-empty"><Layers :size="24"/></div></aside></div>
+      <div class="work-area"><PreviewWorkspace @import="importer?.open()" @demo="store.openDemo(loadDemoGraphics())"/><aside class="inspector" aria-label="参数面板"><SlicingPanel v-if="store.active?.mode==='gcode'"/><ParameterPanel v-else-if="store.active"/><div v-else class="inspector-empty"><Layers :size="24"/></div></aside></div>
       <LogPanel/>
       <div v-if="dropDepth>0" class="drop-overlay"><Upload :size="38"/><h2>松开以导入文件</h2><p>支持 Gerber ZIP、独立图层、DXF</p></div>
       <Transition name="toast"><div v-if="toast" class="toast-message" role="status"><Check :size="16"/>{{ toast }}<button aria-label="关闭提示" @click="toast=''"><X :size="14"/></button></div></Transition>

@@ -65,3 +65,59 @@ test('empty workspace, invalid file, and compact window are usable', async ({ pa
   await expect(page.getByRole('tab')).toHaveCount(0)
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true)
 })
+
+test('sample IR is rendered after reopening from either empty state', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.ir-layer > defs > mask')).toHaveCount(125)
+  await page.getByRole('button',{name:'关闭 示例板 · 100 × 100',exact:true}).click()
+  await page.getByRole('button',{name:'打开示例',exact:true}).click()
+  await expect(page.locator('.ir-layer > defs > mask')).toHaveCount(125)
+  await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'board.gtp',mimeType:'text/plain',buffer:Buffer.from('G04 fixture*')})
+  await expect(page.locator('.ir-layer')).toHaveCount(0)
+  await page.getByRole('button',{name:'关闭 示例板 · 100 × 100',exact:true}).click()
+  await page.getByRole('button',{name:'打开示例',exact:true}).click()
+  await expect(page.locator('.ir-layer > defs > mask')).toHaveCount(125)
+  await page.screenshot({path:test.info().outputPath('ir-preview.png')})
+})
+
+test('IR masks preserve drawing order, transparency and local macro holes', async ({ page }) => {
+  await page.goto('/')
+  // Exercise the public store seam with an already parsed layer. This does
+  // not pretend the browser adapter parses source Gerber files.
+  await page.evaluate(async () => {
+    const moduleUrl='/src/domain/project/index.ts'
+    const {useProjectStore}=await import(moduleUrl)
+    const store=useProjectStore()
+    const flash=(aperture:number,polarity='dark',x=0)=>({kind:'flash',aperture,polarity,at:{x,y:0},sourceOffset:0})
+    store.add('Parsed layer',[],false,{
+      schemaVersion:'2',unit:'mm',source:{originalUnit:'MM',zeroSuppression:'L'},
+      apertures:[
+        {code:10,shape:{type:'circle',diameter:20}},
+        {code:11,shape:{type:'circle',diameter:12}},
+        {code:12,shape:{type:'macro',name:'window',primitives:[
+          {exposure:'on',shape:{type:'centerLine',width:8,height:8,center:{x:0,y:0}}},
+          {exposure:'off',shape:{type:'circle',diameter:4,center:{x:0,y:0}}},
+        ]}},
+      ],objects:[flash(10),flash(11,'clear'),flash(12),flash(12,'dark',8)],
+    })
+  })
+  await expect(page.locator('.ir-layer')).toBeVisible()
+  const samples=await page.locator('.ir-layer').evaluate(async layer => {
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg')
+    svg.setAttribute('width','240');svg.setAttribute('height','240');svg.setAttribute('viewBox','-12 -12 24 24')
+    svg.appendChild(layer.cloneNode(true))
+    const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}))
+    try {
+      const image=new Image();image.src=url;await image.decode()
+      const canvas=document.createElement('canvas');canvas.width=240;canvas.height=240
+      const context=canvas.getContext('2d')!;context.drawImage(image,0,0)
+      return [0,3,-5,8].map(x=>Array.from(context.getImageData((x+12)*10,120,1,1).data))
+    } finally {URL.revokeObjectURL(url)}
+  })
+  expect(samples[0]![3]).toBe(0) // local hole over the cleared layer
+  expect(samples[1]).toEqual([154,200,203,255]) // later dark restores material
+  expect(samples[2]![3]).toBe(0) // layer clear stays transparent
+  expect(samples[3]).toEqual([154,200,203,255]) // macro hole preserves earlier material
+  await page.getByRole('button',{name:'3D 模型',exact:true}).click()
+  await expect(page.locator('.model-scene')).toHaveCount(0)
+})

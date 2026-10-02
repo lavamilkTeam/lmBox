@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lmbox.local/contracts/schemas/v2/graphics.schema.json",
+  "title": "Graphics IR",
+  "description": "Rust board_import output: a versioned, unit-normalized (mm) intermediate representation of one parsed Gerber layer. Values are evaluated but geometry (contouring, booleans, offset, mesh) is left to the Python engine.",
+  "type": "object",
+  "required": ["schemaVersion", "unit", "apertures", "objects", "source"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "2" },
+    "unit": { "type": "string", "const": "mm" },
+    "apertures": { "type": "array", "items": { "$ref": "#/$defs/aperture" } },
+    "objects": { "type": "array", "items": { "$ref": "#/$defs/graphicObject" } },
+    "stepAndRepeat": { "$ref": "#/$defs/stepRepeat" },
+    "source": { "$ref": "#/$defs/sourceInfo" }
+  },
+  "$defs": {
+    "point": {
+      "type": "object",
+      "required": ["x", "y"],
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "sourceInfo": {
+      "type": "object",
+      "required": ["originalUnit", "zeroSuppression"],
+      "additionalProperties": false,
+      "properties": {
+        "originalUnit": { "type": "string", "enum": ["MM", "IN"] },
+        "coordinateFormat": { "type": ["string", "null"] },
+        "zeroSuppression": { "type": "string", "enum": ["L", "T", "D"] }
+      }
+    },
+    "aperture": {
+      "type": "object",
+      "required": ["code", "shape"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "integer", "minimum": 10 },
+        "shape": { "$ref": "#/$defs/apertureShape" }
+      }
+    },
+    "apertureShape": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "diameter"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "circle" },
+            "diameter": { "type": "number" },
+            "holeDiameter": { "type": ["number", "null"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "width", "height"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "rectangle" },
+            "width": { "type": "number" },
+            "height": { "type": "number" },
+            "holeDiameter": { "type": ["number", "null"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "width", "height"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "obround" },
+            "width": { "type": "number" },
+            "height": { "type": "number" },
+            "holeDiameter": { "type": ["number", "null"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "diameter", "vertices", "rotationDeg"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "polygon" },
+            "diameter": { "type": "number" },
+            "vertices": { "type": "integer", "minimum": 3 },
+            "rotationDeg": { "type": "number" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "name", "primitives"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "macro" },
+            "name": { "type": "string" },
+            "primitives": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/macroPrimitive" }
+            }
+          }
+        }
+      ]
+    },
+    "macroPrimitive": {
+      "type": "object",
+      "required": ["exposure", "shape"],
+      "additionalProperties": false,
+      "properties": {
+        "exposure": { "type": "string", "enum": ["on", "off"] },
+        "shape": { "$ref": "#/$defs/macroShape" }
+      }
+    },
+    "macroShape": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "diameter", "center"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "circle" },
+            "diameter": { "type": "number" },
+            "center": { "$ref": "#/$defs/point" },
+            "rotationDeg": { "type": ["number", "null"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "width", "start", "end"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "vectorLine" },
+            "width": { "type": "number" },
+            "start": { "$ref": "#/$defs/point" },
+            "end": { "$ref": "#/$defs/point" },
+            "rotationDeg": { "type": ["number", "null"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "width", "height", "center"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "centerLine" },
+            "width": { "type": "number" },
+            "height": { "type": "number" },
+            "center": { "$ref": "#/$defs/point" },
+            "rotationDeg": { "type": ["number", "null"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "width", "height", "lowerLeft"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "lowerLeftLine" },
+            "width": { "type": "number" },
+            "height": { "type": "number" },
+            "lowerLeft": { "$ref": "#/$defs/point" },
+            "rotationDeg": { "type": ["number", "null"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "vertices"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "outline" },
+            "vertices": { "type": "array", "items": { "$ref": "#/$defs/point" } },
+            "rotationDeg": { "type": ["number", "null"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "vertices", "center", "diameter"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "polygon" },
+            "vertices": { "type": "integer", "minimum": 3 },
+            "center": { "$ref": "#/$defs/point" },
+            "diameter": { "type": "number" },
+            "rotationDeg": { "type": ["number", "null"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "center", "outerDiameter", "innerDiameter", "gap"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "thermal" },
+            "center": { "$ref": "#/$defs/point" },
+            "outerDiameter": { "type": "number" },
+            "innerDiameter": { "type": "number" },
+            "gap": { "type": "number" },
+            "rotationDeg": { "type": ["number", "null"] }
+          }
+        }
+      ]
+    },
+    "graphicObject": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "polarity", "aperture", "at", "sourceOffset"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "flash" },
+            "polarity": { "$ref": "#/$defs/polarity" },
+            "aperture": { "type": "integer", "minimum": 10 },
+            "at": { "$ref": "#/$defs/point" },
+            "sourceOffset": { "type": "integer", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "polarity", "aperture", "start", "segments", "sourceOffset"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "stroke" },
+            "polarity": { "$ref": "#/$defs/polarity" },
+            "aperture": { "type": "integer", "minimum": 10 },
+            "start": { "$ref": "#/$defs/point" },
+            "segments": { "type": "array", "items": { "$ref": "#/$defs/segment" } },
+            "sourceOffset": { "type": "integer", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "polarity", "contours", "sourceOffset"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "region" },
+            "polarity": { "$ref": "#/$defs/polarity" },
+            "contours": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/contour" }
+            },
+            "sourceOffset": { "type": "integer", "minimum": 0 }
+          }
+        }
+      ]
+    },
+    "segment": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "to"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "line" },
+            "to": { "$ref": "#/$defs/point" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "to", "center", "direction", "fullCircle"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "arc" },
+            "to": { "$ref": "#/$defs/point" },
+            "center": { "$ref": "#/$defs/point" },
+            "direction": { "$ref": "#/$defs/arcDirection" },
+            "fullCircle": { "type": "boolean" }
+          }
+        }
+      ]
+    },
+    "contour": {
+      "type": "object",
+      "required": ["start", "segments"],
+      "additionalProperties": false,
+      "properties": {
+        "start": { "$ref": "#/$defs/point" },
+        "segments": { "type": "array", "items": { "$ref": "#/$defs/segment" } }
+      }
+    },
+    "polarity": { "type": "string", "enum": ["dark", "clear"] },
+    "arcDirection": { "type": "string", "enum": ["clockwise", "counterclockwise"] },
+    "stepRepeat": {
+      "type": "object",
+      "required": ["xCount", "yCount", "xStep", "yStep"],
+      "additionalProperties": false,
+      "properties": {
+        "xCount": { "type": "integer", "minimum": 1 },
+        "yCount": { "type": "integer", "minimum": 1 },
+        "xStep": { "type": "number" },
+        "yStep": { "type": "number" }
+      }
+    }
+  }
+}

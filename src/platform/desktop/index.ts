@@ -1,2 +1,2 @@
-export { inspectFiles, saveParameters } from './lib/browser'
+export { inspectFiles, saveParameters, loadDemoGraphics } from './lib/browser'
 export { observeViewportSize } from './lib/viewport'

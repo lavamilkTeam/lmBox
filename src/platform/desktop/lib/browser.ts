@@ -1,5 +1,7 @@
 import { unzipSync } from 'fflate'
 import type { BoardDocument, LayerFile } from '../../../domain/project'
+import type { GraphicsIr } from '../../../contracts'
+import demoGraphics from './demo-ir.json'
 
 function role(name: string): LayerFile['role'] {
   if (/\.gtp$|top.?paste|f[._-]paste/i.test(name)) return 'top-paste'
@@ -38,4 +40,12 @@ export function saveParameters(doc: BoardDocument) {
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
   const a = document.createElement('a'); a.href = url; a.download = `${doc.name.replace(/\.zip$/i, '')}.parameters.json`; a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+// Loads the sample graphics IR produced by the Rust parser for demo.gbr. This
+// exercises the 2D renderer against real parser output. When the Rust/WASM or
+// Tauri bridge lands, `parseGerber(source)` replaces this demo data source
+// while keeping the same `GraphicsIr` contract.
+export function loadDemoGraphics(): GraphicsIr {
+  return demoGraphics as GraphicsIr
 }

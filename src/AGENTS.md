@@ -22,11 +22,11 @@ src/
 │   └── logs/                     # 日志显示、过滤、折叠
 ├── domain/project/               # 工程快照、参数与前端状态
 ├── platform/desktop/             # 桌面调用及浏览器开发适配
-├── contracts/                    # 接入时增加：协议类型的公开入口
+├── contracts/                    # graphics v2 协议类型的公开入口
 └── ui/                           # 按需增加通用、无业务语义的组件
 ```
 
-`contracts/`、`app/lib/` 等按实际需要建立。各 feature 的基本形态如下，不强制创建没有用途的文件：
+`app/lib/` 等按实际需要建立。各 feature 的基本形态如下，不强制创建没有用途的文件：
 
 ```text
 features/stencil/
@@ -63,6 +63,15 @@ features/stencil/
 - 前端只渲染二维轮廓和模型；圆弧近似等制造精度由协议和 Python 决定，不随画布缩放改变。
 - 浏览器开发适配与原生适配保持相同公开接口，不能在每个 feature 中散布环境判断。
 - `platform/desktop` 的 `observeViewportSize` 公开入口封装浏览器尺寸观察并返回清理函数；预览 feature 拥有屏幕坐标换算和网格渲染。
+
+## IR 预览接入
+
+- `app` 从 `platform/desktop` 加载示例 IR，传给 domain；预览组件通过 `demo` 事件请求应用层打开示例，不自行加载或跨 feature 调用。
+- `contracts/index.ts` 是前端协议的公开入口；协议层不得依赖业务模块。当前类型手工映射 graphics v2，Rust 测试校验示例 JSON 与解析输出一致；尚无三端自动类型生成。
+- `preview/lib/render.ts` 只生成 SVG 显示指令；`IrLayer.vue` 用独立孔径遮罩与图层遮罩保留宏内曝光和图层绘制顺序。支持 flash、region、无孔圆孔径 stroke、全图重复及宏旋转；非圆或带孔孔径 stroke 明确报错，不能用近似线宽替代。
+- 预览边界是包含孔径和完整圆弧的保守范围，用于适应画布，不是制造尺寸。图形含热焊盘不支持的间隙尺寸或超限重复时明确失败。
+- 示例二维与三维共享 `demo.gbr` 解析数据；domain 只将固定示例的 dark 圆形/矩形 flash 映射为演示孔，不能扩展成生产几何算法。真实 IR 不使用示例三维或路径代替计算结果。
+- SVG 私有计算的窄回归测试位于 `preview/lib/render.test.ts`，作为复杂内部算法测试的局部例外，不扩大 feature 公开接口。界面和遮罩合成通过浏览器行为验证。
 
 ## 界面约束
 

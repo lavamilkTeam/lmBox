@@ -1,6 +1,6 @@
 # Rust 桌面与业务层
 
-本目录规划为 Tauri 桌面宿主与 Rust 业务实现。当前尚无 Rust 实现或 `Cargo.toml`；下列目录是规划，不代表已有能力。先读 [根 AGENTS.md](../AGENTS.md) 并应用 `code-boundary-standards`。后端采用**模块化单体，按业务能力组织（Feature-first）**，以单 crate 起步，不提前拆成多 crate 或微服务。
+本目录已有单 crate Gerber 解析库、graphics v2 Rust 类型和测试；Tauri 桌面宿主、业务任务、工程存储及外部进程尚未实现。下列完整目录是目标结构，不代表全部已有能力。先读 [根 AGENTS.md](../AGENTS.md) 并应用 `code-boundary-standards`。后端采用**模块化单体，按业务能力组织（Feature-first）**，以单 crate 起步，不提前拆成多 crate 或微服务。
 
 ## 所有权与边界
 
@@ -80,4 +80,6 @@ src-tauri/
 - 解析夹具覆盖单位、坐标模式、圆弧、区域、宏、极性和重复；错误夹具验证不静默丢图。几何数值正确性属于 Python 测试，Rust 验证协议及结果接入。
 - 验证导入资源限制、保存恢复、worker 异常、取消超时、乱序任务结果、多工程隔离及缓存失效。用真实支持范围内的样例贯通导入、解析与 Python 调用。
 - 存在 `Cargo.toml` 后，在 `src-tauri/` 下按实际工程配置运行 `cargo fmt --check`、`cargo clippy --all-targets -- -D warnings`、`cargo test`；另按根规范在仓库根目录运行 `npm run check`，涉及协议时运行对应协议检查。
-- 目前没有 Rust 工程，不能宣称这些 Rust 检查已执行或通过。新增能力时同步记录实际支持范围与验证结果。
+- 当前解析器覆盖基本孔径、已求值宏、线/弧、区域、极性、单位归一化和全图重复字段；不能据此宣称完整 Gerber/DXF 支持。
+- `cargo run --example dump_ir` 输出 `tests/fixtures/demo.gbr` 的 IR；前端示例 JSON 必须与该输出一致，由集成测试验证。混合形状样例保留在 `preview-shapes.gbr`。
+- 新增能力时同步记录实际支持范围与验证结果。

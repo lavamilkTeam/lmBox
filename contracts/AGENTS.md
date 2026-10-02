@@ -1,6 +1,6 @@
 # 跨语言协议架构与注意事项
 
-先读 [根规范](../AGENTS.md)，再读实际涉及的 [前端](../src/AGENTS.md)、[Rust](../src-tauri/AGENTS.md)、[Python](../engine/AGENTS.md) 说明。当前目录只有规范，以下 schema 和生成工具尚未实现。
+先读 [根规范](../AGENTS.md)，再读实际涉及的 [前端](../src/AGENTS.md)、[Rust](../src-tauri/AGENTS.md)、[Python](../engine/AGENTS.md) 说明。当前已有 `schemas/v2/graphics.schema.json` 及 Rust/TypeScript 手工映射；project、job、artifact schema 和自动生成工具尚未实现。
 
 ## 所有权与结构
 
@@ -9,7 +9,7 @@
 ```text
 contracts/
 ├── AGENTS.md
-├── schemas/v1/
+├── schemas/v2/
 │   ├── project.schema.json       # 工程快照、参数、版本
 │   ├── graphics.schema.json      # Rust 解析后的统一图形 IR
 │   ├── job.schema.json           # 请求、进度、完成、错误、取消
@@ -38,6 +38,14 @@ contracts/
 - JSONL 标准输出仅传小型协议消息。大型 IR、二维轮廓、网格、STL、G-code 通过 Rust 分配的任务目录交换；结果以产物清单、校验摘要、格式版本引用。
 - Python 仅访问本任务明确授权的输入/输出文件。前端使用 Rust 生成的产物标识，不自行拼接任意本地路径。
 - 二维轮廓和三维模型来自同一个计算输入版本，记录算法版本、单位、容差及尺寸。切片结果记录所用模型摘要、切片配置和切片器版本。
+
+## graphics v2
+
+v2 为 stroke 增加起点，将 region 轮廓改为包含 `start` 和 `segments` 的对象，避免预览猜测起始坐标。该变更不兼容 v1，因此保留原 v1 schema，解析器输出与前端预览切换到 v2。缺少起点的 v1 数据不能无损推断，预览明确拒绝，不静默迁移。
+
+## 当前验证范围
+
+Rust 集成测试将示例、混合孔径、圆弧、区域和重复夹具的解析 JSON 交给 graphics schema 校验，并比较前端示例 JSON 与 Rust 解析结果。前端从 `src/contracts/index.ts` 使用类型；当前没有 Python 绑定或三端统一 fixture 验证，不能宣称已完成三端互通。
 
 ## 兼容性和验证
 

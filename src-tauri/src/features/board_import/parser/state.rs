@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use crate::contracts::{
-    Aperture, ArcDirection, GraphicObject, GraphicsIr, OriginalUnit, Point, Polarity, Segment,
-    SourceInfo, StepRepeat, Unit, ZeroSuppression, GRAPHICS_IR_VERSION,
+    Aperture, ArcDirection, Contour, GraphicObject, GraphicsIr, OriginalUnit, Point, Polarity,
+    Segment, SourceInfo, StepRepeat, Unit, ZeroSuppression, GRAPHICS_IR_VERSION,
 };
 
 use super::aperture::{parse_aperture_definition, parse_macro, MacroTemplate};
@@ -48,10 +48,11 @@ pub struct State {
     pending_flash: bool,
     region_mode: bool,
     region_offset: usize,
-    region_contours: Vec<Vec<Segment>>,
+    region_contours: Vec<Contour>,
 
     // pending stroke
     stroke_aperture: Option<u32>,
+    stroke_start: Point,
     stroke_offset: usize,
     stroke_segments: Vec<Segment>,
 
@@ -97,6 +98,7 @@ impl State {
             region_offset: 0,
             region_contours: Vec::new(),
             stroke_aperture: None,
+            stroke_start: Point::new(0.0, 0.0),
             stroke_offset: 0,
             stroke_segments: Vec::new(),
             objects: Vec::new(),
@@ -272,7 +274,10 @@ impl State {
                 self.flush_stroke();
                 self.region_mode = true;
                 self.region_offset = offset;
-                self.region_contours = vec![Vec::new()];
+                self.region_contours = vec![Contour {
+                    start: self.pos,
+                    segments: Vec::new(),
+                }];
             }
             37 => {
                 if !self.region_mode {
@@ -303,6 +308,7 @@ impl State {
                     self.region_contours
                         .last_mut()
                         .expect("region has a contour")
+                        .segments
                         .push(segment);
                 } else {
                     let aperture = self.aperture.ok_or_else(|| {
@@ -310,6 +316,7 @@ impl State {
                     })?;
                     if self.stroke_segments.is_empty() {
                         self.stroke_aperture = Some(aperture);
+                        self.stroke_start = self.pos;
                         self.stroke_offset = offset;
                     }
                     self.stroke_segments.push(segment);
@@ -322,10 +329,15 @@ impl State {
                     if self
                         .region_contours
                         .last()
-                        .map(|c| !c.is_empty())
+                        .map(|c| !c.segments.is_empty())
                         .unwrap_or(false)
                     {
-                        self.region_contours.push(Vec::new());
+                        self.region_contours.push(Contour {
+                            start: Point::new(x, y),
+                            segments: Vec::new(),
+                        });
+                    } else if let Some(contour) = self.region_contours.last_mut() {
+                        contour.start = Point::new(x, y);
                     }
                 } else {
                     self.flush_stroke();
@@ -412,6 +424,7 @@ impl State {
         self.objects.push(GraphicObject::Stroke {
             polarity: self.polarity,
             aperture,
+            start: self.stroke_start,
             segments,
             source_offset: self.stroke_offset,
         });
@@ -420,7 +433,10 @@ impl State {
 
     fn emit_region(&mut self) {
         let contours = std::mem::take(&mut self.region_contours);
-        let contours: Vec<Vec<Segment>> = contours.into_iter().filter(|c| !c.is_empty()).collect();
+        let contours: Vec<Contour> = contours
+            .into_iter()
+            .filter(|c| !c.segments.is_empty())
+            .collect();
         if !contours.is_empty() {
             self.objects.push(GraphicObject::Region {
                 polarity: self.polarity,

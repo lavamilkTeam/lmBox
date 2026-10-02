@@ -1,0 +1,1292 @@
+{
+  "schemaVersion": "2",
+  "unit": "mm",
+  "apertures": [
+    {
+      "code": 10,
+      "shape": {
+        "type": "rectangle",
+        "width": 1.3,
+        "height": 4.0
+      }
+    },
+    {
+      "code": 11,
+      "shape": {
+        "type": "rectangle",
+        "width": 4.0,
+        "height": 1.3
+      }
+    },
+    {
+      "code": 12,
+      "shape": {
+        "type": "rectangle",
+        "width": 1.4,
+        "height": 2.2
+      }
+    },
+    {
+      "code": 13,
+      "shape": {
+        "type": "rectangle",
+        "width": 3.0,
+        "height": 4.0
+      }
+    },
+    {
+      "code": 14,
+      "shape": {
+        "type": "circle",
+        "diameter": 2.4
+      }
+    }
+  ],
+  "objects": [
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 31.65,
+        "y": 28.0
+      },
+      "sourceOffset": 142
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 31.65,
+        "y": 72.0
+      },
+      "sourceOffset": 166
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 27.0,
+        "y": 32.65
+      },
+      "sourceOffset": 190
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 72.0,
+        "y": 32.65
+      },
+      "sourceOffset": 214
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 35.05,
+        "y": 28.0
+      },
+      "sourceOffset": 238
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 35.05,
+        "y": 72.0
+      },
+      "sourceOffset": 262
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 27.0,
+        "y": 35.75
+      },
+      "sourceOffset": 286
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 72.0,
+        "y": 35.75
+      },
+      "sourceOffset": 310
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 38.45,
+        "y": 28.0
+      },
+      "sourceOffset": 334
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 38.45,
+        "y": 72.0
+      },
+      "sourceOffset": 358
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 27.0,
+        "y": 38.85
+      },
+      "sourceOffset": 382
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 72.0,
+        "y": 38.85
+      },
+      "sourceOffset": 406
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 41.85,
+        "y": 28.0
+      },
+      "sourceOffset": 430
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 41.85,
+        "y": 72.0
+      },
+      "sourceOffset": 454
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 27.0,
+        "y": 41.95
+      },
+      "sourceOffset": 478
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 72.0,
+        "y": 41.95
+      },
+      "sourceOffset": 502
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 45.25,
+        "y": 28.0
+      },
+      "sourceOffset": 526
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 45.25,
+        "y": 72.0
+      },
+      "sourceOffset": 550
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 27.0,
+        "y": 45.05
+      },
+      "sourceOffset": 574
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 72.0,
+        "y": 45.05
+      },
+      "sourceOffset": 598
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 48.65,
+        "y": 28.0
+      },
+      "sourceOffset": 622
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 48.65,
+        "y": 72.0
+      },
+      "sourceOffset": 646
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 27.0,
+        "y": 48.15
+      },
+      "sourceOffset": 670
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 72.0,
+        "y": 48.15
+      },
+      "sourceOffset": 694
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 52.05,
+        "y": 28.0
+      },
+      "sourceOffset": 718
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 52.05,
+        "y": 72.0
+      },
+      "sourceOffset": 742
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 27.0,
+        "y": 51.25
+      },
+      "sourceOffset": 766
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 72.0,
+        "y": 51.25
+      },
+      "sourceOffset": 790
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 55.45,
+        "y": 28.0
+      },
+      "sourceOffset": 814
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 55.45,
+        "y": 72.0
+      },
+      "sourceOffset": 838
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 27.0,
+        "y": 54.35
+      },
+      "sourceOffset": 862
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 72.0,
+        "y": 54.35
+      },
+      "sourceOffset": 886
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 58.85,
+        "y": 28.0
+      },
+      "sourceOffset": 910
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 58.85,
+        "y": 72.0
+      },
+      "sourceOffset": 934
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 27.0,
+        "y": 57.45
+      },
+      "sourceOffset": 958
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 72.0,
+        "y": 57.45
+      },
+      "sourceOffset": 982
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 62.25,
+        "y": 28.0
+      },
+      "sourceOffset": 1006
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 62.25,
+        "y": 72.0
+      },
+      "sourceOffset": 1030
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 27.0,
+        "y": 60.55
+      },
+      "sourceOffset": 1054
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 72.0,
+        "y": 60.55
+      },
+      "sourceOffset": 1078
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 65.65,
+        "y": 28.0
+      },
+      "sourceOffset": 1102
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 65.65,
+        "y": 72.0
+      },
+      "sourceOffset": 1126
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 27.0,
+        "y": 63.65
+      },
+      "sourceOffset": 1150
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 72.0,
+        "y": 63.65
+      },
+      "sourceOffset": 1174
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 69.05,
+        "y": 28.0
+      },
+      "sourceOffset": 1198
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 10,
+      "at": {
+        "x": 69.05,
+        "y": 72.0
+      },
+      "sourceOffset": 1222
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 27.0,
+        "y": 66.75
+      },
+      "sourceOffset": 1246
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 11,
+      "at": {
+        "x": 72.0,
+        "y": 66.75
+      },
+      "sourceOffset": 1270
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 12.7,
+        "y": 16.1
+      },
+      "sourceOffset": 1294
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 12.7,
+        "y": 22.1
+      },
+      "sourceOffset": 1318
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 15.4,
+        "y": 16.1
+      },
+      "sourceOffset": 1342
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 15.4,
+        "y": 22.1
+      },
+      "sourceOffset": 1366
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 18.1,
+        "y": 16.1
+      },
+      "sourceOffset": 1390
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 18.1,
+        "y": 22.1
+      },
+      "sourceOffset": 1414
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 20.8,
+        "y": 16.1
+      },
+      "sourceOffset": 1438
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 20.8,
+        "y": 22.1
+      },
+      "sourceOffset": 1462
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 80.7,
+        "y": 16.1
+      },
+      "sourceOffset": 1486
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 80.7,
+        "y": 22.1
+      },
+      "sourceOffset": 1510
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 83.4,
+        "y": 16.1
+      },
+      "sourceOffset": 1534
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 83.4,
+        "y": 22.1
+      },
+      "sourceOffset": 1558
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 86.1,
+        "y": 16.1
+      },
+      "sourceOffset": 1582
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 86.1,
+        "y": 22.1
+      },
+      "sourceOffset": 1606
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 88.8,
+        "y": 16.1
+      },
+      "sourceOffset": 1630
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 88.8,
+        "y": 22.1
+      },
+      "sourceOffset": 1654
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 12.7,
+        "y": 74.1
+      },
+      "sourceOffset": 1678
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 12.7,
+        "y": 80.1
+      },
+      "sourceOffset": 1702
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 15.4,
+        "y": 74.1
+      },
+      "sourceOffset": 1726
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 15.4,
+        "y": 80.1
+      },
+      "sourceOffset": 1750
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 18.1,
+        "y": 74.1
+      },
+      "sourceOffset": 1774
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 18.1,
+        "y": 80.1
+      },
+      "sourceOffset": 1798
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 20.8,
+        "y": 74.1
+      },
+      "sourceOffset": 1822
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 20.8,
+        "y": 80.1
+      },
+      "sourceOffset": 1846
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 80.7,
+        "y": 74.1
+      },
+      "sourceOffset": 1870
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 80.7,
+        "y": 80.1
+      },
+      "sourceOffset": 1894
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 83.4,
+        "y": 74.1
+      },
+      "sourceOffset": 1918
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 83.4,
+        "y": 80.1
+      },
+      "sourceOffset": 1942
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 86.1,
+        "y": 74.1
+      },
+      "sourceOffset": 1966
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 86.1,
+        "y": 80.1
+      },
+      "sourceOffset": 1990
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 88.8,
+        "y": 74.1
+      },
+      "sourceOffset": 2014
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 88.8,
+        "y": 80.1
+      },
+      "sourceOffset": 2038
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 39.7,
+        "y": 11.1
+      },
+      "sourceOffset": 2062
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 39.7,
+        "y": 17.1
+      },
+      "sourceOffset": 2086
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 42.4,
+        "y": 11.1
+      },
+      "sourceOffset": 2110
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 42.4,
+        "y": 17.1
+      },
+      "sourceOffset": 2134
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 45.1,
+        "y": 11.1
+      },
+      "sourceOffset": 2158
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 45.1,
+        "y": 17.1
+      },
+      "sourceOffset": 2182
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 47.8,
+        "y": 11.1
+      },
+      "sourceOffset": 2206
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 47.8,
+        "y": 17.1
+      },
+      "sourceOffset": 2230
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 43.7,
+        "y": 83.1
+      },
+      "sourceOffset": 2254
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 43.7,
+        "y": 89.1
+      },
+      "sourceOffset": 2278
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 46.4,
+        "y": 83.1
+      },
+      "sourceOffset": 2302
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 46.4,
+        "y": 89.1
+      },
+      "sourceOffset": 2326
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 49.1,
+        "y": 83.1
+      },
+      "sourceOffset": 2350
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 49.1,
+        "y": 89.1
+      },
+      "sourceOffset": 2374
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 51.8,
+        "y": 83.1
+      },
+      "sourceOffset": 2398
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 12,
+      "at": {
+        "x": 51.8,
+        "y": 89.1
+      },
+      "sourceOffset": 2422
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 13,
+      "at": {
+        "x": 14.5,
+        "y": 37.0
+      },
+      "sourceOffset": 2446
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 13,
+      "at": {
+        "x": 14.5,
+        "y": 44.0
+      },
+      "sourceOffset": 2470
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 13,
+      "at": {
+        "x": 14.5,
+        "y": 51.0
+      },
+      "sourceOffset": 2494
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 13,
+      "at": {
+        "x": 14.5,
+        "y": 58.0
+      },
+      "sourceOffset": 2518
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 13,
+      "at": {
+        "x": 82.5,
+        "y": 37.0
+      },
+      "sourceOffset": 2542
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 13,
+      "at": {
+        "x": 82.5,
+        "y": 44.0
+      },
+      "sourceOffset": 2566
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 13,
+      "at": {
+        "x": 82.5,
+        "y": 51.0
+      },
+      "sourceOffset": 2590
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 13,
+      "at": {
+        "x": 82.5,
+        "y": 58.0
+      },
+      "sourceOffset": 2614
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 13,
+      "at": {
+        "x": 37.5,
+        "y": 45.0
+      },
+      "sourceOffset": 2638
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 13,
+      "at": {
+        "x": 37.5,
+        "y": 52.0
+      },
+      "sourceOffset": 2662
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 13,
+      "at": {
+        "x": 52.5,
+        "y": 45.0
+      },
+      "sourceOffset": 2686
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 13,
+      "at": {
+        "x": 52.5,
+        "y": 52.0
+      },
+      "sourceOffset": 2710
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 13.2,
+        "y": 93.2
+      },
+      "sourceOffset": 2734
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 13.2,
+        "y": 6.2
+      },
+      "sourceOffset": 2758
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 23.2,
+        "y": 93.2
+      },
+      "sourceOffset": 2781
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 23.2,
+        "y": 6.2
+      },
+      "sourceOffset": 2805
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 33.2,
+        "y": 93.2
+      },
+      "sourceOffset": 2828
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 33.2,
+        "y": 6.2
+      },
+      "sourceOffset": 2852
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 43.2,
+        "y": 93.2
+      },
+      "sourceOffset": 2875
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 43.2,
+        "y": 6.2
+      },
+      "sourceOffset": 2899
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 53.2,
+        "y": 93.2
+      },
+      "sourceOffset": 2922
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 53.2,
+        "y": 6.2
+      },
+      "sourceOffset": 2946
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 63.2,
+        "y": 93.2
+      },
+      "sourceOffset": 2969
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 63.2,
+        "y": 6.2
+      },
+      "sourceOffset": 2993
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 73.2,
+        "y": 93.2
+      },
+      "sourceOffset": 3016
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 73.2,
+        "y": 6.2
+      },
+      "sourceOffset": 3040
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 83.2,
+        "y": 93.2
+      },
+      "sourceOffset": 3063
+    },
+    {
+      "kind": "flash",
+      "polarity": "dark",
+      "aperture": 14,
+      "at": {
+        "x": 83.2,
+        "y": 6.2
+      },
+      "sourceOffset": 3087
+    }
+  ],
+  "source": {
+    "originalUnit": "MM",
+    "coordinateFormat": "FSLAX34Y34",
+    "zeroSuppression": "L"
+  }
+}

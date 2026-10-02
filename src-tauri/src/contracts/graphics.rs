@@ -1,4 +1,4 @@
-//! Graphics IR — Rust binding of `contracts/schemas/v1/graphics.schema.json`.
+//! Graphics IR — Rust binding of `contracts/schemas/v2/graphics.schema.json`.
 //!
 //! All lengths are normalized to millimetres. Arcs keep their centre and
 //! direction; aperture macros are stored as already-evaluated primitives, and
@@ -8,7 +8,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Version of the graphics IR schema this binding targets.
-pub const GRAPHICS_IR_VERSION: &str = "1";
+pub const GRAPHICS_IR_VERSION: &str = "2";
 
 /// A parsed Gerber layer, normalized to millimetres.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -198,15 +198,25 @@ pub enum GraphicObject {
     Stroke {
         polarity: Polarity,
         aperture: u32,
+        start: Point,
         segments: Vec<Segment>,
         source_offset: usize,
     },
     #[serde(rename_all = "camelCase")]
     Region {
         polarity: Polarity,
-        contours: Vec<Vec<Segment>>,
+        contours: Vec<Contour>,
         source_offset: usize,
     },
+}
+
+/// A closed boundary inside a region: the pen-down start point plus the
+/// segments drawn from it. Rendering closes the contour back to `start`.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Contour {
+    pub start: Point,
+    pub segments: Vec<Segment>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]

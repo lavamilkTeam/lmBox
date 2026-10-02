@@ -57,9 +57,13 @@ fn parses_templates_and_flashes_in_millimetres() {
 fn preserves_lines_and_arcs_in_draw_order() {
     let ir = parse_gerber(include_str!("fixtures/draw_arc.gbr")).unwrap();
     assert_eq!(ir.objects.len(), 1);
-    let GraphicObject::Stroke { segments, .. } = &ir.objects[0] else {
+    let GraphicObject::Stroke {
+        start, segments, ..
+    } = &ir.objects[0]
+    else {
         panic!("expected a stroke");
     };
+    assert_eq!(*start, lmbox::contracts::Point::new(0.0, 0.0));
     assert_eq!(segments.len(), 4);
 
     assert!(
@@ -112,8 +116,10 @@ fn regions_record_clear_polarity_and_contours() {
     };
     assert_eq!(*polarity, Polarity::Clear);
     assert_eq!(contours.len(), 1);
-    assert_eq!(contours[0].len(), 4);
+    assert_eq!(contours[0].start, lmbox::contracts::Point::new(0.0, 0.0));
+    assert_eq!(contours[0].segments.len(), 4);
     assert!(contours[0]
+        .segments
         .iter()
         .all(|s| matches!(s, Segment::Line { .. })));
 }
@@ -198,7 +204,7 @@ fn ir_round_trips_through_schema_valid_json() {
     let value = serde_json::to_value(&ir).unwrap();
 
     let schema: serde_json::Value = serde_json::from_str(include_str!(
-        "../../contracts/schemas/v1/graphics.schema.json"
+        "../../contracts/schemas/v2/graphics.schema.json"
     ))
     .unwrap();
     let validator = jsonschema::validator_for(&schema).unwrap();
@@ -220,4 +226,74 @@ fn flash_object_field_names_match_schema() {
     assert!(obj.contains_key("sourceOffset"));
     assert_eq!(obj["at"]["x"], 1.5);
     assert_eq!(obj["at"]["y"], 2.5);
+}
+
+#[test]
+fn browser_demo_matches_parser_output_and_supported_sample_shapes() {
+    let ir = parse_gerber(include_str!("fixtures/demo.gbr")).unwrap();
+    let browser: serde_json::Value =
+        serde_json::from_str(include_str!("../../src/platform/desktop/lib/demo-ir.json")).unwrap();
+    assert_eq!(serde_json::to_value(&ir).unwrap(), browser);
+    assert_eq!(ir.objects.len(), 124);
+    assert!(ir.objects.iter().all(|obj| matches!(
+        obj,
+        GraphicObject::Flash {
+            polarity: Polarity::Dark,
+            ..
+        }
+    )));
+    assert!(ir.apertures.iter().all(|a| matches!(
+        a.shape,
+        ApertureShape::Circle {
+            hole_diameter: None,
+            ..
+        } | ApertureShape::Rectangle {
+            hole_diameter: None,
+            ..
+        }
+    )));
+}
+
+#[test]
+fn all_preview_fixtures_follow_the_graphics_schema() {
+    let schema: serde_json::Value = serde_json::from_str(include_str!(
+        "../../contracts/schemas/v2/graphics.schema.json"
+    ))
+    .unwrap();
+    let validator = jsonschema::validator_for(&schema).unwrap();
+    for source in [
+        include_str!("fixtures/demo.gbr"),
+        include_str!("fixtures/preview-shapes.gbr"),
+        include_str!("fixtures/draw_arc.gbr"),
+        include_str!("fixtures/region_polarity.gbr"),
+        include_str!("fixtures/step_repeat.gbr"),
+    ] {
+        let ir = parse_gerber(source).unwrap();
+        validator
+            .validate(&serde_json::to_value(ir).unwrap())
+            .unwrap();
+    }
+}
+
+#[test]
+fn region_starts_at_the_current_position_without_an_extra_move() {
+    let ir = parse_gerber("%FSLAX34Y34*%\n%MOMM*%\nX10000Y20000D02*\nG36*\nX30000Y20000D01*\nX10000Y40000D01*\nX10000Y20000D01*\nG37*\nM02*").unwrap();
+    let GraphicObject::Region { contours, .. } = &ir.objects[0] else {
+        panic!("expected a region");
+    };
+    assert_eq!(contours[0].start, lmbox::contracts::Point::new(1.0, 2.0));
+}
+
+#[test]
+fn revised_graphics_are_not_mislabeled_as_v1() {
+    let ir = parse_gerber(include_str!("fixtures/draw_arc.gbr")).unwrap();
+    assert_eq!(ir.schema_version, "2");
+    let old_schema: serde_json::Value = serde_json::from_str(include_str!(
+        "../../contracts/schemas/v1/graphics.schema.json"
+    ))
+    .unwrap();
+    let validator = jsonschema::validator_for(&old_schema).unwrap();
+    assert!(validator
+        .validate(&serde_json::to_value(ir).unwrap())
+        .is_err());
 }

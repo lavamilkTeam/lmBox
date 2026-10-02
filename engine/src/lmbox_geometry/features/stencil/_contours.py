@@ -141,7 +141,7 @@ def aperture(shape):
     return valid(geometry)
 
 
-def compose(ir):
+def operations(ir):
     shapes = {item["code"]: item["shape"] for item in ir["apertures"]}
     apertures = {code: aperture(shape) for code, shape in shapes.items()}
     repeat = ir.get("stepAndRepeat", {"xCount": 1, "yCount": 1, "xStep": 0, "yStep": 0})
@@ -170,10 +170,17 @@ def compose(ir):
             operations.append((obj["polarity"], valid(part)))
         except (ValueError, KeyError) as error:
             raise ValueError(f"图形位置 {obj['sourceOffset']}：{error}") from error
-    result = Polygon()
-    for x in range(repeat["xCount"]):
-        for y in range(repeat["yCount"]):
-            for polarity, part in operations:
+    result = []
+    for y in range(repeat["yCount"]):
+        for x in range(repeat["xCount"]):
+            for index, (polarity, part) in enumerate(operations):
                 part = affinity.translate(part, x * repeat["xStep"], y * repeat["yStep"])
-                result = result.union(part) if polarity == "dark" else result.difference(part)
+                result.append((f"{y}:{x}:{index}", polarity, part))
+    return result
+
+
+def compose(ir):
+    result = Polygon()
+    for _, polarity, part in operations(ir):
+        result = result.union(part) if polarity == "dark" else result.difference(part)
     return valid(result)

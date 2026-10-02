@@ -72,3 +72,24 @@ fn closing_cli_input_cancels_the_owned_python_task() {
     let response: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
     assert!(response["error"].as_str().unwrap().contains("取消"));
 }
+
+#[test]
+fn editing_contract_and_export_are_validated_across_the_native_boundary() {
+    let mut data: PreviewRequest =
+        serde_json::from_str(include_str!("../../contracts/fixtures/v1/editing.json")).unwrap();
+    assert!(validate_preview(&data).is_ok());
+    data.export_format = Some("svg".into());
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    let result = build_preview(&data, root, Arc::new(AtomicBool::new(false))).unwrap();
+    assert_eq!(result["artifact"]["format"], "svg");
+    assert!(result["artifact"]["content"]
+        .as_str()
+        .unwrap()
+        .contains("<svg"));
+    assert_eq!(result["mesh"]["objects"][0]["id"], "0:0:0");
+    data.settings.design.as_mut().unwrap().optimization.grid_web = 0.;
+    assert!(validate_preview(&data).is_err());
+    data.settings.design.as_mut().unwrap().optimization.grid_web = 0.4;
+    data.edits[0].id = "../file".into();
+    assert!(validate_preview(&data).is_err());
+}

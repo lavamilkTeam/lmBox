@@ -18,6 +18,8 @@ class Mesh:
     area: float
     thickness: float
     hole_count: int
+    expected_volume: float = None
+    objects: list = None
 
 
 def validate_request(request):

@@ -2,8 +2,9 @@
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Box, Scan, CodeXml, MousePointer2, Move, ZoomIn, ZoomOut, Maximize, Focus, Layers, FileBox, Upload, Grid2X2, CircleHelp } from '@lucide/vue'
 import { useProjectStore } from '../../../domain/project'
+import SelectionLayer from './SelectionLayer.vue'
 import IrLayer from './IrLayer.vue'
-import { renderIr } from './render'
+import { renderIr, type RenderedIr } from './render'
 import { observeViewportSize } from '../../../platform/desktop'
 const ModelScene = defineAsyncComponent(() => import('./ModelScene.vue'))
 const store = useProjectStore()
@@ -14,12 +15,54 @@ const rendered = computed(() => {
   try { return { geometry: renderIr(store.activeIr), error: '' } }
   catch (error) { return { geometry: undefined, error: error instanceof Error ? error.message : '图形预览失败。' } }
 })
+// Native contours are the shared contact-plane preview; raw IR remains available while building.
+const processed = computed<RenderedIr|undefined>(() => {
+  const mesh=doc.value?.model.mesh
+  if(!mesh?.objects || !rendered.value.geometry)return
+  return {bounds:rendered.value.geometry.bounds,operations:mesh.objects.filter(o=>!o.deleted || doc.value?.editing.showDeleted).map(o=>({
+    id:o.id,deleted:o.deleted,polarity:'dark',transform:'',paths:[{d:o.rings.map(r=>'M '+r.map(p=>p.join(' ')).join(' L ')+' Z').join(' '),fill:'white',fillRule:'evenodd'}],
+  }))}
+})
+const displayGeometry=computed(()=>processed.value ?? rendered.value.geometry)
+const drawingTransform=computed(()=>`translate(${!processed.value && doc.value?.params.mirror ? geometryBounds.value.minX+geometryBounds.value.maxX : 0} ${flipY.value}) scale(${!processed.value && doc.value?.params.mirror ? -1 : 1} -1)`)
+const materialPath=computed(()=>doc.value?.model.mesh?.contours.map(r=>'M '+r.map(p=>p.join(' ')).join(' L ')+' Z').join(' ') ?? '')
+const marquee=ref<{x:number;y:number;width:number;height:number}>()
+const canvas=ref<SVGSVGElement>()
+let selectStart:{x:number;y:number;clientX:number;clientY:number;id?:string;add:boolean}|undefined
+function svgPoint(e:PointerEvent) {
+  const matrix=canvas.value?.getScreenCTM();if(!matrix)return {x:0,y:0}
+  return new DOMPoint(e.clientX,e.clientY).matrixTransform(matrix.inverse())
+}
+function pointerUp(e:PointerEvent) {
+  if(selectStart) {
+    const moved=Math.hypot(e.clientX-selectStart.clientX,e.clientY-selectStart.clientY)>4
+    const ids:string[]=[]
+    if(moved) {
+      const a={left:Math.min(e.clientX,selectStart.clientX),right:Math.max(e.clientX,selectStart.clientX),top:Math.min(e.clientY,selectStart.clientY),bottom:Math.max(e.clientY,selectStart.clientY)}
+      for(const node of canvas.value?.querySelectorAll<SVGGElement>('[data-object-id]') ?? []) {
+        const b=node.getBoundingClientRect()
+        if(b.width && b.height && b.left<=a.right && b.right>=a.left && b.top<=a.bottom && b.bottom>=a.top)ids.push(node.dataset.objectId!)
+      }
+    } else if(selectStart.id)ids.push(selectStart.id)
+    store.setSelection(ids,selectStart.add?(moved?'add':'toggle'):'replace')
+  }
+  selectStart=undefined;marquee.value=undefined;dragging.value=false
+  if(canvas.value?.hasPointerCapture(e.pointerId))canvas.value.releasePointerCapture(e.pointerId)
+}
+function keyboard(e:KeyboardEvent) {
+  if(e.key==='Escape') {store.setSelection([]);e.preventDefault()}
+  if(e.key==='Delete' || e.key==='Backspace') {store.editSelection({deleted:true});e.preventDefault()}
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='a') {store.setSelection(store.allObjects());e.preventDefault()}
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z') {store.undo(e.shiftKey);e.preventDefault()}
+}
 const outlines = computed(() => doc.value?.files.filter(file=>file.role==='outline' && file.ir && file.name!==doc.value?.selectedLayer).map(file=>{
   try { return {name:file.name,geometry:renderIr(file.ir!),error:''} }
   catch(error) {return {name:file.name,geometry:undefined,error:error instanceof Error?error.message:'板框预览失败。'}}
 }) ?? [])
 const geometryBounds = computed(() => {
   const all = doc.value?.mode==='2d' ? [rendered.value.geometry,...outlines.value.map(o=>o.geometry)].filter(g=>g!==undefined) : []
+  const modelBounds=doc.value?.model.mesh?.summary.bounds
+  if(modelBounds?.[0] && modelBounds[1])all.push({operations:[],bounds:{minX:modelBounds[0][0]!,minY:modelBounds[0][1]!,maxX:modelBounds[1][0]!,maxY:modelBounds[1][1]!}})
   if (!all.length || doc.value?.demo) return {minX:0,minY:0,maxX:100,maxY:100}
   return {minX:Math.min(...all.map(g=>g.bounds.minX)),minY:Math.min(...all.map(g=>g.bounds.minY)),maxX:Math.max(...all.map(g=>g.bounds.maxX)),maxY:Math.max(...all.map(g=>g.bounds.maxY))}
 })
@@ -72,15 +115,25 @@ const yTicks = computed(() => doc.value?.mode==='2d'
 const paths = computed(() => Array.from({length: 21}, (_, i) => 1+i*4.8))
 function fit() { zoom.value=1; pan.value={x:0,y:0}; resetKey.value++ }
 function changeZoom(delta: number) { zoom.value=Math.max(0.05, Math.min(30,zoom.value*(delta>0?1.15:1/1.15))) }
-function pointerDown(e: PointerEvent) { if (!panMode.value && e.button !== 1) return; dragging.value=true; start={x:e.clientX,y:e.clientY,px:pan.value.x,py:pan.value.y}; (e.currentTarget as SVGElement).setPointerCapture(e.pointerId) }
-function pointerMove(e: PointerEvent) { if (!dragging.value) return; pan.value={x:start.px+(e.clientX-start.x)/pixelsPerMm.value,y:start.py+(e.clientY-start.y)/pixelsPerMm.value} }
-watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=false;resetKey.value++})
+function pointerDown(e: PointerEvent) {
+  if(e.button!==0 && e.button!==1)return
+  canvas.value?.focus();canvas.value?.setPointerCapture(e.pointerId)
+  if(panMode.value || e.button===1) {dragging.value=true;start={x:e.clientX,y:e.clientY,px:pan.value.x,py:pan.value.y};return}
+  if(doc.value?.demo || doc.value?.mode!=='2d')return
+  const p=svgPoint(e)
+  selectStart={x:p.x,y:p.y,clientX:e.clientX,clientY:e.clientY,id:(e.target as Element).closest<SVGGElement>('[data-object-id]')?.dataset.objectId,add:e.shiftKey || e.metaKey || e.ctrlKey}
+}
+function pointerMove(e: PointerEvent) {
+  if(selectStart) {const p=svgPoint(e);marquee.value={x:Math.min(p.x,selectStart.x),y:Math.min(p.y,selectStart.y),width:Math.abs(p.x-selectStart.x),height:Math.abs(p.y-selectStart.y)};return}
+  if (!dragging.value) return; pan.value={x:start.px+(e.clientX-start.x)/pixelsPerMm.value,y:start.py+(e.clientY-start.y)/pixelsPerMm.value} }
+watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=false;selectStart=undefined;marquee.value=undefined;resetKey.value++})
 </script>
 <template>
   <div class="preview-layout">
     <nav class="mode-rail" aria-label="预览模式">
       <button v-for="mode in modes" :key="mode.id" :class="{ selected:doc?.mode===mode.id }" :disabled="!doc || (!doc.demo && (mode.id==='gcode' || (mode.id==='3d' && !store.activeIr)))" :aria-label="mode.title" :aria-pressed="doc?.mode===mode.id" :title="mode.title" @click="store.setMode(mode.id)"><component :is="mode.icon" :size="21" :stroke-width="1.7"/><span>{{ mode.label }}</span></button>
       <div class="rail-divider"/>
+      <button :disabled="!doc || doc.demo" :class="{selected:doc?.mode==='2d' && !panMode}" aria-label="选择工具" @click="store.setMode('2d');panMode=false"><MousePointer2 :size="19"/><span>选择</span></button>
       <button :disabled="!doc || doc.mode==='3d'" :class="{ selected:panMode }" aria-label="平移工具" title="平移画布" @click="panMode=!panMode"><Move :size="19"/><span>平移</span></button>
       <button :disabled="!doc" aria-label="适应画布" title="适应画布" @click="fit"><Focus :size="19"/><span>适应</span></button>
       <span class="rail-bottom" title="滚轮缩放 · 平移工具拖动 · 3D 鼠标旋转"><CircleHelp :size="18"/></span>
@@ -100,7 +153,7 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
               <button v-if="doc.model.status==='error' || doc.model.status==='cancelled'" class="outline-button" @click="store.retryModel">重新生成</button>
             </div>
           </template>
-          <svg v-else class="board-canvas" :class="{ panning:panMode, dragging }" :viewBox="viewBox" @wheel.prevent="changeZoom($event.deltaY<0 ? 0.1 : -0.1)" @pointerdown="pointerDown" @pointermove="pointerMove" @pointerup="dragging=false" @pointercancel="dragging=false">
+          <svg v-else ref="canvas" tabindex="0" aria-label="图形编辑画布" class="board-canvas" @keydown="keyboard" :class="{ panning:panMode, dragging }" :viewBox="viewBox" @wheel.prevent="changeZoom($event.deltaY<0 ? 0.1 : -0.1)" @pointerdown="pointerDown" @pointermove="pointerMove" @pointerup="pointerUp" @pointercancel="selectStart=undefined;marquee=undefined;dragging=false">
             <g v-if="doc.params.grid" class="preview-grid" aria-hidden="true" pointer-events="none">
               <line v-for="tick in xTicks" :key="`x-${tick.value}`" :x1="tick.value" :x2="tick.value" :y1="bounds.y" :y2="bounds.y+bounds.height" :stroke="tick.major ? '#343a43' : '#1c222a'" stroke-width="1" vector-effect="non-scaling-stroke"/>
               <line v-for="tick in yTicks" :key="`y-${tick.value}`" :y1="doc.mode==='2d' ? flipY-tick.value : tick.value" :y2="doc.mode==='2d' ? flipY-tick.value : tick.value" :x1="bounds.x" :x2="bounds.x+bounds.width" :stroke="tick.major ? '#343a43' : '#1c222a'" stroke-width="1" vector-effect="non-scaling-stroke"/>
@@ -108,8 +161,10 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
             <defs><pattern id="fill-lines" width="0.9" height="0.9" patternUnits="userSpaceOnUse" :patternTransform="`rotate(${doc.params.layer%2 ? 45 : -45})`"><line x1="0" y1="0" x2="0" y2="0.9" stroke="#649bb0" stroke-width="0.16"/></pattern><mask id="stencil-mask"><rect x="-5" y="-5" width="110" height="110" fill="white"/><g :transform="doc.params.mirror ? 'translate(100 0) scale(-1 1)' : undefined"><rect v-for="(p,i) in doc.apertures" :key="i" :x="p.x-doc.params.compensation" :y="p.y-doc.params.compensation" :width="p.width+2*doc.params.compensation" :height="p.height+2*doc.params.compensation" :rx="p.round ? 2 : 0" fill="black"/></g></mask></defs>
             <g v-if="doc.mode==='2d'">
               <rect v-if="doc.demo && doc.params.outline" x="0" y="0" width="100" height="100" fill="none" stroke="#7e8df5" stroke-width="0.22"/>
-              <g v-if="rendered.geometry" :opacity="doc.params.opacity/100" :transform="`translate(${doc.params.mirror ? geometryBounds.minX+geometryBounds.maxX : 0} ${flipY}) scale(${doc.params.mirror ? -1 : 1} -1)`">
-                <IrLayer :geometry="rendered.geometry" :color="store.activeLayer?.role==='outline' ? '#8790ee' : undefined"/>
+              <g v-if="displayGeometry" :transform="drawingTransform">
+                <path v-if="materialPath" :d="materialPath" fill="#17252d" fill-rule="evenodd" stroke="#577785" stroke-width="1" vector-effect="non-scaling-stroke" pointer-events="none"/>
+                <g :opacity="doc.params.opacity/100" pointer-events="none"><IrLayer :geometry="{...displayGeometry,operations:displayGeometry.operations.filter(o=>!o.deleted)}" :color="store.activeLayer?.role==='outline' ? '#8790ee' : undefined"/></g>
+                <SelectionLayer v-if="!doc.demo" :geometry="displayGeometry" :selected="doc.editing.selected"/>
               </g>
               <g v-if="doc.params.outline" :transform="`translate(${doc.params.mirror ? geometryBounds.minX+geometryBounds.maxX : 0} ${flipY}) scale(${doc.params.mirror ? -1 : 1} -1)`" class="outline-layers">
                 <template v-for="outline in outlines" :key="outline.name"><IrLayer v-if="outline.geometry" :geometry="outline.geometry" color="#8790ee"/></template>
@@ -123,18 +178,20 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
               <g :transform="doc.params.mirror ? 'translate(100 0) scale(-1 1)' : undefined"><rect v-for="(p,i) in doc.apertures" :key="i" :x="p.x-doc.params.compensation" :y="p.y-doc.params.compensation" :width="p.width+2*doc.params.compensation" :height="p.height+2*doc.params.compensation" :rx="p.round ? 2 : 0" fill="none" stroke="#eca967" stroke-width="0.2"/></g>
               <g v-if="doc.params.showTravel" stroke="#bf84f2" stroke-width="0.16" stroke-dasharray="1 0.7"><path v-for="(y,i) in paths" :key="i" :d="`M -3 ${y} L 103 ${100-y}`"/></g>
             </g>
+            <rect v-if="marquee" v-bind="marquee" fill="#529af52b" stroke="#69aaff" stroke-width="1" vector-effect="non-scaling-stroke" pointer-events="none"/>
           </svg>
           <div v-if="doc.mode==='2d' && rendered.error" class="preview-empty" role="alert"><p>{{ rendered.error }}</p></div><div v-else-if="doc.mode==='2d' && doc.params.outline && outlines.some(o=>o.error)" class="preview-warning" role="alert">{{ outlines.filter(o=>o.error).map(o=>`${o.name}：${o.error}`).join('；') }}</div>
-          <div class="viewport-top-info">{{ doc.mode==='gcode' ? `路径演示 · 第 ${doc.params.layer} 层` : doc.mode==='3d' ? (doc.demo ? '透视视图' : '矩形模板 · 透视视图') : doc.demo ? '顶视图 · TOP' : store.activeLayer?.name ?? doc.name }}<span class="info-divider"/>{{ doc.mode==='3d' ? `${doc.params.thickness.toFixed(2)} mm 厚度` : '单位：mm' }}</div>
+          <div v-if="!doc.demo && doc.mode==='2d' && doc.model.status!=='ready'" class="edit-progress" :role="doc.model.status==='error'?'alert':'status'">{{ doc.model.status==='error' ? doc.model.error : doc.model.status==='cancelled' ? '已取消计算' : '正在计算编辑结果…' }}<button v-if="doc.model.status==='error' || doc.model.status==='cancelled'" @click="store.retryModel">重试</button></div>
+          <div class="viewport-top-info">{{ doc.mode==='gcode' ? `路径演示 · 第 ${doc.params.layer} 层` : doc.mode==='3d' ? (doc.demo ? '透视视图' : doc.editing.design.kind==='base' ? '定位底板 · 透视视图' : '钢网 · 透视视图') : doc.demo ? '顶视图 · TOP' : store.activeLayer?.name ?? doc.name }}<span class="info-divider"/>{{ doc.mode==='3d' ? `${(!doc.demo && doc.editing.design.kind==='base' ? doc.editing.design.floor+doc.editing.design.boardThickness : doc.params.thickness).toFixed(2)} mm 厚度` : '单位：mm' }}</div>
           <div class="axis-widget"><span class="axis-y">Y</span><span class="axis-x">X</span><i/></div>
-          <div class="canvas-hint">{{ doc.mode==='3d' ? '拖动旋转 · 滚轮缩放 · 右键平移' : '滚轮缩放 · 选择平移工具拖动画布' }}</div>
+          <div class="canvas-hint">{{ doc.mode==='3d' ? '拖动旋转 · 滚轮缩放 · 右键平移' : '单击选择 · 拖动框选 · Shift 多选 · 中键平移' }}</div>
           <div v-if="doc.mode==='gcode'" class="toolpath-legend"><span><i style="background:#eca967"/>轮廓</span><span><i style="background:#649bb0"/>填充</span><span><i style="background:#bf84f2"/>空走</span></div>
           <div v-if="doc.mode!=='3d'" class="zoom-controls"><button aria-label="缩小" @click="changeZoom(-0.1)"><ZoomOut :size="16"/></button><span>{{ Math.round(zoom*100) }}%</span><button aria-label="放大" @click="changeZoom(0.1)"><ZoomIn :size="16"/></button><i/><button aria-label="缩放适应画布" @click="fit"><Maximize :size="14"/></button></div>
         </template>
         <div v-else-if="doc" class="preview-empty imported-empty"><div class="empty-icon"><FileBox :size="33" :stroke-width="1.3"/></div><h2>{{ store.activeLayer?.name ?? doc.name }}</h2><p v-if="store.activeLayer?.diagnostic" role="alert">{{ store.activeLayer.diagnostic.message }}</p><div class="file-summary"><span>{{ doc.files.length }} 个文件</span><span>{{ doc.files.filter(f=>f.role.includes('paste')).length }} 个锡膏层</span></div><div class="imported-layers"><div v-for="file in doc.files.filter(f=>f.role!=='other')" :key="file.name"><Layers :size="14"/><span>{{ file.name }}</span><b>{{ file.role==='outline' ? '板框' : file.role==='top-paste' ? '顶层锡膏' : '底层锡膏' }}</b></div></div><button class="outline-button" @click="emit('demo')">打开示例</button></div>
         <div v-else class="preview-empty"><div class="empty-icon"><Layers :size="36" :stroke-width="1.3"/></div><h2>导入gerber</h2><button class="primary-button" @click="emit('import')"><Upload :size="15"/>导入文件</button><button class="text-button" @click="emit('demo')">打开示例</button></div>
       </div>
-      <div class="viewport-status"><span><MousePointer2 :size="12"/>{{ doc?.mode==='3d' ? '轨道控制' : panMode ? '平移模式' : '查看模式' }}</span><span v-if="doc?.demo">{{ doc.apertures.length }} 个开孔<span class="status-divider">|</span>{{ doc.width }} × {{ doc.height }} mm</span><span v-if="doc && !doc.demo && store.activeIr">{{ store.activeIr.objects.length }} 个图形对象</span><span class="status-right"><Grid2X2 :size="12"/>毫米</span></div>
+      <div class="viewport-status"><span><MousePointer2 :size="12"/>{{ doc?.mode==='3d' ? '轨道控制' : panMode ? '平移模式' : `已选 ${doc?.editing.selected.length ?? 0} 个` }}</span><span v-if="doc?.demo">{{ doc.apertures.length }} 个开孔<span class="status-divider">|</span>{{ doc.width }} × {{ doc.height }} mm</span><span v-if="doc && !doc.demo && store.activeIr">{{ store.activeIr.objects.length }} 个图形对象</span><span class="status-right"><Grid2X2 :size="12"/>毫米</span></div>
     </section>
   </div>
 </template>

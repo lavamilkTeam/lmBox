@@ -10,9 +10,11 @@ import { SlicingPanel } from '../features/slicing'
 import { LogPanel } from '../features/logs'
 import { useProjectStore } from '../domain/project'
 import { inspectFiles, saveParameters, loadDemoGraphics } from '../platform/desktop'
+import { useModelExport } from './lib/useModelExport'
 import { useModelPreview } from './lib/useModelPreview'
 const store = useProjectStore()
 const modelPreview=useModelPreview()
+const modelExport=useModelExport(notify)
 const importer = ref<InstanceType<typeof ImportButton>>()
 const busy = ref(false)
 let importController: AbortController | undefined
@@ -48,7 +50,7 @@ onBeforeUnmount(()=>{ importController?.abort(); clearTimeout(toastTimeout); win
         <div class="header-right"><button class="export-button" :disabled="!store.active" title="导出当前参数配置（⌘ / Ctrl + S）" @click="exportParams"><Download :size="15"/>导出参数<ChevronDown :size="13"/></button></div>
       </header>
       <DocumentTabs @import="importer?.open()" @close="requestClose"/>
-      <div class="work-area"><PreviewWorkspace @cancel-model="modelPreview.cancel" @import="importer?.open()" @demo="store.openDemo(loadDemoGraphics())"/><aside class="inspector" aria-label="参数面板"><SlicingPanel v-if="store.active?.mode==='gcode'"/><ParameterPanel v-else-if="store.active"/><div v-else class="inspector-empty"><Layers :size="24"/></div></aside></div>
+      <div class="work-area"><PreviewWorkspace @cancel-model="modelPreview.cancel" @import="importer?.open()" @demo="store.openDemo(loadDemoGraphics())"/><aside class="inspector" aria-label="参数面板"><SlicingPanel v-if="store.active?.mode==='gcode'"/><ParameterPanel v-else-if="store.active" :exporting="modelExport.exporting.value" @export="modelExport.exportModel"/><div v-else class="inspector-empty"><Layers :size="24"/></div></aside></div>
       <LogPanel/>
       <div v-if="dropDepth>0" class="drop-overlay"><Upload :size="38"/><h2>松开以导入文件</h2><p>支持 Gerber ZIP、独立 Gerber 图层</p></div>
       <Transition name="toast"><div v-if="toast" class="toast-message" role="status"><Check :size="16"/>{{ toast }}<button aria-label="关闭提示" @click="toast=''"><X :size="14"/></button></div></Transition>

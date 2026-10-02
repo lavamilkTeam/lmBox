@@ -24,5 +24,22 @@ pub fn validate_preview(request: &PreviewRequest) -> Result<(), String> {
     if request.ir.objects.is_empty() || request.ir.objects.len() > 20000 {
         return Err("图层为空或图形数量超出三维预览限制。".into());
     }
+    if s.design.as_ref().is_some_and(|d| !d.valid())
+        || request.edits.len() > 20000
+        || request.edits.iter().any(|e| !e.valid())
+        || request
+            .export_format
+            .as_ref()
+            .is_some_and(|f| !["stl", "svg", "dxf"].contains(&f.as_str()))
+        || request.outline.as_ref().is_some_and(|ir| {
+            ir.schema_version != "2" || ir.objects.is_empty() || ir.objects.len() > 20000
+        })
+    {
+        return Err("编辑或加工参数无效。".into());
+    }
+    let ids: std::collections::HashSet<_> = request.edits.iter().map(|e| &e.id).collect();
+    if ids.len() != request.edits.len() {
+        return Err("编辑对象重复。".into());
+    }
     Ok(())
 }

@@ -16,7 +16,10 @@ def inspect_mesh(data):
         raise ValueError("模型网格未闭合或含无效坐标。")
     if not mesh.is_winding_consistent or np.any(mesh.area_faces <= 1e-14):
         raise ValueError("模型法向或三角面无效。")
-    if not math.isclose(mesh.volume, data.area * data.thickness, rel_tol=1e-6):
+    expected = (
+        data.expected_volume if data.expected_volume is not None else data.area * data.thickness
+    )
+    if mesh.volume <= 0 or not math.isclose(mesh.volume, expected, rel_tol=1e-5):
         raise ValueError("模型体积校验失败。")
     return {
         "bounds": mesh.bounds.tolist(),
@@ -25,4 +28,5 @@ def inspect_mesh(data):
         "triangleCount": len(mesh.faces),
         "tolerance": 0.01,
         "unit": "mm",
+        "algorithmVersion": "0.2.0",
     }

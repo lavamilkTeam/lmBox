@@ -16,7 +16,7 @@ export function useModelPreview() {
   watch([()=>store.activeId,()=>store.active?.mode,()=>store.active?.model.revision],(_value,_old,onCleanup)=>{
     cancel()
     const doc=store.active
-    if(!doc || doc.demo || doc.mode!=='3d' || doc.model.status==='ready')return
+    if(!doc || doc.demo || doc.mode==='gcode' || doc.model.status==='ready')return
     const timer=setTimeout(async()=>{
       const input=store.beginModel()
       if(!input)return

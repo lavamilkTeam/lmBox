@@ -42,7 +42,7 @@ export async function inspectFiles(files: File[], signal?: AbortSignal): Promise
   } finally {worker.terminate()}
 }
 export function saveParameters(doc: BoardDocument) {
-  const data = { version: 1, source: doc.name, demo: doc.demo, parameters: doc.params }
+  const data = { version: 2, source: doc.name, demo: doc.demo, parameters: doc.params, selectedLayer:doc.selectedLayer, design:doc.editing.design, edits:doc.editing.layers, outlineLayer:doc.editing.outlineLayer }
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
   const a = document.createElement('a'); a.href = url; a.download = `${doc.name.replace(/\.zip$/i, '')}.parameters.json`; a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)

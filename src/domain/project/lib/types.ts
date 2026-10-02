@@ -1,4 +1,4 @@
-import type { GraphicsIr, ImportedLayer, PreviewMesh } from '../../../contracts'
+import type { DesignSettings, ObjectEdit, GraphicsIr, ImportedLayer, PreviewMesh } from '../../../contracts'
 
 export type ViewMode = '2d' | '3d' | 'gcode'
 export type LayerFile = ImportedLayer
@@ -17,7 +17,10 @@ export interface BoardDocument {
   ir?: GraphicsIr;
   selectedLayer: string;
   model: ModelState;
+  editing: { selected:string[]; layers:Record<string,ObjectEdit[]>; design:DesignSettings; outlineLayer:string; past:EditSnapshot[]; future:EditSnapshot[]; showDeleted:boolean };
   view: { zoom:number; panX:number; panY:number };
 }
 
 export interface ModelState { revision:number; jobId:string; status:"idle"|"building"|"ready"|"error"|"cancelled"; error:string; mesh?:PreviewMesh }
+
+export interface EditSnapshot { params:Pick<Parameters, "thickness"|"margin"|"compensation"|"mirror">; design:DesignSettings; layers:Record<string,ObjectEdit[]>; outlineLayer:string }

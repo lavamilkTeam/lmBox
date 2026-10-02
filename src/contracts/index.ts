@@ -18,4 +18,4 @@ export type {
   ZeroSuppression,
 } from './graphics'
 export type { ImportedLayer, ImportResult } from './import'
-export type { ModelSettings, PreviewRequest, PreviewMesh, PreviewResult } from './preview'
+export type { Optimization, DesignSettings, ObjectEdit, DisplayObject, ExportFormat, ModelSettings, PreviewRequest, PreviewMesh, PreviewResult } from './preview'

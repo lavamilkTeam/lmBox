@@ -144,6 +144,8 @@ function renderAperture(shape: ApertureShape): PathItem[] {
 }
 
 export interface RenderOperation {
+  id:string
+  deleted?:boolean
   paths: PathItem[]
   transform: string
   polarity: 'dark' | 'clear'
@@ -193,7 +195,7 @@ export function renderIr(ir: GraphicsIr): RenderedIr {
         cur=seg.to
       }
     }
-    for(const obj of ir.objects) {
+    for(const [index,obj] of ir.objects.entries()) {
       let paths:PathItem[]
       let transform=`translate(${fmt(dx)} ${fmt(dy)})`
       if(obj.kind==='region') {
@@ -212,7 +214,7 @@ export function renderIr(ir: GraphicsIr): RenderedIr {
           contour(obj.start,obj.segments,shape.diameter/2)
         }
       }
-      operations.push({paths,transform,polarity:obj.polarity})
+      operations.push({id:`${y}:${x}:${index}`,paths,transform,polarity:obj.polarity})
     }
   }
   if(!operations.length) return {operations,bounds:{minX:0,minY:0,maxX:100,maxY:100}}

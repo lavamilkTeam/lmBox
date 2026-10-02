@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lmbox-geometry"
-version = "0.1.0"
+version = "0.2.0"
 requires-python = ">=3.9"
-dependencies = ["shapely==2.0.7", "trimesh==4.5.3", "mapbox-earcut==1.0.3", "numpy==2.0.2", "jsonschema==4.23.0"]
+dependencies = ["shapely==2.0.7", "trimesh==4.5.3", "mapbox-earcut==1.0.3", "numpy==2.0.2", "jsonschema==4.23.0", "manifold3d==3.0.1"]
 
 [project.optional-dependencies]
 dev = ["pytest==8.3.5", "ruff==0.11.13", "import-linter==2.2"]
@@ -38,5 +38,5 @@ modules = ["lmbox_geometry.features.stencil", "lmbox_geometry.features.inspectio
 name = "Stencil internals stay private"
 type = "forbidden"
 source_modules = ["lmbox_geometry.runner", "lmbox_geometry.runtime", "lmbox_geometry.features.inspection"]
-forbidden_modules = ["lmbox_geometry.features.stencil._pipeline", "lmbox_geometry.features.stencil._contours"]
+forbidden_modules = ["lmbox_geometry.features.stencil._pipeline", "lmbox_geometry.features.stencil._contours", "lmbox_geometry.features.stencil._editing", "lmbox_geometry.features.stencil._frame", "lmbox_geometry.features.stencil._solid"]
 allow_indirect_imports = true

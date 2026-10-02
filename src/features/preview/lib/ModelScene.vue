@@ -14,11 +14,12 @@ let scene: THREE.Scene
 let mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial> | undefined
 let frame = 0
 let span=110
+let floorZ=-.1
 let grid:THREE.GridHelper|undefined
 function reset() {
   const vertical=THREE.MathUtils.degToRad(camera.fov)
   const horizontal=2*Math.atan(Math.tan(vertical/2)*camera.aspect)
-  const distance=span/(2*Math.tan(Math.min(vertical,horizontal)/2))*1.3
+  const distance=span/(2*Math.tan(Math.min(vertical,horizontal)/2))*1.5
   camera.position.copy(new THREE.Vector3(0.6,-0.9,0.85).normalize().multiplyScalar(distance))
   camera.near=Math.max(0.001,span/100);camera.far=Math.max(100,span*50);camera.updateProjectionMatrix()
   controls.minDistance=span*0.1;controls.maxDistance=span*20
@@ -35,7 +36,7 @@ function rebuild() {
     indexed.setAttribute('position',new THREE.Float32BufferAttribute(data.positions,3));indexed.setIndex(data.indices)
     const geometry=indexed.toNonIndexed();indexed.dispose();geometry.computeVertexNormals();geometry.computeBoundingBox()
     const bounds=geometry.boundingBox!,center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3())
-    geometry.translate(-center.x,-center.y,-center.z);span=Math.max(size.x,size.y,size.z)
+    geometry.translate(-center.x,-center.y,-center.z);span=Math.max(size.x,size.y,size.z);floorZ=-size.z/2
     mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:0xbac9d9,metalness:0.35,roughness:0.45}))
     scene.add(mesh);updateDisplay();reset();return
   }
@@ -54,7 +55,7 @@ function rebuild() {
   }
   const geometry = new THREE.ExtrudeGeometry(shape, { depth: p.thickness, bevelEnabled: false, curveSegments: 16 })
   const material = new THREE.MeshStandardMaterial({ color: 0xbac9d9, metalness: 0.55, roughness: 0.38, side: THREE.DoubleSide })
-  mesh = new THREE.Mesh(geometry, material); scene.add(mesh);span=2*size;updateDisplay();reset()
+  mesh = new THREE.Mesh(geometry, material); scene.add(mesh);span=2*size;floorZ=0;updateDisplay();reset()
 }
 onMounted(() => {
   try {
@@ -73,7 +74,7 @@ onMounted(() => {
   } catch { error.value = '当前环境无法启动 3D 预览，请在支持 WebGL 的桌面环境中打开。' }
 })
 function updateDisplay() {
-  if(grid){grid.visible=props.doc.params.grid;grid.scale.setScalar(span*3);grid.position.z=-props.doc.params.thickness/2-0.01}
+  if(grid){grid.visible=props.doc.params.grid;grid.scale.setScalar(span*3);grid.position.z=floorZ-0.01}
 }
 watch(() => [props.doc.id, props.doc.model.mesh, ...(props.doc.demo ? [props.doc.params.thickness,props.doc.params.margin,props.doc.params.compensation,props.doc.params.mirror] : [])], rebuild)
 watch(() => props.doc.params.grid,updateDisplay)

@@ -11,7 +11,9 @@ def run(envelope):
     identity = ("protocolVersion", "projectId", "jobId", "inputRevision")
     if any(request[key] != envelope.get(key) for key in identity):
         raise ValueError("任务标识不匹配。")
-    mesh = build_preview(request["ir"], request["settings"])
+    mesh = build_preview(
+        request["ir"], request["settings"], request.get("edits"), request.get("outline")
+    )
     summary = inspect_mesh(mesh)
-    write_mesh(mesh, summary)
+    write_mesh(mesh, summary, request.get("exportFormat"))
     return {**{key: request[key] for key in identity}, "artifact": "mesh.json"}

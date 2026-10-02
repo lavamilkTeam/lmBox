@@ -59,6 +59,302 @@
         },
         "mirror": {
           "type": "boolean"
+        },
+        "design": {
+          "$ref": "#/$defs/design"
+        }
+      }
+    },
+    "outline": {
+      "$ref": "https://lmbox.local/contracts/schemas/v2/graphics.schema.json"
+    },
+    "edits": {
+      "type": "array",
+      "maxItems": 20000,
+      "items": {
+        "$ref": "#/$defs/edit"
+      }
+    },
+    "exportFormat": {
+      "enum": [
+        "stl",
+        "svg",
+        "dxf"
+      ]
+    }
+  },
+  "$defs": {
+    "optimization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scale",
+        "rounding",
+        "grid",
+        "gridThreshold",
+        "gridCell",
+        "gridWeb",
+        "stagger",
+        "gap",
+        "staggerOffset",
+        "staggerShrink",
+        "taper"
+      ],
+      "properties": {
+        "scale": {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 200
+        },
+        "rounding": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "grid": {
+          "type": "boolean"
+        },
+        "gridThreshold": {
+          "type": "number",
+          "minimum": 0.2,
+          "maximum": 20
+        },
+        "gridCell": {
+          "type": "number",
+          "minimum": 0.2,
+          "maximum": 10
+        },
+        "gridWeb": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 2
+        },
+        "stagger": {
+          "type": "boolean"
+        },
+        "gap": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 3
+        },
+        "staggerOffset": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 50
+        },
+        "staggerShrink": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 70
+        },
+        "taper": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 200
+        }
+      }
+    },
+    "design": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "frame",
+        "extraLeft",
+        "extraRight",
+        "extraTop",
+        "extraBottom",
+        "cornerStyle",
+        "cornerTL",
+        "cornerTR",
+        "cornerBL",
+        "cornerBR",
+        "boardThickness",
+        "clearance",
+        "floor",
+        "slotWidth",
+        "chamfer",
+        "optimization"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "stencil",
+            "base"
+          ]
+        },
+        "frame": {
+          "enum": [
+            "bounds",
+            "outline"
+          ]
+        },
+        "extraLeft": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "extraRight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "extraTop": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "extraBottom": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "cornerStyle": {
+          "enum": [
+            "round",
+            "chamfer"
+          ]
+        },
+        "cornerTL": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "cornerTR": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "cornerBL": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "cornerBR": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "boardThickness": {
+          "type": "number",
+          "minimum": 0.2,
+          "maximum": 10
+        },
+        "clearance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "floor": {
+          "type": "number",
+          "minimum": 0.2,
+          "maximum": 10
+        },
+        "slotWidth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "chamfer": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "optimization": {
+          "$ref": "#/$defs/optimization"
+        },
+        "cornerStyles": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "TL",
+            "TR",
+            "BL",
+            "BR"
+          ],
+          "properties": {
+            "TL": {
+              "enum": [
+                "round",
+                "chamfer"
+              ]
+            },
+            "TR": {
+              "enum": [
+                "round",
+                "chamfer"
+              ]
+            },
+            "BL": {
+              "enum": [
+                "round",
+                "chamfer"
+              ]
+            },
+            "BR": {
+              "enum": [
+                "round",
+                "chamfer"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "edit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "dx",
+        "dy",
+        "scaleX",
+        "scaleY",
+        "rotation",
+        "compensation",
+        "deleted"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[0-9]+:[0-9]+:[0-9]+$",
+          "maxLength": 40
+        },
+        "dx": {
+          "type": "number",
+          "minimum": -500,
+          "maximum": 500
+        },
+        "dy": {
+          "type": "number",
+          "minimum": -500,
+          "maximum": 500
+        },
+        "scaleX": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 3
+        },
+        "scaleY": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 3
+        },
+        "rotation": {
+          "type": "number",
+          "minimum": -360,
+          "maximum": 360
+        },
+        "compensation": {
+          "type": "number",
+          "minimum": -0.3,
+          "maximum": 0.5
+        },
+        "deleted": {
+          "type": "boolean"
+        },
+        "optimization": {
+          "$ref": "#/$defs/optimization"
         }
       }
     }

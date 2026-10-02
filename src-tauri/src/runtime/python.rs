@@ -89,9 +89,15 @@ pub(crate) fn preview(
     if fs::metadata(&artifact).map_err(|e| e.to_string())?.len() > 32 * 1024 * 1024 {
         return Err("模型产物超过大小限制。".into());
     }
-    let mesh: Value = serde_json::from_slice(&fs::read(artifact).map_err(|e| e.to_string())?)
+    let mut mesh: Value = serde_json::from_slice(&fs::read(artifact).map_err(|e| e.to_string())?)
         .map_err(|e| e.to_string())?;
+    let artifact = mesh.as_object_mut().and_then(|m| m.remove("export"));
+    if request.export_format.is_some()
+        && artifact.as_ref().and_then(|a| a["format"].as_str()) != request.export_format.as_deref()
+    {
+        return Err("导出产物格式不匹配。".into());
+    }
     Ok(
-        json!({"protocolVersion":"1","projectId":request.project_id,"jobId":request.job_id,"inputRevision":request.input_revision,"mesh":mesh}),
+        json!({"protocolVersion":"1","projectId":request.project_id,"jobId":request.job_id,"inputRevision":request.input_revision,"mesh":mesh,"artifact":artifact}),
     )
 }

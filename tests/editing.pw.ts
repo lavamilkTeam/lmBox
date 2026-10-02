@@ -1,0 +1,81 @@
+import { test, expect } from '@playwright/test'
+import { readFileSync } from 'node:fs'
+import { zipSync, strToU8 } from 'fflate'
+const paste=readFileSync('src-tauri/tests/fixtures/basic.gbr')
+const outline=strToU8('%FSLAX34Y34*%\n%MOMM*%\n%ADD10C,0.1*%\nD10*\nX0Y0D02*\nX100000Y0D01*\nX100000Y100000D01*\nX0Y100000D01*\nX0Y0D01*\nM02*')
+async function ready(page:import('@playwright/test').Page) {await expect(page.getByRole('button',{name:'STL',exact:true})).toBeEnabled({timeout:20000})}
+async function open(page:import('@playwright/test').Page) {
+  await page.goto('/')
+  await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'editor.zip',mimeType:'application/zip',buffer:Buffer.from(zipSync({'TopPaste.GTP':paste,'Board.GKO':outline}))})
+  await ready(page)
+}
+
+test('single selection, additive marquee, edits, delete, undo and restore use real contours',async({page})=>{
+  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message))
+  await open(page)
+  const first=page.locator('[data-object-id="0:0:0"]'),second=page.locator('[data-object-id="0:0:1"]')
+  await first.click()
+  await expect(first).toHaveAttribute('data-selected','true')
+  await expect(page.locator('.selection-count')).toHaveText('1 个图形')
+  const before=await first.boundingBox()
+  await page.getByLabel('X 偏移',{exact:true}).fill('0.25')
+  await page.getByLabel('X 偏移',{exact:true}).press('Tab')
+  await page.getByRole('button',{name:'应用变换'}).click();await ready(page)
+  expect((await first.boundingBox())!.x).toBeGreaterThan(before!.x)
+  await page.getByRole('button',{name:'放大',exact:true}).click()
+  const b=(await second.boundingBox())!
+  await page.keyboard.down('Shift');await page.mouse.move(b.x-2,b.y-2);await page.mouse.down();await page.mouse.move(b.x+b.width+2,b.y+b.height+2,{steps:5});await page.mouse.up();await page.keyboard.up('Shift')
+  await expect(page.locator('.selection-count')).toHaveText('2 个图形')
+  await page.getByRole('button',{name:'删除所选'}).click();await ready(page)
+  await expect(page.locator('[data-object-id]')).toHaveCount(1)
+  await page.getByRole('button',{name:'撤销编辑'}).click();await ready(page)
+  await expect(page.locator('[data-object-id]')).toHaveCount(3)
+  await page.getByRole('button',{name:'重做编辑'}).click();await ready(page)
+  await page.getByRole('switch',{name:'显示已删除图形'}).click()
+  await expect(page.locator('.deleted-object')).toHaveCount(2)
+  await page.getByRole('button',{name:'恢复原图'}).click();await ready(page)
+  await expect(page.locator('.deleted-object')).toHaveCount(0)
+  await expect(page.locator('[data-object-id]')).toHaveCount(3)
+  expect(errors).toEqual([])
+  await page.screenshot({path:test.info().outputPath('selection-editor.png')})
+})
+
+test('selected printing optimization and native STL SVG DXF exports match current geometry',async({page})=>{
+  await open(page)
+  await page.locator('[data-object-id="0:0:2"]').click()
+  await page.getByRole('tab',{name:'打印优化',exact:true}).click()
+  await page.getByLabel('优化范围',{exact:true}).click()
+  await page.getByText('当前选中（1）',{exact:true}).click()
+  await page.getByRole('switch',{name:'大孔开网格'}).click()
+  await page.getByLabel('网格开孔上限',{exact:true}).fill('0.5');await page.getByLabel('网格开孔上限',{exact:true}).press('Tab')
+  await page.getByRole('button',{name:'优化所选图形'}).click();await ready(page)
+  await expect(page.locator('.board-info')).toContainText('6')
+  await page.getByLabel('喇叭口比例',{exact:true}).fill('110');await page.getByLabel('喇叭口比例',{exact:true}).press('Tab')
+  await page.getByRole('button',{name:'优化所选图形'}).click();await ready(page)
+  await page.getByRole('button',{name:'查看 3D',exact:true}).click()
+  await expect(page.locator('.model-scene canvas')).toBeVisible()
+  for(const format of ['STL','SVG','DXF']) {
+    const downloading=page.waitForEvent('download')
+    await page.getByRole('button',{name:format,exact:true}).click()
+    const file=await downloading
+    expect(file.suggestedFilename()).toMatch(new RegExp(`\\.${format.toLowerCase()}$`))
+    const stream=await file.createReadStream();const chunks:Buffer[]=[]
+    for await(const chunk of stream!)chunks.push(Buffer.from(chunk))
+    expect(Buffer.concat(chunks).toString()).toContain(format==='STL'?'facet normal':format==='SVG'?'viewBox':'LWPOLYLINE')
+    await ready(page)
+  }
+  await page.screenshot({path:test.info().outputPath('optimized-3d.png')})
+})
+
+test('right editor generates a real recessed base with removal slot',async({page})=>{
+  await open(page)
+  await page.getByRole('tab',{name:'外框与底板',exact:true}).click()
+  await page.getByLabel('生成对象',{exact:true}).click()
+  await page.getByText('PCB 定位底板',{exact:true}).click();await ready(page)
+  await page.getByLabel('卸板槽宽',{exact:true}).fill('3');await page.getByLabel('卸板槽宽',{exact:true}).press('Tab');await ready(page)
+  await page.getByLabel('取件斜口',{exact:true}).fill('0.4');await page.getByLabel('取件斜口',{exact:true}).press('Tab');await ready(page)
+  await page.getByRole('button',{name:'查看 3D',exact:true}).click()
+  await expect(page.locator('.model-scene canvas')).toBeVisible()
+  await expect(page.locator('.viewport-top-info')).toContainText('定位底板')
+  await page.screenshot({path:test.info().outputPath('base-3d.png')})
+})

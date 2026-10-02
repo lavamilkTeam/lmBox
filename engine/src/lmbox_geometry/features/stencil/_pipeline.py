@@ -31,7 +31,9 @@ def build_preview(ir, settings, edits=None, outline=None):
         if solid.is_empty() or len(solid.decompose()) != 1:
             raise ValueError("模型为空或含分离实体，请检查开孔和边框。")
         expected_volume = solid.volume()
-        raw = solid.to_mesh()
+        # Keep the kernel's precision: float32 can collapse thin valid triangles
+        # between almost aligned openings, even at ordinary board coordinates.
+        raw = solid.to_mesh64()
         vertices, faces = raw.vert_properties[:, :3].astype(float), raw.tri_verts.astype(int)
         if is_base:
             # Export the actual top rim, including the slot and extraction bevel.

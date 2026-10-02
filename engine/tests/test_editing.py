@@ -164,7 +164,7 @@ def test_grid_cells_receive_rounding_and_base_export_contains_slot(data):
     # The slot opens the rim into a single contour instead of a closed interior ring.
     assert len(mesh.contours) == 1
     assert summary["holeCount"] == 0
-    assert summary["algorithmVersion"] == "0.2.1"
+    assert summary["algorithmVersion"] == "0.2.2"
 
 
 def test_each_corner_can_choose_round_or_chamfer(data):

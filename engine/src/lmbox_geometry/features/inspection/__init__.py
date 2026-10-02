@@ -28,5 +28,5 @@ def inspect_mesh(data):
         "triangleCount": len(mesh.faces),
         "tolerance": 0.01,
         "unit": "mm",
-        "algorithmVersion": "0.2.1",
+        "algorithmVersion": "0.2.2",
     }

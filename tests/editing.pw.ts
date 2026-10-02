@@ -79,12 +79,19 @@ test('right editor generates a real recessed base with removal slot',async({page
   await page.screenshot({path:test.info().outputPath('base-3d.png')})
 })
 
+async function geometryBox(locator:import('@playwright/test').Locator) {
+  return locator.evaluate(element=>{
+    const {x,y,width,height}=(element as SVGGraphicsElement).getBBox()
+    return {x,y,width,height}
+  })
+}
+
 test('selected taper stays pending across compensation changes and appears in 2D',async({page})=>{
   await open(page)
   const target=page.locator('[data-object-id="0:0:2"] path')
   const other=page.locator('[data-object-id="0:0:0"] path')
-  const otherBefore=await other.getAttribute('d')
-  const bottomBefore=await target.getAttribute('d')
+  const otherBefore=await geometryBox(other)
+  const bottomBefore=await geometryBox(target)
   await target.click()
   await page.getByRole('tab',{name:'打印优化',exact:true}).click()
   await expect(page.getByLabel('优化范围',{exact:true})).toContainText('当前选中（1）')
@@ -102,8 +109,8 @@ test('selected taper stays pending across compensation changes and appears in 2D
   expect(input.edits).toHaveLength(1)
   expect(input.edits[0]).toMatchObject({id:'0:0:2',optimization:{taper:120}})
   await ready(page)
-  await expect(target).toHaveAttribute('d',bottomBefore!)
-  await expect(other).toHaveAttribute('d',otherBefore!)
+  expect(await geometryBox(target)).toEqual(bottomBefore)
+  expect(await geometryBox(other)).toEqual(otherBefore)
   const upper=page.locator('.top-mouth-outline')
   await expect(upper).toBeVisible()
   expect((await upper.getAttribute('d'))!.length).toBeGreaterThan(50)
@@ -117,4 +124,35 @@ test('selected taper stays pending across compensation changes and appears in 2D
   await page.getByText('整层默认参数',{exact:true}).click()
   await expect(page.getByRole('button',{name:'应用整层优化'})).toBeEnabled()
   await expect(page.getByLabel('喇叭口比例',{exact:true})).toHaveValue('100')
+})
+
+test('inverse taper shrinks only the selected contact opening and focuses its real walls',async({page})=>{
+  await open(page)
+  const target=page.locator('[data-object-id="0:0:2"] path')
+  const other=page.locator('[data-object-id="0:0:0"] path')
+  const before=(await geometryBox(target))!,otherBefore=await geometryBox(other)
+  await target.click()
+  await page.getByRole('tab',{name:'打印优化',exact:true}).click()
+  await page.getByLabel('喇叭口比例',{exact:true}).fill('120')
+  await page.getByLabel('喇叭口比例',{exact:true}).press('Tab')
+  await page.getByRole('switch',{name:'反比缩放',exact:true}).click()
+  const request=page.waitForRequest(r=>r.url().endsWith('/api/preview') && r.method()==='POST')
+  await page.getByRole('button',{name:'优化所选图形'}).click()
+  expect((await request).postDataJSON().edits[0].optimization).toMatchObject({taper:120,inverseTaper:true})
+  await ready(page)
+  const after=(await geometryBox(target))!
+  expect(after.width/before.width).toBeCloseTo(.8,3)
+  expect(after.height/before.height).toBeCloseTo(.8,3)
+  expect(await geometryBox(other)).toEqual(otherBefore)
+  await expect(page.getByText(/上口 120%，贴板下口 80%/)).toBeVisible()
+  await page.getByRole('button',{name:'查看所选孔壁',exact:true}).click()
+  await expect(page.locator('.model-scene canvas')).toBeVisible()
+  await page.getByLabel('喇叭口比例',{exact:true}).scrollIntoViewIfNeeded()
+  await page.screenshot({path:test.info().outputPath('inverse-taper-walls.png')})
+  await page.getByRole('button',{name:'2D 图层',exact:true}).click()
+  await page.getByRole('switch',{name:'反比缩放',exact:true}).click()
+  await page.getByRole('button',{name:'优化所选图形'}).click();await ready(page)
+  expect(await geometryBox(target)).toEqual(before)
+  await expect(page.locator('.top-mouth-outline')).toBeVisible()
+  await expect(page.getByText(/上口 120%，贴板下口 100%/)).toBeVisible()
 })

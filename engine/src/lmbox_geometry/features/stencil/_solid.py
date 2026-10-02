@@ -23,21 +23,35 @@ def loft(g, height, scale=1, z=0):
     )
 
 
-def stencil_solid(outer, holes, visible, thickness):
-    cutters, tops = [], []
+def opening_sections(holes, visible):
+    sections, contact_objects = [], {o["id"]: [] for o in visible}
     for p in polygons(holes):
         owners = [
             o
             for o in visible
             if o["geometry"].intersects(p) and o["geometry"].intersection(p).area > 1e-10
         ]
-        scales = {o["opt"]["taper"] / 100 for o in owners}
+        scales = {(o["opt"]["taper"] / 100, o["opt"].get("inverseTaper", False)) for o in owners}
         if len(scales) > 1:
             raise ValueError("相连开孔的喇叭口比例不一致，请分开或统一参数。")
-        scale = next(iter(scales), 1)
+        scale, inverse = next(iter(scales), (1, False))
+        lower = 2 - scale if inverse else 1
+        if lower <= 0:
+            raise ValueError("反比缩放会使下口消失，喇叭口比例必须小于 200%。")
+        bottom = affinity.scale(p, lower, lower, origin=p.centroid) if inverse else p
         top = affinity.scale(p, scale, scale, origin=p.centroid)
-        tops.append(top)
-        cutters.append(loft(p, thickness, scale))
+        sections.append((bottom, top, scale / lower))
+        for o in owners:
+            piece = o["geometry"].intersection(p)
+            contact_objects[o["id"]].append(
+                affinity.scale(piece, lower, lower, origin=p.centroid) if inverse else piece
+            )
+    return sections, {ident: unary_union(parts) for ident, parts in contact_objects.items()}
+
+
+def stencil_solid(outer, sections, thickness):
+    cutters = [loft(bottom, thickness, ratio) for bottom, _, ratio in sections]
+    tops = [top for _, top, _ in sections]
     expanded = unary_union(tops)
     if not expanded.is_empty and (
         not outer.contains(expanded) or len(polygons(expanded)) != len(tops)

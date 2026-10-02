@@ -43,6 +43,8 @@ pub struct Optimization {
     pub stagger_offset: f64,
     pub stagger_shrink: f64,
     pub taper: f64,
+    #[serde(default)]
+    pub inverse_taper: bool,
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -96,6 +98,7 @@ impl Optimization {
             && range(self.stagger_offset, 0.0, 50.0)
             && range(self.stagger_shrink, 0.0, 70.0)
             && range(self.taper, 100.0, 200.0)
+            && (!self.inverse_taper || self.taper < 200.0)
     }
 }
 impl DesignSettings {

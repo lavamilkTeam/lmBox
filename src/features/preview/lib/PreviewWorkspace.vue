@@ -88,6 +88,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => stopObserving?.())
 const resetKey = ref(0)
+const focusKey = ref(0)
 const panMode = ref(false)
 const dragging = ref(false)
 let start = { x: 0, y: 0, px: 0, py: 0 }
@@ -121,7 +122,7 @@ const yTicks = computed(() => doc.value?.mode==='2d'
   ? ticks(flipY.value-bounds.value.y-bounds.value.height,bounds.value.height).map(tick=>({...tick,position:(flipY.value-tick.value-bounds.value.y)*pixelsPerMm.value}))
   : ticks(bounds.value.y,bounds.value.height))
 const paths = computed(() => Array.from({length: 21}, (_, i) => 1+i*4.8))
-function fit() { zoom.value=1; pan.value={x:0,y:0}; resetKey.value++ }
+function fit() { focusKey.value=0; zoom.value=1; pan.value={x:0,y:0}; resetKey.value++ }
 function changeZoom(delta: number) { zoom.value=Math.max(0.05, Math.min(30,zoom.value*(delta>0?1.15:1/1.15))) }
 function pointerDown(e: PointerEvent) {
   if(e.button!==0 && e.button!==1)return
@@ -147,13 +148,13 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
       <span class="rail-bottom" title="滚轮缩放 · 平移工具拖动 · 3D 鼠标旋转"><CircleHelp :size="18"/></span>
     </nav>
     <section class="preview-main">
-      <div class="viewport-toolbar"><div><span class="view-icon"><component :is="doc?.mode==='3d' ? Box : doc?.mode==='gcode' ? CodeXml : Layers" :size="15"/></span><strong>{{ modeTitle }}</strong></div><div><span v-if="doc?.demo" class="demo-badge">示例数据</span><button class="icon-button" title="重置视图" aria-label="重置视图" @click="fit"><Maximize :size="15"/></button></div></div>
+      <div class="viewport-toolbar"><div><span class="view-icon"><component :is="doc?.mode==='3d' ? Box : doc?.mode==='gcode' ? CodeXml : Layers" :size="15"/></span><strong>{{ modeTitle }}</strong></div><div><button v-if="doc && !doc.demo && doc.editing.selected.length && doc.editing.design.kind==='stencil'" class="text-button" :disabled="doc.model.status!=='ready'" @click="focusKey++;store.setMode('3d')">查看所选孔壁</button><span v-if="doc?.demo" class="demo-badge">示例数据</span><button class="icon-button" title="重置视图" aria-label="重置视图" @click="fit"><Maximize :size="15"/></button></div></div>
       <div ref="viewport" class="viewport">
         <div v-if="canPreview && doc?.mode!=='3d'" class="ruler ruler-horizontal"><span v-for="tick in xTicks" :key="tick.value" :class="{ major:tick.major }" :style="{ left:`${tick.position}px` }"><b v-if="tick.major">{{ tick.value }}</b></span></div>
         <div v-if="canPreview && doc?.mode!=='3d'" class="ruler ruler-vertical"><span v-for="tick in yTicks" :key="tick.value" :class="{ major:tick.major }" :style="{ top:`${tick.position}px` }"><b v-if="tick.major">{{ tick.value }}</b></span></div>
         <template v-if="doc && canPreview">
           <template v-if="doc.mode==='3d'">
-            <ModelScene v-if="doc.demo || doc.model.status==='ready'" :doc="doc" :reset-key="resetKey"/>
+            <ModelScene v-if="doc.demo || doc.model.status==='ready'" :doc="doc" :reset-key="resetKey" :focus-key="focusKey"/>
             <div v-else class="preview-empty" :role="doc.model.status==='error' ? 'alert' : 'status'">
               <Box :size="32"/><h2>{{ doc.model.status==='error' ? '模型生成失败' : doc.model.status==='cancelled' ? '已取消生成' : '正在生成三维模板' }}</h2>
               <p>{{ doc.model.error || '正在计算开孔与模板网格…' }}</p>

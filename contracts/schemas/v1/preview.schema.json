@@ -151,8 +151,33 @@
           "type": "number",
           "minimum": 100,
           "maximum": 200
+        },
+        "inverseTaper": {
+          "type": "boolean",
+          "default": false
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "inverseTaper"
+            ],
+            "properties": {
+              "inverseTaper": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "taper": {
+                "exclusiveMaximum": 200
+              }
+            }
+          }
+        }
+      ]
     },
     "design": {
       "type": "object",

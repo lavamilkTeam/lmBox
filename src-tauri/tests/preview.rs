@@ -93,3 +93,23 @@ fn editing_contract_and_export_are_validated_across_the_native_boundary() {
     data.edits[0].id = "../file".into();
     assert!(validate_preview(&data).is_err());
 }
+
+#[test]
+fn inverse_taper_preserves_the_selected_mode_through_python() {
+    let mut data: PreviewRequest =
+        serde_json::from_str(include_str!("../../contracts/fixtures/v1/editing.json")).unwrap();
+    let opt = &mut data.settings.design.as_mut().unwrap().optimization;
+    assert!(!opt.inverse_taper);
+    opt.taper = 120.;
+    opt.inverse_taper = true;
+    assert!(validate_preview(&data).is_ok());
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    let result = build_preview(&data, root, Arc::new(AtomicBool::new(false))).unwrap();
+    let ring = result["mesh"]["objects"][0]["rings"][0].as_array().unwrap();
+    let xs: Vec<f64> = ring.iter().map(|p| p[0].as_f64().unwrap()).collect();
+    let width = xs.iter().copied().fold(f64::NEG_INFINITY, f64::max)
+        - xs.iter().copied().fold(f64::INFINITY, f64::min);
+    assert!((width - 1.6).abs() < 1e-8);
+    data.settings.design.as_mut().unwrap().optimization.taper = 200.;
+    assert!(validate_preview(&data).is_err());
+}

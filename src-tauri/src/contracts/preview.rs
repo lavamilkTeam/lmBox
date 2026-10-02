@@ -45,6 +45,21 @@ pub struct Optimization {
     pub taper: f64,
     #[serde(default)]
     pub inverse_taper: bool,
+    #[serde(default = "default_xy_mode")]
+    pub xy_mode: String,
+    #[serde(default = "default_xy_scale_x")]
+    pub xy_scale_x: f64,
+    #[serde(default = "default_xy_scale_y")]
+    pub xy_scale_y: f64,
+}
+fn default_xy_mode() -> String {
+    "off".into()
+}
+fn default_xy_scale_x() -> f64 {
+    80.0
+}
+fn default_xy_scale_y() -> f64 {
+    120.0
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -99,6 +114,10 @@ impl Optimization {
             && range(self.stagger_shrink, 0.0, 70.0)
             && range(self.taper, 100.0, 200.0)
             && (!self.inverse_taper || self.taper < 200.0)
+            && ["off", "upper", "whole", "opposed"].contains(&self.xy_mode.as_str())
+            && range(self.xy_scale_x, 10.0, 200.0)
+            && range(self.xy_scale_y, 10.0, 200.0)
+            && (self.xy_mode != "opposed" || (self.xy_scale_x < 200.0 && self.xy_scale_y < 200.0))
     }
 }
 impl DesignSettings {

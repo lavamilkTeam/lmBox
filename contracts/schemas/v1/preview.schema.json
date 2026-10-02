@@ -155,6 +155,28 @@
         "inverseTaper": {
           "type": "boolean",
           "default": false
+        },
+        "xyMode": {
+          "type": "string",
+          "enum": [
+            "off",
+            "upper",
+            "whole",
+            "opposed"
+          ],
+          "default": "off"
+        },
+        "xyScaleX": {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 200,
+          "default": 80
+        },
+        "xyScaleY": {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 200,
+          "default": 120
         }
       },
       "allOf": [
@@ -172,6 +194,28 @@
           "then": {
             "properties": {
               "taper": {
+                "exclusiveMaximum": 200
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "xyMode"
+            ],
+            "properties": {
+              "xyMode": {
+                "const": "opposed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "xyScaleX": {
+                "exclusiveMaximum": 200
+              },
+              "xyScaleY": {
                 "exclusiveMaximum": 200
               }
             }

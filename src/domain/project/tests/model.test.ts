@@ -3,7 +3,8 @@ import { createPinia, setActivePinia } from 'pinia'
 import { isReactive } from 'vue'
 import { useProjectStore } from '../index'
 import fixture from '../../../../contracts/fixtures/v1/preview.json'
-import type { GraphicsIr, PreviewMesh } from '../../../contracts'
+import xyFixture from '../../../../contracts/fixtures/v1/xy-scaling.json'
+import type { GraphicsIr, Optimization, PreviewMesh } from '../../../contracts'
 
 beforeEach(()=>setActivePinia(createPinia()))
 const mesh:PreviewMesh={positions:[0,0,0,1,0,0,0,1,0],indices:[0,1,2],contours:[],summary:{bounds:[[0,0,0],[1,1,.2]],volume:1,holeCount:2,triangleCount:1,tolerance:.01,unit:'mm'}}
@@ -71,4 +72,23 @@ it('invalidates geometry for design changes but not selection, and gates exports
   expect(store.active!.model.status).toBe('idle')
   expect(store.exportRequest()).toBeUndefined()
   store.undo();expect(store.active!.editing.design.cornerTL).toBe(0)
+})
+
+it('keeps XY and thickness settings together across requests and history',()=>{
+  const store=open()
+  const optimization={...xyFixture.edits[0]!.optimization,taper:120,inverseTaper:true} as Optimization
+  store.setSelection(['0:0:0'])
+  store.applyOptimization(optimization,true)
+  const request=store.beginModel()!
+  expect(request.edits![0]!.optimization).toEqual(optimization)
+  expect(request.settings.design!.optimization.xyMode).toBe('off')
+  store.applyOptimization({...optimization,xyMode:'opposed'},true)
+  expect(request.edits![0]!.optimization!.xyMode).toBe('upper')
+  store.undo()
+  expect(store.activeEdits[0]!.optimization).toEqual(optimization)
+  store.undo(true)
+  expect(store.activeEdits[0]!.optimization!.xyMode).toBe('opposed')
+  store.applyOptimization({...optimization,xyMode:'whole'},false)
+  expect(store.active!.editing.design.optimization.xyMode).toBe('whole')
+  expect(store.activeEdits[0]!.optimization!.xyMode).toBe('opposed')
 })

@@ -8,6 +8,7 @@ from shapely.ops import unary_union
 from shapely.strtree import STRtree
 
 from ._contours import operations, valid
+from ._xy_scaling import scale_xy
 
 DEFAULT_OPT = dict(
     scale=100,
@@ -155,7 +156,8 @@ def edited_holes(ir, edits, settings):
         )
         o["geometry"] = affinity.translate(g, dx * factor, dy * factor)
     for o in eligible:
-        o["geometry"] = optimize(o["geometry"], {**o["opt"], "scale": 100})
+        g = scale_xy(o["geometry"], o["opt"])
+        o["geometry"] = optimize(g, {**o["opt"], "scale": 100})
     visible = []
     for o in prepared:
         if o["deleted"]:

@@ -113,3 +113,39 @@ fn inverse_taper_preserves_the_selected_mode_through_python() {
     data.settings.design.as_mut().unwrap().optimization.taper = 200.;
     assert!(validate_preview(&data).is_err());
 }
+
+#[test]
+fn xy_scaling_modes_survive_the_native_boundary_and_validate_limits() {
+    let mut data: PreviewRequest =
+        serde_json::from_str(include_str!("../../contracts/fixtures/v1/xy-scaling.json")).unwrap();
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    assert_eq!(
+        data.settings.design.as_ref().unwrap().optimization.xy_mode,
+        "off"
+    );
+    for (mode, width, height) in [
+        ("upper", 2.0, 1.1),
+        ("whole", 1.6, 1.2),
+        ("opposed", 2.4, 1.0),
+    ] {
+        data.edits[0].optimization.as_mut().unwrap().xy_mode = mode.into();
+        assert!(validate_preview(&data).is_ok());
+        let result = build_preview(&data, root, Arc::new(AtomicBool::new(false))).unwrap();
+        let ring = result["mesh"]["objects"][0]["rings"][0].as_array().unwrap();
+        for (axis, expected) in [(0, width), (1, height)] {
+            let values: Vec<f64> = ring.iter().map(|p| p[axis].as_f64().unwrap()).collect();
+            let span = values.iter().copied().fold(f64::NEG_INFINITY, f64::max)
+                - values.iter().copied().fold(f64::INFINITY, f64::min);
+            assert!((span - expected).abs() < 1e-8);
+        }
+    }
+    data.edits[0].optimization.as_mut().unwrap().xy_scale_x = 200.;
+    assert!(validate_preview(&data).is_err());
+    data.edits[0].optimization.as_mut().unwrap().xy_mode = "whole".into();
+    assert!(validate_preview(&data).is_ok());
+    data.edits[0].optimization.as_mut().unwrap().xy_scale_y = 0.;
+    assert!(validate_preview(&data).is_err());
+    data.edits[0].optimization.as_mut().unwrap().xy_scale_y = 120.;
+    data.edits[0].optimization.as_mut().unwrap().xy_mode = "unknown".into();
+    assert!(validate_preview(&data).is_err());
+}

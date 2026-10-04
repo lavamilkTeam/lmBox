@@ -1,4 +1,4 @@
-const roots = ['features', 'domain', 'platform'];
+const roots = ['features', 'domain', 'platform', 'ui'];
 module.exports = {
   forbidden: [
     { name: 'tauri-only-in-desktop-platform', severity: 'error', from: { pathNot: '^src/platform/desktop/' }, to: { path: '(^|/)@tauri-apps/' } },

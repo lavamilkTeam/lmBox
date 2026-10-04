@@ -3,6 +3,7 @@ name = "lmbox"
 version = "0.1.0"
 edition = "2021"
 publish = false
+default-run = "lmbox-desktop"
 
 [lib]
 name = "lmbox"
@@ -26,3 +27,18 @@ strip = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tempfile = "3"
+tauri = { version = "2", optional = true, features = [] }
+rfd = { version = "0.15", optional = true }
+
+[features]
+default = []
+desktop = ["dep:tauri", "dep:tauri-build", "dep:rfd"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[[bin]]
+name = "lmbox-desktop"
+path = "src/main.rs"
+required-features = ["desktop"]
+
+[build-dependencies]
+tauri-build = { version = "2", optional = true, features = [] }

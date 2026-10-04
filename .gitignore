@@ -22,3 +22,8 @@ engine/.ruff_cache/
 engine/.import_linter_cache/
 **/__pycache__/
 engine/src/*.egg-info/
+
+# Desktop build products
+src-tauri/binaries/
+src-tauri/gen/
+src-tauri/resources/

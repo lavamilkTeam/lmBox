@@ -1,6 +1,6 @@
 # Rust 桌面与业务层
 
-本目录已有单 crate Gerber/ZIP 导入库、浏览器 WASM 薄入口、graphics v2 和 import v1 类型及测试；已有本地模型预览 CLI 和 Python 单次任务调用；Tauri 桌面宿主、持久任务队列及工程存储尚未实现。下列完整目录是目标结构，不代表全部已有能力。先读 [根 AGENTS.md](../AGENTS.md) 并应用 `code-boundary-standards`。后端采用**模块化单体，按业务能力组织（Feature-first）**，以单 crate 起步，不提前拆成多 crate 或微服务。
+本目录已有单 crate Gerber/ZIP 导入库、浏览器 WASM 薄入口、graphics v2 和 import v1 类型及测试；已有本地模型预览 CLI 和 Python 单次任务调用；已有可选的 Tauri 桌面宿主；持久任务队列及工程存储尚未实现。下列完整目录是目标结构，不代表全部已有能力。先读 [根 AGENTS.md](../AGENTS.md) 并应用 `code-boundary-standards`。后端采用**模块化单体，按业务能力组织（Feature-first）**，以单 crate 起步，不提前拆成多 crate 或微服务。
 
 ## 所有权与边界
 
@@ -97,15 +97,24 @@ src-tauri/
 - `bin/preview.rs → app::build_preview → features/stencil + runtime/python`；应用层协调业务验证和外部进程，feature 不访问文件或启动 Python。
 - CLI 首行读取 preview v1 请求，stdin 关闭即取消。Python 由 Rust 启动并在取消或 60 秒超时后终止、回收。临时任务目录只包含固定名称文件，完成/失败后清理。
 - 大 IR 和网格通过任务目录交换，Python JSONL 只返回身份和产物名称；Rust 核对关联信息后读取受限大小的网格。浏览器适配最多同时运行两个任务。
-- 原生测试需要先运行 `npm run setup:geometry`。本入口面向本地开发预览，并非已完成 Tauri 桌面打包或工程持久化。
+- 原生测试需要先运行 `npm run setup:geometry`。本入口面向本地开发预览，桌面宿主另经 commands 接入，不表示已完成工程持久化。
 
 
 ## 编辑及导出入口
 
 - preview v1 可选编辑扩展由 typed serde 结构接收，并在 stencil 业务边界检查参数范围、唯一编辑 ID、板框版本/规模及允许的导出格式；Python 再按同一共享 schema 校验几何输入。
 - Rust 继续拥有本地任务目录、子进程与结果读取。Python 返回固定 `mesh.json`，导出文本位于同一受限产物内；Rust 抽取 stl/svg/dxf 格式与内容，拒绝请求和结果格式不符，不开放任意文件路径。
-- 前端每次导出带新的任务身份并核对当前修订；取消、超时、并发数和 32 MB 产物限制同模型预览。现阶段仍为本地开发适配，未增加持久任务仓库或 Tauri 宿主。
+- 前端每次导出带新的任务身份并核对当前修订；取消、超时、并发数和 32 MB 产物限制同模型预览。桌面宿主与本地开发适配复用同一业务入口，未增加持久任务仓库。
 
 - `inverseTaper` 可选布尔值默认为 false；业务校验拒绝开启反比缩放且喇叭口比例达到 200% 的请求，完整传递整层及局部优化到 Python，不在 Rust 计算截面。
 
 - XY 缩放字段按共享 schema 提供兼容默认值并完整转发；业务校验模式枚举、有限数值和上下反向模式的小于 200% 限制。原生集成测试覆盖三种模式返回的实际轮廓尺寸。半部裁切与缩放仍归 Python。
+
+## 最小桌面宿主
+
+- `main.rs → commands → app → runtime/python`；`desktop` 是可选 Cargo feature，WASM 和纯后端检查不依赖 WebView 库。`commands` 只适配 IPC、原生保存对话框、固定资源路径和窗口退出。
+- `app::PreviewTasks` 登记最多两个任务，按工程/任务身份隔离。先确认登记再运行，保证准备期间的取消不会丢失；运行中任务须由实际执行者收尾，退出前取消并等待进程回收。未启动登记在一分钟后可回收。
+- `app::build_bundled_preview` 与 CLI 共享参数校验、JSONL、60 秒超时及产物限制；计算引擎只从应用资源目录或可执行程序相邻的固定 geometry 目录定位，前端不能传入可执行路径。PyInstaller 使用目录模式，不创建额外的解包父进程。
+- 保存命令限制 json/stl/svg/dxf 和 32 MB，由用户选择目标；取消返回 false，写入失败返回错误，不伪报成功。不暴露通用 shell 或任意文件读取接口。
+- 开发先运行 `npm run setup:wasm`、`npm run setup:geometry`、`npm run build:wasm`、`npm run build:worker`，再运行 `npm run desktop:dev`（独立端口 1421）。生产资源编译为 `npm run desktop:build -- --no-bundle`；该命令只构建可执行程序及资源，不生成签名安装器。
+- 桌面变更另运行 `cargo clippy --features desktop --locked --all-targets -- -D warnings`、`cargo test --features desktop --locked` 和 `npm run check:worker`。CI 三平台矩阵必须全部成功，仍需实际窗口验证关键交互。

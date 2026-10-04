@@ -1,7 +1,7 @@
 //! lmBox backend crate.
 //!
 //! This crate currently hosts the `board_import` Gerber parser and the Rust
-//! bindings and a local Python preview task runner. Tauri commands, project
+//! bindings and a local Python preview task runner. Project
 //! persistence, STEP export and slicer integration are not implemented yet.
 
 pub mod contracts;
@@ -16,3 +16,8 @@ mod browser;
 pub mod app;
 #[cfg(not(target_arch = "wasm32"))]
 mod runtime;
+
+#[cfg(all(feature = "desktop", not(target_arch = "wasm32")))]
+mod commands;
+#[cfg(all(feature = "desktop", not(target_arch = "wasm32")))]
+pub use commands::run;

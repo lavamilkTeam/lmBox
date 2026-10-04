@@ -1,13 +1,18 @@
 """Shared request validation and library-neutral mesh data."""
 
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
-SCHEMAS = Path(__file__).resolve().parents[4] / "contracts" / "schemas"
+SCHEMAS = (
+    Path(sys._MEIPASS) / "contracts" / "schemas"
+    if getattr(sys, "frozen", False)
+    else Path(__file__).resolve().parents[4] / "contracts" / "schemas"
+)
 
 
 @dataclass

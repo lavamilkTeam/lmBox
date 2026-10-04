@@ -33,7 +33,14 @@ async function importFiles(files: File[]) {
   catch(e) { const message=e instanceof Error ? e.message : '文件读取失败'; notify(message); if (store.active) store.log(store.active,message,'warning') }
   finally { busy.value=false;importController=undefined }
 }
-function exportParams() { if (store.active) { saveParameters(store.active); store.log(store.active,'参数配置已导出为 JSON。','success'); store.active.dirty=false; notify('参数配置已导出') } }
+async function exportParams() {
+  const doc=store.active
+  if (!doc) return
+  try {
+    if (!await saveParameters(doc)) return
+    store.log(doc,'参数配置已导出为 JSON。','success'); notify('参数配置已导出')
+  } catch (error) { notify(error instanceof Error ? error.message : '参数导出失败。') }
+}
 function requestClose(id: string) { const doc=store.documents.find(d=>d.id===id); if (doc?.dirty) closeId.value=id; else store.close(id) }
 function drop(event: DragEvent) { dropDepth.value=0; if (event.dataTransfer?.files.length) void importFiles(Array.from(event.dataTransfer.files)) }
 function keydown(event: KeyboardEvent) { if ((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='o') { event.preventDefault(); importer.value?.open() }; if ((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='s') { event.preventDefault(); exportParams() }; if(event.key==='Escape') closeId.value='' }

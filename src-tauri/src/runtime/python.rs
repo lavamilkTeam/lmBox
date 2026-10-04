@@ -19,29 +19,54 @@ pub(crate) fn preview(
     root: &Path,
     cancelled: Arc<AtomicBool>,
 ) -> Result<Value, String> {
+    let mut command = Command::new(root.join(if cfg!(windows) {
+        "engine/.venv/Scripts/python.exe"
+    } else {
+        "engine/.venv/bin/python"
+    }));
+    command
+        .arg("-m")
+        .arg("lmbox_geometry")
+        .env("PYTHONPATH", root.join("engine/src"));
+    execute(request, command, cancelled)
+}
+
+pub(crate) fn bundled_preview(
+    request: &PreviewRequest,
+    worker: &Path,
+    cancelled: Arc<AtomicBool>,
+) -> Result<Value, String> {
+    execute(request, Command::new(worker), cancelled)
+}
+
+fn execute(
+    request: &PreviewRequest,
+    mut command: Command,
+    cancelled: Arc<AtomicBool>,
+) -> Result<Value, String> {
+    if cancelled.load(Ordering::SeqCst) {
+        return Err("模型计算已取消或超时。".into());
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000);
+    }
     let task = tempfile::tempdir().map_err(|_| "无法创建模型任务目录。")?;
     fs::write(
         task.path().join("input.json"),
         serde_json::to_vec(request).map_err(|e| e.to_string())?,
     )
     .map_err(|_| "无法写入模型输入。")?;
-    let python = root.join(if cfg!(windows) {
-        "engine/.venv/Scripts/python.exe"
-    } else {
-        "engine/.venv/bin/python"
-    });
     let output = fs::File::create(task.path().join("response.jsonl")).map_err(|e| e.to_string())?;
     let errors = fs::File::create(task.path().join("errors.log")).map_err(|e| e.to_string())?;
-    let mut child = Command::new(python)
-        .arg("-m")
-        .arg("lmbox_geometry")
-        .env("PYTHONPATH", root.join("engine/src"))
+    let mut child = command
         .current_dir(task.path())
         .stdin(Stdio::piped())
         .stdout(output)
         .stderr(errors)
         .spawn()
-        .map_err(|_| "无法启动模型计算，请先运行 npm run setup:geometry。")?;
+        .map_err(|_| "无法启动模型计算，请检查计算引擎是否完整安装。")?;
     let envelope = json!({"protocolVersion":"1", "projectId":request.project_id,"jobId":request.job_id,"inputRevision":request.input_revision});
     if let Err(error) = writeln!(child.stdin.take().expect("piped stdin"), "{envelope}") {
         let _ = child.kill();

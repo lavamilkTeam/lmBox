@@ -1,0 +1,10 @@
+{
+  "identifier": "main-window",
+  "description": "Local workbench window; no filesystem or shell API is exposed to JavaScript.",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default"
+  ]
+}

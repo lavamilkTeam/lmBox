@@ -2,7 +2,7 @@
 import { computed, useId } from 'vue'
 import type { PathItem, RenderedIr } from './render'
 
-const props = withDefaults(defineProps<{ geometry: RenderedIr; color?:string }>(),{color:'#9ac8cb'})
+const props = withDefaults(defineProps<{ geometry: RenderedIr; color?:string }>(),{color:'#7db6e8'})
 const id = `ir-${useId().replace(/[^a-zA-Z0-9_-]/g, '-')}`
 const operations = computed(() => props.geometry.operations.map((op,index)=>({
   ...op,index,needsMask:op.paths.some(path=>path.fill==='black' || path.stroke==='black'),

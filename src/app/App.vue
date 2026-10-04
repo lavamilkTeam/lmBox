@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { NConfigProvider, NDialogProvider, NMessageProvider } from 'naive-ui'
+import { NConfigProvider, NDialogProvider, NMessageProvider, type GlobalThemeOverrides } from 'naive-ui'
 import { Layers, Download, ChevronDown, Check, X, AlertCircle, Upload } from '@lucide/vue'
 import { DocumentTabs } from '../features/project'
 import { ImportButton } from '../features/import-board'
@@ -23,7 +23,18 @@ const closeId = ref('')
 const dropDepth = ref(0)
 let toastTimeout: ReturnType<typeof setTimeout>
 const closingDoc = computed(() => store.documents.find(d=>d.id===closeId.value))
-const overrides = { common: { primaryColor: '#3875ed', primaryColorHover: '#5489f2', primaryColorPressed: '#2962cb', borderRadius: '4px', fontSize: '12px', heightSmall: '30px', fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif' }, Input: { color: '#f9fafc', colorFocus: '#fff', border: '1px solid #dfe4ec' }, InputNumber: { peers: { Input: { color: '#f9fafc' } } } }
+const overrides: GlobalThemeOverrides = {
+  common: {
+    primaryColor: '#262626', primaryColorHover: '#525252', primaryColorPressed: '#171717', primaryColorSuppl: '#404040',
+    infoColor: '#525252', successColor: '#525252', warningColor: '#525252', errorColor: '#262626',
+    textColorBase: '#171717', textColor1: '#262626', textColor2: '#525252', textColor3: '#737373',
+    borderColor: '#d4d4d4', dividerColor: '#e5e5e5', hoverColor: '#f5f5f5',
+    borderRadius: '4px', fontSize: '12px', heightSmall: '30px',
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif',
+  },
+  Input: { color: '#fafafa', colorFocus: '#fff', border: '1px solid #d4d4d4', boxShadowFocus: '0 0 0 2px #26262618' },
+  InputNumber: { peers: { Input: { color: '#fafafa' } } },
+}
 function notify(message: string) { toast.value=message; clearTimeout(toastTimeout); toastTimeout=setTimeout(()=>toast.value='',5000) }
 async function importFiles(files: File[]) {
   if (busy.value) return

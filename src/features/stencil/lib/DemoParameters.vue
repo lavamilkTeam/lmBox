@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { NInputNumber, NSelect, NSlider, NSwitch } from 'naive-ui'
 import { RotateCcw, SlidersHorizontal, Layers, Box } from '@lucide/vue'
+import { HelpTip } from '../../../ui/help-tip'
 import { useProjectStore } from '../../../domain/project'
 const store = useProjectStore()
 const doc = computed(() => store.active)
@@ -33,14 +34,13 @@ const sides = computed(() => [{ label: '顶层锡膏 · Top Paste', value: 'top'
         <div class="layer-legend"><span><i class="swatch paste"/>锡膏开孔</span><span><i class="swatch outline"/>PCB 板框</span></div>
       </section>
       <section v-else class="parameter-section">
-        <h3><Box :size="14"/>模板尺寸<span>02</span></h3>
+        <h3><Box :size="14"/>模板尺寸<HelpTip v-if="!doc.demo" label="模板尺寸说明">矩形模板：按当前图层的图形范围加外扩边距生成。</HelpTip><span>02</span></h3>
         <label class="field-label">模板厚度 <span>mm</span></label>
         <NInputNumber :input-props="{ 'aria-label': '模板厚度' }" :value="doc.params.thickness" :min="0.05" :max="3" :step="0.05" size="small" @update:value="v => v !== null && store.update('thickness', v)"/>
         <label class="field-label">外扩边距 <span>mm</span></label>
         <NInputNumber :input-props="{ 'aria-label': '外扩边距' }" :value="doc.params.margin" :min="1" :max="30" :step="1" size="small" @update:value="v => v !== null && store.update('margin', v)"/>
-        <label class="field-label">开孔补偿 <span>mm / 单边</span></label>
+        <label class="field-label"><span>开孔补偿 <HelpTip label="开孔补偿说明">正值扩大开孔，负值缩小开孔。</HelpTip></span><span>mm / 单边</span></label>
         <NInputNumber :input-props="{ 'aria-label': '开孔补偿' }" :value="doc.params.compensation" :min="-0.3" :max="0.5" :step="0.01" size="small" @update:value="v => v !== null && store.update('compensation', v)"/>
-        <p class="field-help">正值扩大开孔，负值缩小开孔。</p><p v-if="!doc.demo" class="field-help">矩形模板：按当前图层的图形范围加外扩边距生成。</p>
       </section>
       <section class="parameter-section board-info">
         <h3>文件信息<span>03</span></h3>

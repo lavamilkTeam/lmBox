@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Box, Scan, CodeXml, MousePointer2, Move, ZoomIn, ZoomOut, Maximize, Focus, Layers, FileBox, Upload, Grid2X2, CircleHelp } from '@lucide/vue'
+import { Box, Scan, CodeXml, MousePointer2, Move, ZoomIn, ZoomOut, Maximize, Focus, Layers, FileBox, Upload, Grid2X2 } from '@lucide/vue'
 import { useProjectStore } from '../../../domain/project'
+import { HelpTip } from '../../../ui/help-tip'
 import SelectionLayer from './SelectionLayer.vue'
 import IrLayer from './IrLayer.vue'
 import { renderIr, type RenderedIr } from './render'
@@ -145,7 +146,7 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
       <button :disabled="!doc || doc.demo" :class="{selected:doc?.mode==='2d' && !panMode}" aria-label="选择工具" @click="store.setMode('2d');panMode=false"><MousePointer2 :size="19"/><span>选择</span></button>
       <button :disabled="!doc || doc.mode==='3d'" :class="{ selected:panMode }" aria-label="平移工具" title="平移画布" @click="panMode=!panMode"><Move :size="19"/><span>平移</span></button>
       <button :disabled="!doc" aria-label="适应画布" title="适应画布" @click="fit"><Focus :size="19"/><span>适应</span></button>
-      <span class="rail-bottom" title="滚轮缩放 · 平移工具拖动 · 3D 鼠标旋转"><CircleHelp :size="18"/></span>
+      <span class="rail-bottom"><HelpTip label="预览操作说明">{{ doc?.mode==='3d' ? '拖动旋转 · 滚轮缩放 · 右键平移' : '单击选择 · 拖动框选 · Shift 多选 · 中键平移' }}</HelpTip></span>
     </nav>
     <section class="preview-main">
       <div class="viewport-toolbar"><div><span class="view-icon"><component :is="doc?.mode==='3d' ? Box : doc?.mode==='gcode' ? CodeXml : Layers" :size="15"/></span><strong>{{ modeTitle }}</strong></div><div><button v-if="doc && !doc.demo && doc.editing.selected.length && doc.editing.design.kind==='stencil'" class="text-button" :disabled="doc.model.status!=='ready'" @click="focusKey++;store.setMode('3d')">查看所选孔壁</button><span v-if="doc?.demo" class="demo-badge">示例数据</span><button class="icon-button" title="重置视图" aria-label="重置视图" @click="fit"><Maximize :size="15"/></button></div></div>
@@ -194,8 +195,7 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
           <div v-if="!doc.demo && doc.mode==='2d' && doc.model.status!=='ready'" class="edit-progress" :role="doc.model.status==='error'?'alert':'status'">{{ doc.model.status==='error' ? doc.model.error : doc.model.status==='cancelled' ? '已取消计算' : '正在计算编辑结果…' }}<button v-if="doc.model.status==='error' || doc.model.status==='cancelled'" @click="store.retryModel">重试</button></div>
           <div class="viewport-top-info">{{ doc.mode==='gcode' ? `路径演示 · 第 ${doc.params.layer} 层` : doc.mode==='3d' ? (doc.demo ? '透视视图' : doc.editing.design.kind==='base' ? '定位底板 · 透视视图' : '钢网 · 透视视图') : doc.demo ? '顶视图 · TOP' : store.activeLayer?.name ?? doc.name }}<span class="info-divider"/>{{ doc.mode==='3d' ? `${(!doc.demo && doc.editing.design.kind==='base' ? doc.editing.design.floor+doc.editing.design.boardThickness : doc.params.thickness).toFixed(2)} mm 厚度` : '单位：mm' }}</div>
           <div class="axis-widget"><span class="axis-y">Y</span><span class="axis-x">X</span><i/></div>
-          <div v-if="doc.mode==='2d' && topOutline" class="mouth-legend"><label><input v-model="showTopOutline" type="checkbox"/>显示上口轮廓</label><span>橙色虚线：上口 · 填充图形：贴板下口</span></div>
-          <div class="canvas-hint">{{ doc.mode==='3d' ? '拖动旋转 · 滚轮缩放 · 右键平移' : '单击选择 · 拖动框选 · Shift 多选 · 中键平移' }}</div>
+          <div v-if="doc.mode==='2d' && topOutline" class="mouth-legend"><label><input v-model="showTopOutline" type="checkbox"/>显示上口轮廓</label><HelpTip label="上口轮廓说明">橙色虚线：上口 · 填充图形：贴板下口</HelpTip></div>
           <div v-if="doc.mode==='gcode'" class="toolpath-legend"><span><i style="background:#eca967"/>轮廓</span><span><i style="background:#649bb0"/>填充</span><span><i style="background:#bf84f2"/>空走</span></div>
           <div v-if="doc.mode!=='3d'" class="zoom-controls"><button aria-label="缩小" @click="changeZoom(-0.1)"><ZoomOut :size="16"/></button><span>{{ Math.round(zoom*100) }}%</span><button aria-label="放大" @click="changeZoom(0.1)"><ZoomIn :size="16"/></button><i/><button aria-label="缩放适应画布" @click="fit"><Maximize :size="14"/></button></div>
         </template>

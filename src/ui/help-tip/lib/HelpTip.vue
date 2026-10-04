@@ -41,12 +41,12 @@ function dismiss() {
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: #7c8ba0;
+  color: #737373;
   cursor: help;
   vertical-align: middle;
 }
-.help-tip-button:hover, .help-tip-button:focus-visible { color: #3578f0; background: #3578f012; }
-.help-tip-button:focus-visible { outline: 2px solid #3578f0; outline-offset: 2px; }
+.help-tip-button:hover, .help-tip-button:focus-visible { color: #262626; background: #26262612; }
+.help-tip-button:focus-visible { outline: 2px solid #262626; outline-offset: 2px; }
 .help-tip-content { font-size: 12px; line-height: 1.7; font-weight: 400; overflow-wrap: anywhere; }
 .help-tip-content :deep(p) { margin: 0; }
 .help-tip-content :deep(p + p) { margin-top: 6px; }

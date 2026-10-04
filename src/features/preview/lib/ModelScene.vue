@@ -48,7 +48,7 @@ function rebuild() {
     const geometry=indexed.toNonIndexed();indexed.dispose();geometry.computeVertexNormals();geometry.computeBoundingBox()
     const bounds=geometry.boundingBox!,center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3())
     geometry.translate(-center.x,-center.y,-center.z);span=Math.max(size.x,size.y,size.z);floorZ=-size.z/2
-    mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:0xbac9d9,metalness:0.35,roughness:0.45}))
+    mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:0xc9c9c9,metalness:0.35,roughness:0.45}))
     const shift=center.clone().sub(modelCenter)
     modelCenter=center
     scene.add(mesh);updateDisplay()
@@ -72,7 +72,7 @@ function rebuild() {
     shape.holes.push(hole)
   }
   const geometry = new THREE.ExtrudeGeometry(shape, { depth: p.thickness, bevelEnabled: false, curveSegments: 16 })
-  const material = new THREE.MeshStandardMaterial({ color: 0xbac9d9, metalness: 0.55, roughness: 0.38, side: THREE.DoubleSide })
+  const material = new THREE.MeshStandardMaterial({ color: 0xc9c9c9, metalness: 0.55, roughness: 0.38, side: THREE.DoubleSide })
   mesh = new THREE.Mesh(geometry, material); scene.add(mesh);span=2*size;floorZ=0;updateDisplay();reset()
 }
 onMounted(() => {
@@ -83,9 +83,9 @@ onMounted(() => {
     scene = new THREE.Scene()
     camera = new THREE.PerspectiveCamera(40, 1, 0.1, 2000); camera.up.set(0,0,1)
     controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.minDistance = 25; controls.maxDistance = 500
-    scene.add(new THREE.HemisphereLight(0xe5efff, 0x394054, 3))
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x404040, 3))
     const light = new THREE.DirectionalLight(0xffffff, 4); light.position.set(-80,-20,150); scene.add(light)
-    grid = new THREE.GridHelper(1, 20, 0x343a43, 0x1c222a); grid.rotation.x = Math.PI/2; scene.add(grid)
+    grid = new THREE.GridHelper(1, 20, 0x343434, 0x202020); grid.rotation.x = Math.PI/2; scene.add(grid)
     reset(); rebuild()
     observer = new ResizeObserver(() => { const el = host.value; if (!el || !renderer) return; const w=el.clientWidth,h=el.clientHeight; if (!h) return; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); if(props.focusKey)focusSelected();else reset() }); observer.observe(host.value!)
     const render = () => { controls.update(); renderer!.render(scene,camera); frame=requestAnimationFrame(render) }; render()

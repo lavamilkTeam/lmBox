@@ -118,9 +118,9 @@ test('IR masks preserve drawing order, transparency and local macro holes', asyn
     } finally {URL.revokeObjectURL(url)}
   })
   expect(samples[0]![3]).toBe(0) // local hole over the cleared layer
-  expect(samples[1]).toEqual([154,200,203,255]) // later dark restores material
+  expect(samples[1]).toEqual([125,182,232,255]) // later dark restores material
   expect(samples[2]![3]).toBe(0) // layer clear stays transparent
-  expect(samples[3]).toEqual([154,200,203,255]) // macro hole preserves earlier material
+  expect(samples[3]).toEqual([125,182,232,255]) // macro hole preserves earlier material
   await expect(page.getByRole('button',{name:'3D 模型',exact:true})).toBeEnabled()
   await expect(page.locator('.model-scene')).toHaveCount(0)
 })

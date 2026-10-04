@@ -1,6 +1,7 @@
 import type { BoardDocument, LayerFile } from '../../../domain/project'
 import type { GraphicsIr, ImportResult } from '../../../contracts'
 import demoGraphics from './demo-ir.json'
+import { saveTextFile } from './native'
 
 export async function inspectFiles(files: File[], signal?: AbortSignal): Promise<{ name: string; layers: LayerFile[] }[]> {
   if (!files.length) return []
@@ -43,9 +44,7 @@ export async function inspectFiles(files: File[], signal?: AbortSignal): Promise
 }
 export function saveParameters(doc: BoardDocument) {
   const data = { version: 2, source: doc.name, demo: doc.demo, parameters: doc.params, selectedLayer:doc.selectedLayer, design:doc.editing.design, edits:doc.editing.layers, outlineLayer:doc.editing.outlineLayer }
-  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
-  const a = document.createElement('a'); a.href = url; a.download = `${doc.name.replace(/\.zip$/i, '')}.parameters.json`; a.click()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+  return saveTextFile(`${doc.name.replace(/\.zip$/i, '')}.parameters.json`,JSON.stringify(data,null,2),'application/json')
 }
 
 // Loads the sample graphics IR produced by the Rust parser for demo.gbr. This

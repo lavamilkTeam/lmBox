@@ -1,6 +1,7 @@
 const roots = ['features', 'domain', 'platform'];
 module.exports = {
   forbidden: [
+    { name: 'tauri-only-in-desktop-platform', severity: 'error', from: { pathNot: '^src/platform/desktop/' }, to: { path: '(^|/)@tauri-apps/' } },
     { name: 'contracts-independent', severity: 'error', from: { path: '^src/contracts/' }, to: { path: '^src/(app|features|domain|platform|ui)/' } },
     { name: 'contracts-public-entrypoint', severity: 'error', from: { pathNot: '^src/contracts/' }, to: { path: '^src/contracts/', pathNot: '^src/contracts/index\\.ts$' } },
     { name: 'no-unresolved-internal-imports', severity: 'error', from: {}, to: { couldNotResolve: true, path: '^src/|^\\.' } },

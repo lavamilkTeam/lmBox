@@ -95,7 +95,7 @@ features/stencil/
 
 ## 真实三维预览
 
-- `app/lib/useModelPreview` 协调模型任务；`platform/desktop::generatePreview` 是唯一浏览器请求入口，向同源 `/api/preview` 发送版本化请求。
+- `app/lib/useModelPreview` 协调模型任务；`platform/desktop::generatePreview` 统一适配入口：浏览器向同源 `/api/preview` 发送版本化请求，桌面环境通过 Tauri IPC 使用同一协议。
 - domain 保存任务状态、修订号及 `markRaw` 网格；只有匹配工程、任务、修订号的运行中请求可发布结果。显示设置不使模型失效；图层、厚度、边距、补偿及镜像变化清除旧模型。
 - `ModelScene` 直接加载 Python 输出的顶点和三角索引，设置相机、材质和交互，不生成真实制造几何。固定示例仍保留演示路径。
 - 模板支持矩形及闭合单板随形外框；未选择板框时使用图形范围矩形，并在右侧说明这一尺寸来源。
@@ -118,3 +118,10 @@ features/stencil/
 - 打印优化的“反比缩放”作用于板厚方向：上口 P%，下口 200-P%；关闭时下口 100%。该参数经协议交给 Python，不由预览重建孔壁。“查看所选孔壁”仅调整真实网格相机目标和缩放距离，二维对象仍来自同版本原生下口轮廓。
 
 - 打印优化中的 XY 平面孔形提供关闭、仅上半部、整个焊盘和上下反向变化模式，X/Y 比例独立。草稿在应用前不改模型；局部与整层、撤销和参数导出沿用同一优化组。Vue 仅展示 Python 返回轮廓，板厚方向喇叭口继续独立设置。分区模式的 X 比例表示端部宽度因子，界面说明沿 Y 连续渐变；整个焊盘模式仍为统一的 X/Y 缩放。
+
+## 桌面适配与 CI
+
+- `platform/desktop/lib/native.ts` 私有封装 Tauri 检测、模型 IPC 和原生保存；feature 和 domain 不检测宿主、不导入 Tauri。dependency-cruiser 自动限制 `@tauri-apps/*` 只能出现在该平台模块。
+- 原生模型请求分为登记、运行和取消；适配在登记完成后补发准备期间的取消，运行响应仍接受相同身份及网格校验。浏览器继续使用 WASM 导入，桌面也复用该 Rust 解析器，不复制解析逻辑。
+- `saveParameters`、`saveModelArtifact` 返回 `Promise<boolean>`，false 表示用户取消保存；调用者等待结果后才提示成功，异常显示失败。导出参数不等于完整工程持久化。
+- CI 使用 Chromium 软件 WebGL 运行真实建模测试，禁止 `test.only`、不通过重试掩盖失败，并保留失败 trace/截图。前端门禁覆盖边界、单元、类型、构建和端到端行为。

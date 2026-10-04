@@ -1,0 +1,201 @@
+name: CI
+
+on:
+  push:
+    branches: [main, kihon]
+  pull_request:
+    branches: [main, kihon]
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: engine/pyproject.toml
+      - name: Install locked frontend dependencies
+        run: npm ci
+      - name: Install geometry engine for real browser integration tests
+        run: npm run setup:geometry
+      - name: Install the pinned Rust and WASM tools
+        run: |
+          rustup show
+          npm run setup:wasm
+      - name: Install Chromium and Linux browser dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Check boundaries, unit tests, types, build and browser behavior
+        run: npm run check
+      - name: Upload browser diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: frontend-test-results
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  rust:
+    name: Backend Rust
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: engine/pyproject.toml
+      - name: Prepare the real geometry worker
+        run: |
+          python -m venv engine/.venv
+          engine/.venv/bin/python -m pip install -e 'engine[dev]'
+      - name: Check Rust format and reject Clippy warnings
+        run: |
+          cargo fmt --manifest-path src-tauri/Cargo.toml --check
+          cargo clippy --manifest-path src-tauri/Cargo.toml --locked --all-targets -- -D warnings
+      - name: Test parsing, contracts, cancellation and Python integration
+        run: cargo test --manifest-path src-tauri/Cargo.toml --locked
+
+  geometry:
+    name: Backend Python
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: engine/pyproject.toml
+      - name: Install geometry and checking dependencies
+        run: python -m pip install -e 'engine[dev]'
+      - name: Check lint, module boundaries and geometry regressions
+        working-directory: engine
+        run: |
+          ruff check src tests
+          lint-imports
+          pytest --junitxml=test-results/geometry.xml
+      - name: Upload geometry test report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: geometry-test-results
+          path: engine/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  workflow:
+    name: Workflow validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.25.0'
+          cache: false
+      - run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+
+  desktop:
+    name: Desktop (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-14]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: engine/pyproject.toml
+      - name: Install Linux WebKit and window system libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev
+      - run: npm ci
+      - run: npm run setup:geometry
+      - run: npm run setup:wasm
+      - name: Bundle and exercise the standalone geometry runtime
+        run: |
+          npm run build:worker
+          npm run check:worker
+      - name: Reject desktop Rust warnings and test native integration
+        run: |
+          cargo clippy --manifest-path src-tauri/Cargo.toml --features desktop --locked --all-targets -- -D warnings
+          cargo test --manifest-path src-tauri/Cargo.toml --features desktop --locked
+      - name: Build the desktop executable and embedded frontend
+        run: npm run desktop:build -- --no-bundle
+      - name: Validate the copied application resources and preserve file permissions
+        run: |
+          npm run check:worker -- src-tauri/target/release/geometry
+          node scripts/archive-desktop.mjs
+      - name: Upload executable and bundled runtime
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: desktop-${{ matrix.os }}
+          path: .tools/desktop-*.tar.gz
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+  quality-gate:
+    name: Quality gate
+    if: ${{ always() }}
+    needs: [frontend, rust, geometry, workflow, desktop]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require every mandatory job to succeed
+        env:
+          JOB_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          results = json.loads(os.environ['JOB_RESULTS'])
+          failed = [name for name, job in results.items() if job['result'] != 'success']
+          for name, job in results.items():
+              print(f"{name}: {job['result']}")
+          if not results or failed:
+              print('Quality gate failed: every mandatory job must succeed.', file=sys.stderr)
+              sys.exit(1)
+          PY

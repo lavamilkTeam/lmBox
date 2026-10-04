@@ -17,7 +17,7 @@ export function useModelExport(notify:(message:string)=>void) {
       const result=await generatePreview(request,abort.signal)
       if(abort.signal.aborted || doc.model.revision!==request.inputRevision || !store.documents.some(d=>d.id===doc.id))return
       if(!result.artifact || result.artifact.format!==format)throw new Error('导出产物无效。')
-      saveModelArtifact(result.artifact,`${doc.name}-${doc.editing.design.kind}`)
+      if (!await saveModelArtifact(result.artifact,`${doc.name}-${doc.editing.design.kind}`)) return
       store.log(doc,`已导出 ${format.toUpperCase()}，输入版本 ${request.inputRevision}。`,'success');notify(`${format.toUpperCase()} 已导出`)
     } catch(error) {
       if(abort.signal.aborted)notify('参数已改变，导出已取消。')

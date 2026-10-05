@@ -118,3 +118,10 @@ src-tauri/
 - 保存命令限制 json/stl/svg/dxf 和 32 MB，由用户选择目标；取消返回 false，写入失败返回错误，不伪报成功。不暴露通用 shell 或任意文件读取接口。
 - 开发先运行 `npm run setup:wasm`、`npm run setup:geometry`、`npm run build:wasm`、`npm run build:worker`，再运行 `npm run desktop:dev`（独立端口 1421）。生产资源编译为 `npm run desktop:build -- --no-bundle`；该命令只构建可执行程序及资源，不生成签名安装器。
 - 桌面变更另运行 `cargo clippy --features desktop --locked --all-targets -- -D warnings`、`cargo test --features desktop --locked` 和 `npm run check:worker`。CI 三平台矩阵必须全部成功，仍需实际窗口验证关键交互。
+
+
+## 安装包发布
+
+- 三平台 CI 在现有桌面与引擎检查后生成安装包：Windows x64 NSIS、macOS arm64 DMG、Linux x64 deb/AppImage。引擎仍通过既有 resources 映射打包，不新增进程协议或算法入口。
+- 版本标签发布复用同一 CI；打包与上传由 `.github/workflows/` 和 `scripts/release-assets.mjs` 负责，业务模块不依赖 GitHub。版本、来源提交和 SHA-256 全部一致且质量门禁通过后才发布 Release。
+- macOS 仅使用 ad-hoc 签名，不等同 Apple 开发者签名或公证；Windows 发布者签名、Intel macOS 和软件内自动更新不在当前范围。触发方式与限制见 [质量规范](../.github/QUALITY.md#versioned-releases)。

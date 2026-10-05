@@ -34,14 +34,23 @@ jobs:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: engine/pyproject.toml
+      - name: Install the pinned Rust toolchain in a fresh directory
+        shell: bash
+        run: |
+          task_rustup_dir="$(mktemp -d "$RUNNER_TEMP/lmbox-rustup.XXXXXX")"
+          task_rust_channel="$(python -c 'import tomllib; print(tomllib.load(open("rust-toolchain.toml", "rb"))["toolchain"]["channel"])')"
+          echo "RUSTUP_HOME=$task_rustup_dir" >> "$GITHUB_ENV"
+          export RUSTUP_HOME="$task_rustup_dir"
+          rustup toolchain install "$task_rust_channel" --profile minimal --component clippy --component rustfmt
+          rustc --version
+          cargo clippy --version
+          cargo fmt --version
       - name: Install locked frontend dependencies
         run: npm ci
       - name: Install geometry engine for real browser integration tests
         run: npm run setup:geometry
       - name: Install the pinned Rust and WASM tools
-        run: |
-          rustup show
-          npm run setup:wasm
+        run: npm run setup:wasm
       - name: Install Chromium and Linux browser dependencies
         run: npx playwright install --with-deps chromium
       - name: Check boundaries, unit tests, types, build and browser behavior
@@ -70,6 +79,17 @@ jobs:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: engine/pyproject.toml
+      - name: Install the pinned Rust toolchain in a fresh directory
+        shell: bash
+        run: |
+          task_rustup_dir="$(mktemp -d "$RUNNER_TEMP/lmbox-rustup.XXXXXX")"
+          task_rust_channel="$(python -c 'import tomllib; print(tomllib.load(open("rust-toolchain.toml", "rb"))["toolchain"]["channel"])')"
+          echo "RUSTUP_HOME=$task_rustup_dir" >> "$GITHUB_ENV"
+          export RUSTUP_HOME="$task_rustup_dir"
+          rustup toolchain install "$task_rust_channel" --profile minimal --component clippy --component rustfmt
+          rustc --version
+          cargo clippy --version
+          cargo fmt --version
       - name: Prepare the real geometry worker
         run: |
           python -m venv engine/.venv
@@ -160,6 +180,17 @@ jobs:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: engine/pyproject.toml
+      - name: Install the pinned Rust toolchain in a fresh directory
+        shell: bash
+        run: |
+          task_rustup_dir="$(mktemp -d "$RUNNER_TEMP/lmbox-rustup.XXXXXX")"
+          task_rust_channel="$(python -c 'import tomllib; print(tomllib.load(open("rust-toolchain.toml", "rb"))["toolchain"]["channel"])')"
+          echo "RUSTUP_HOME=$task_rustup_dir" >> "$GITHUB_ENV"
+          export RUSTUP_HOME="$task_rustup_dir"
+          rustup toolchain install "$task_rust_channel" --profile minimal --component clippy --component rustfmt
+          rustc --version
+          cargo clippy --version
+          cargo fmt --version
       - name: Install Linux WebKit and window system libraries
         if: runner.os == 'Linux'
         run: |
@@ -184,6 +215,10 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            # PyInstaller normally adds this path when its worker starts. linuxdeploy scans ELF files directly.
+            export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/src-tauri/resources/lmbox-geometry/_internal${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          fi
           npm run desktop:build -- --bundles "$BUNDLE_TARGETS" --verbose 2>&1 | tee desktop-build.log
       - name: Preserve installer failure diagnostics
         if: failure()
@@ -193,6 +228,16 @@ jobs:
           path: desktop-build.log
           if-no-files-found: ignore
           retention-days: 7
+      - name: Verify the geometry worker extracted from the final AppImage
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          installers=("$GITHUB_WORKSPACE"/src-tauri/target/release/bundle/appimage/*.AppImage)
+          test "${#installers[@]}" -eq 1
+          appimage_check_dir="$(mktemp -d)"
+          trap 'rm -rf "$appimage_check_dir"' EXIT
+          (cd "$appimage_check_dir" && "${installers[0]}" --appimage-extract > /dev/null)
+          npm run check:worker -- "$appimage_check_dir/squashfs-root/usr/lib/lmBox/geometry"
       - name: Validate the copied application resources and preserve file permissions
         run: |
           npm run check:worker -- src-tauri/target/release/geometry

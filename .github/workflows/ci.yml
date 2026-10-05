@@ -184,6 +184,10 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            # PyInstaller normally adds this path when its worker starts. linuxdeploy scans ELF files directly.
+            export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/src-tauri/resources/lmbox-geometry/_internal${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          fi
           npm run desktop:build -- --bundles "$BUNDLE_TARGETS" --verbose 2>&1 | tee desktop-build.log
       - name: Preserve installer failure diagnostics
         if: failure()
@@ -193,6 +197,16 @@ jobs:
           path: desktop-build.log
           if-no-files-found: ignore
           retention-days: 7
+      - name: Verify the geometry worker extracted from the final AppImage
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          installers=("$GITHUB_WORKSPACE"/src-tauri/target/release/bundle/appimage/*.AppImage)
+          test "${#installers[@]}" -eq 1
+          appimage_check_dir="$(mktemp -d)"
+          trap 'rm -rf "$appimage_check_dir"' EXIT
+          (cd "$appimage_check_dir" && "${installers[0]}" --appimage-extract > /dev/null)
+          npm run check:worker -- "$appimage_check_dir/squashfs-root/usr/lib/lmBox/geometry"
       - name: Validate the copied application resources and preserve file permissions
         run: |
           npm run check:worker -- src-tauri/target/release/geometry

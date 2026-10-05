@@ -7,11 +7,11 @@ Development uses `kihon`; both `kihon` and `main` run CI on push and pull reques
 | Frontend | Module boundaries, unit tests, TypeScript, production assets, all Chromium end-to-end tests using the real Rust/Python backend |
 | Backend Rust | rustfmt, Clippy with warnings rejected, parser/contract/task and real Python integration tests |
 | Backend Python | Ruff, import-linter, complete geometry regression suite |
-| Desktop | Linux, Windows and macOS: relocated standalone worker creates a model and STL; native Clippy/tests pass; Tauri executable and embedded frontend build |
-| Workflow validation | Pinned actionlint validates workflow syntax and expressions |
+| Desktop | Linux, Windows and macOS: relocated standalone worker creates a model and STL; native Clippy/tests pass; Tauri executable, embedded frontend and platform installers build |
+| Workflow validation | Pinned actionlint validates workflow syntax and expressions; release artifact tests reject incomplete or mismatched builds |
 | Quality gate | Every required job succeeds, including every desktop matrix entry; failure, cancellation or skipping rejects the gate |
 
-There are no path filters that omit checks on documentation-only pull requests. Merge-group events run the same checks. Concurrent obsolete runs are cancelled; cancelled runs never satisfy the aggregate gate. GitHub Actions has read-only repository permission, actions are pinned to commits, dependency lockfiles are honored, and tests do not receive deployment credentials.
+There are no path filters that omit checks on documentation-only pull requests. Merge-group events run the same checks. Concurrent obsolete runs are cancelled; cancelled runs never satisfy the aggregate gate. CI jobs have read-only repository permission, actions are pinned to commits, dependency lockfiles are honored, and tests do not receive deployment credentials.
 
 In the active `main` ruleset, enable **Require status checks to pass**, select **Quality gate** from GitHub Actions, and require the branch to be up to date before merging. The workflow cannot enable this repository setting. After the first approved push, verify the check exists and the rule is bound to it. Do not represent a local configuration as an active remote requirement.
 
@@ -20,3 +20,22 @@ Use Node 24, the checked-in Rust toolchain, and Python 3.11 in CI. Locally, run 
 Desktop CI artifacts contain a native executable and its adjacent `geometry` resource directory. They are build validation outputs, not signed or notarized installers. Each artifact contains a tar archive preserving executable permissions and runtime symlinks; extract that archive before manual runs. GUI behavior and OS installers require separate verification; do not infer these passed from compilation.
 
 Never reduce test coverage, bypass boundary rules, mark tests skipped, add `continue-on-error`, or accept unrelated working-directory changes merely to turn CI green. Record pre-existing failures separately and validate the exact candidate commit. Updating a required job name also requires updating the remote rule. Push and merge authorization remain separate from CI results.
+
+
+## Versioned releases
+
+`.github/workflows/release.yml` runs on pushed `vMAJOR.MINOR.PATCH` tags. The tag must match `package.json`, `src-tauri/tauri.conf.json` and the Rust package version, and its commit must already belong to the remote default branch. Update the application version and its lockfile entries through a reviewed PR before tagging. Creating or pushing a tag still requires the normal explicit push authorization.
+
+Release reuses the entire CI workflow at the tagged commit. Normal branch/PR CI also builds installers so packaging failures block the existing Quality gate before integration. All three desktop jobs, backend/frontend tests and workflow checks must succeed before publication; only the final publication job gets `contents: write`. Builds and tests do not receive a release token.
+
+| Platform | Release assets |
+| --- | --- |
+| Windows x64 | NSIS `-setup.exe` |
+| macOS Apple Silicon / arm64 | `.dmg` (ad-hoc signed; no Apple Developer signing or notarization) |
+| Linux x64 | `.deb` and `.AppImage`, built on Ubuntu 24.04 |
+
+The Linux baseline is Ubuntu 24.04 or a compatible system; this does not promise support for older glibc distributions. Intel macOS and ARM Windows/Linux are not part of this matrix. Signing with publisher certificates and in-app updating are separate work.
+
+`scripts/release-assets.mjs` is a build adapter invoked through its CLI. It collects exactly the expected Tauri installers and records SHA-256, platform, application version and source commit. The publishing job downloads only artifacts from its own workflow run, rejects missing/duplicate/empty/modified files or mismatched versions/commits, and emits `SHA256SUMS` plus `release-manifest.json`. It uploads the complete set to a draft and only then publishes it. Failed uploads leave a draft that a rerun can finish; a published version is never overwritten. Use a new version tag for subsequent releases. Run `node --test scripts/release-assets.check.mjs` to exercise this boundary with temporary files.
+
+Release notes include `.github/RELEASE-NOTES.md` and GitHub-generated changes. A new workflow is only configured locally until the approved commit reaches the remote; three-platform installer construction and Release publication must be verified by the actual hosted run. Do not claim those actions completed from local checks alone.

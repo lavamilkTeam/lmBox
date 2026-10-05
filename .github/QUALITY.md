@@ -39,3 +39,10 @@ The Linux baseline is Ubuntu 24.04 or a compatible system; this does not promise
 `scripts/release-assets.mjs` is a build adapter invoked through its CLI. It collects exactly the expected Tauri installers and records SHA-256, platform, application version and source commit. The publishing job downloads only artifacts from its own workflow run, rejects missing/duplicate/empty/modified files or mismatched versions/commits, and emits `SHA256SUMS` plus `release-manifest.json`. It uploads the complete set to a draft and only then publishes it. Failed uploads leave a draft that a rerun can finish; a published version is never overwritten. Use a new version tag for subsequent releases. Run `node --test scripts/release-assets.check.mjs` to exercise this boundary with temporary files.
 
 Release notes include `.github/RELEASE-NOTES.md` and GitHub-generated changes. A new workflow is only configured locally until the approved commit reaches the remote; three-platform installer construction and Release publication must be verified by the actual hosted run. Do not claim those actions completed from local checks alone.
+
+
+### Linux AppImage geometry runtime
+
+The standalone Python worker sets its own library search path at startup. `linuxdeploy` instead inspects each ELF file directly, including private Shapely/GEOS and NumPy libraries inside the worker. The Linux installer step prepends the bundled worker's `_internal` directory to `LD_LIBRARY_PATH` for that build process only. It does not install a substitute system GEOS or change the application protocol. Existing binary stripping remains enabled.
+
+After AppImage creation, CI extracts the final image and runs the existing relocated-worker model/STL check against its embedded geometry directory. A missing library, corrupted worker or failed model remains a hard failure. Verbose desktop build logs are retained as artifacts on installer failure.

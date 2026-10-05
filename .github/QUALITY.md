@@ -24,7 +24,7 @@ Never reduce test coverage, bypass boundary rules, mark tests skipped, add `cont
 
 ## Versioned releases
 
-`.github/workflows/release.yml` runs on pushed `vMAJOR.MINOR.PATCH` tags. The tag must match `package.json`, `src-tauri/tauri.conf.json` and the Rust package version, and its commit must already belong to the remote default branch. Update the application version and its lockfile entries through a reviewed PR before tagging. Creating or pushing a tag still requires the normal explicit push authorization.
+`.github/workflows/release.yml` runs on pushed `vMAJOR.MINOR.PATCH` tags or demo tags with a minor number padded to two digits, such as `demov0.01.1` for application version `0.1.1`. The demo prefix is a release naming convention; these releases remain normal published releases, not GitHub prereleases. The tag must match `package.json`, `src-tauri/tauri.conf.json` and the Rust package version, and its commit must already belong to the remote default branch. Update the application version and its lockfile entries through a reviewed PR before tagging. Creating or pushing a tag still requires the normal explicit push authorization.
 
 Release reuses the entire CI workflow at the tagged commit. Normal branch/PR CI also builds installers so packaging failures block the existing Quality gate before integration. All three desktop jobs, backend/frontend tests and workflow checks must succeed before publication; only the final publication job gets `contents: write`. Builds and tests do not receive a release token.
 

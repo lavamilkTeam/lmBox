@@ -34,9 +34,11 @@ const collectAll = path => {
   }
 }
 
-test('only stable version tags matching application manifests are accepted', () => {
+test('standard and padded demo tags identify the same application version', () => {
   pass(run('validate-tag', `v${version}`))
-  for (const tag of ['v99.99.99', 'v01.2.3', `v${version}-rc.1`, 'main', 'v1.2.3;echo bad']) {
+  const [major, minor, patch] = version.split('.')
+  pass(run('validate-tag', `demov${major}.${minor.padStart(2, '0')}.${patch}`))
+  for (const tag of ['v99.99.99', 'v01.2.3', 'demov0.001.1', 'demov99.99.99', `v${version}-rc.1`, 'main', 'v1.2.3;echo bad']) {
     fail(run('validate-tag', tag), /Release tags|Tag must match/)
   }
 })

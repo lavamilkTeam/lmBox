@@ -23,9 +23,12 @@ const [command, ...args] = process.argv.slice(2)
 
 if (command === 'validate-tag') {
   const [tag] = args
-  assert.match(tag ?? '', /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/,
-    'Release tags must use vMAJOR.MINOR.PATCH')
-  assert.equal(tag, `v${version}`, 'Tag must match package.json')
+  assert.match(version, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/,
+    'Application version must use MAJOR.MINOR.PATCH')
+  const [major, minor, patch] = version.split('.')
+  const demoTag = `demov${major}.${minor.padStart(2, '0')}.${patch}`
+  assert(tag === `v${version}` || tag === demoTag,
+    `Tag must match package.json: v${version} or ${demoTag}`)
   const tauri = JSON.parse(readFileSync(join(root, 'src-tauri/tauri.conf.json'), 'utf8'))
   assert.equal(tauri.version, version, 'Tauri version must match package.json')
   const cargo = readFileSync(join(root, 'src-tauri/Cargo.toml'), 'utf8')

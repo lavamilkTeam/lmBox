@@ -17,7 +17,7 @@ In the active `main` ruleset, enable **Require status checks to pass**, select *
 
 Use Node 24, the checked-in Rust toolchain, and Python 3.11 in CI. Locally, run `npm run setup:wasm` and `npm run setup:geometry` once, then `npm run check`, `npm run check:geometry`, and the Rust checks documented in the backend instructions. Desktop checks additionally require `npm run build:worker` and `npm run check:worker` before building with the `desktop` feature.
 
-Every job using Rust sets `RUSTUP_HOME` to its own runner temporary directory. Rustup installs the version and components from `rust-toolchain.toml` there, avoiding partially installed toolchains in the runner image. The isolated directory is not cached, and installation failures still fail the job.
+Every job using Rust creates a unique, empty temporary directory for `RUSTUP_HOME` after dependency-cache restoration. It explicitly installs the version from `rust-toolchain.toml` with Clippy and rustfmt, then verifies those tools before running any build. The isolated directory is not cached or reused; installation failures immediately fail the job.
 
 Desktop CI artifacts contain a native executable and its adjacent `geometry` resource directory. They are build validation outputs, not signed or notarized installers. Each artifact contains a tar archive preserving executable permissions and runtime symlinks; extract that archive before manual runs. GUI behavior and OS installers require separate verification; do not infer these passed from compilation.
 

@@ -17,6 +17,8 @@ In the active `main` ruleset, enable **Require status checks to pass**, select *
 
 Use Node 24, the checked-in Rust toolchain, and Python 3.11 in CI. Locally, run `npm run setup:wasm` and `npm run setup:geometry` once, then `npm run check`, `npm run check:geometry`, and the Rust checks documented in the backend instructions. Desktop checks additionally require `npm run build:worker` and `npm run check:worker` before building with the `desktop` feature.
 
+Every job using Rust sets `RUSTUP_HOME` to its own runner temporary directory. Rustup installs the version and components from `rust-toolchain.toml` there, avoiding partially installed toolchains in the runner image. The isolated directory is not cached, and installation failures still fail the job.
+
 Desktop CI artifacts contain a native executable and its adjacent `geometry` resource directory. They are build validation outputs, not signed or notarized installers. Each artifact contains a tar archive preserving executable permissions and runtime symlinks; extract that archive before manual runs. GUI behavior and OS installers require separate verification; do not infer these passed from compilation.
 
 Never reduce test coverage, bypass boundary rules, mark tests skipped, add `continue-on-error`, or accept unrelated working-directory changes merely to turn CI green. Record pre-existing failures separately and validate the exact candidate commit. Updating a required job name also requires updating the remote rule. Push and merge authorization remain separate from CI results.

@@ -29,12 +29,14 @@ if (command === 'validate-tag') {
   const demoTag = `demov${major}.${minor.padStart(2, '0')}.${patch}`
   assert(tag === `v${version}` || tag === demoTag,
     `Tag must match package.json: v${version} or ${demoTag}`)
-  const tauri = JSON.parse(readFileSync(join(root, 'src-tauri/tauri.conf.json'), 'utf8'))
+  const tauri = JSON.parse(readFileSync(join(root, 'desktop/tauri/tauri.conf.json'), 'utf8'))
   assert.equal(tauri.version, version, 'Tauri version must match package.json')
-  const cargo = readFileSync(join(root, 'src-tauri/Cargo.toml'), 'utf8')
-  const packageSection = cargo.match(/\[package\]([\s\S]*?)(?=\n\[|$)/)?.[1]
-  assert.equal(packageSection?.match(/^version\s*=\s*"([^"]+)"/m)?.[1], version,
-    'Cargo package version must match package.json')
+  for (const manifest of ['src-rust/Cargo.toml', 'desktop/tauri/Cargo.toml']) {
+    const cargo = readFileSync(join(root, manifest), 'utf8')
+    const packageSection = cargo.match(/\[package\]([\s\S]*?)(?=\n\[|$)/)?.[1]
+    assert.equal(packageSection?.match(/^version\s*=\s*"([^"]+)"/m)?.[1], version,
+      `${manifest} package version must match package.json`)
+  }
 } else if (command === 'collect') {
   const [platform, source, destination] = args
   assert(Object.hasOwn(formats, platform), 'Unknown release platform')

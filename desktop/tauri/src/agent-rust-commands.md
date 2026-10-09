@@ -12,7 +12,7 @@
 
 - `src/main.rs` 启动宿主；`src/commands.rs` 只适配 IPC、原生保存对话框、固定资源路径与窗口退出。业务、解析和计算调度留在核心，不在桌面入口复制校验规则。
 
-- 前端只经 `src/platform/desktop` 导入 Tauri API。IPC 使用共享协议，不开放通用 shell、任意文件读取或由前端指定 worker 可执行路径的接口。
+- 前端只经 `frontend/platform/desktop` 导入 Tauri API。IPC 使用共享协议，不开放通用 shell、任意文件读取或由前端指定 worker 可执行路径的接口。
 
 - `commands` 调用 `app::PreviewTasks` 登记任务，再运行核心业务；退出时取消全部任务，等待实际进程回收后再退出。准备期间的取消不能丢失。
 

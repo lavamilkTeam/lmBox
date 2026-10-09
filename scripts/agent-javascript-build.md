@@ -6,7 +6,7 @@
 
 范围：build-wasm/build-worker/check-worker/geometry-env。
 
-只构建、定位工具链与固定资源；WASM 绑定和 Python bundle 为生成产物，不手改。固定绑定/依赖版本与源码一致；搬移 worker 后检查真实请求、模型和 STL，不创建另一套协议。
+只构建、定位工具链与固定资源；WASM 绑定和 Python bundle 为生成产物，不手改。WASM 绑定输出到 `frontend/platform/desktop/lib/generated/`。固定绑定/依赖版本与源码一致；搬移 worker 后检查真实请求、模型和 STL，不创建另一套协议。
 
 ## 验证
 

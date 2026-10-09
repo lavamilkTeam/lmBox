@@ -9,7 +9,7 @@ const root = fileURLToPath(new URL('../', import.meta.url))
 const task = mkdtempSync(join(tmpdir(), 'lmbox-worker-'))
 try {
   // Run a relocated distribution without Python, the repository, or a dev server on PATH.
-  cpSync(resolve(root, process.argv[2] || 'src-tauri/resources/lmbox-geometry'), join(task, 'worker'), { recursive: true, verbatimSymlinks: true })
+  cpSync(resolve(root, process.argv[2] || 'desktop/tauri/resources/lmbox-geometry'), join(task, 'worker'), { recursive: true, verbatimSymlinks: true })
   const request = JSON.parse(readFileSync(join(root, 'contracts/fixtures/v1/preview.json'), 'utf8'))
   request.exportFormat = 'stl'
   writeFileSync(join(task, 'input.json'), JSON.stringify(request))

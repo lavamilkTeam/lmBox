@@ -11,41 +11,7 @@
 <!-- agent-directory:start -->
 ```text
 src/
-├── agent-frontend.md
-├── app/
-│   └── agent-frontend-app.md
-├── contracts/
-│   └── agent-frontend-contracts.md
-├── domain/
-│   └── project/
-│       └── agent-frontend-project-state.md
-├── features/
-│   ├── export-parameters/
-│   │   └── agent-frontend-export-parameters.md
-│   ├── import-board/
-│   │   └── agent-frontend-import-board.md
-│   ├── logs/
-│   │   └── agent-frontend-logs.md
-│   ├── preview/
-│   │   └── agent-frontend-preview.md
-│   ├── project/
-│   │   └── agent-frontend-project.md
-│   ├── slicing/
-│   │   └── agent-frontend-slicing.md
-│   └── stencil/
-│       └── agent-frontend-stencil.md
-├── platform/
-│   └── desktop/
-│       └── agent-frontend-desktop.md
-└── ui/
-    ├── agent-frontend-ui.md
-    ├── export-button/
-    │   └── agent-frontend-export-button.md
-    ├── help-tip/
-    │   └── agent-frontend-help-tip.md
-    ├── icon-button/
-    │   └── agent-frontend-icon-button.md
-    └── import-button/
-        └── agent-frontend-import-button.md
+├── AGENTS.md
+└── agent-frontend.md
 ```
 <!-- agent-directory:end -->

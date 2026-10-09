@@ -72,10 +72,20 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 ├── AGENTS.md
 ├── src/
 │   ├── AGENTS.md
+│   └── agent-frontend.md
+├── frontend/
 │   ├── agent-frontend.md
+│   ├── main.ts
 │   ├── app/
-│   ├── features/
-│   ├── domain/
+│   ├── modules/
+│   │   └── stencil/
+│   │       ├── index.ts
+│   │       ├── agent-frontend-stencil.md
+│   │       └── lib/
+│   │           ├── app/
+│   │           ├── features/
+│   │           ├── domain/
+│   │           └── ui/
 │   ├── platform/
 │   ├── contracts/
 │   └── ui/

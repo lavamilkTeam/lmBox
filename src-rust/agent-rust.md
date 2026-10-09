@@ -1,6 +1,6 @@
 # Rust 核心结构与依赖边界
 
-先读 [根规范](../AGENTS.md)，再读受影响模块；应用 `$code-boundary-standards`。跨界同时阅读 [前端](../src/agent-frontend.md)、[Python](../engine/agent-python.md)、[协议](../contracts/agent-contracts.md) 或 [桌面宿主](../desktop/tauri/agent-rust.md) 的相关说明。
+先读 [根规范](../AGENTS.md)，再读受影响模块；应用 `$code-boundary-standards`。跨界同时阅读 [前端](../frontend/agent-frontend.md)、[Python](../engine/agent-python.md)、[协议](../contracts/agent-contracts.md) 或 [桌面宿主](../desktop/tauri/agent-rust.md) 的相关说明。
 
 ## 结构与职责
 

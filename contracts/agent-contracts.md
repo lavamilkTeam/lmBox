@@ -2,7 +2,7 @@
 
 先读 [根规范](../AGENTS.md) 和受影响语言说明；涉及代码/schema 设计应用 `$code-boundary-standards`。
 
-根 `contracts` 是 Vue ↔ Rust ↔ Python 数据语义来源，只放版本化 JSON Schema、样例及说明，不实现业务。三端映射分别在 `src/contracts`、`src-rust/src/contracts`、`engine/src/lmbox_geometry/contracts`；当前使用手工映射和共享样例校验，未建立自动类型生成。将来生成文件需标注来源，不能手改。
+根 `contracts` 是 Vue ↔ Rust ↔ Python 数据语义来源，只放版本化 JSON Schema、样例及说明，不实现业务。三端映射分别在 `frontend/contracts`、`src-rust/src/contracts`、`engine/src/lmbox_geometry/contracts`；当前使用手工映射和共享样例校验，未建立自动类型生成。将来生成文件需标注来源，不能手改。
 
 | 模块 | 必读说明 |
 | --- | --- |

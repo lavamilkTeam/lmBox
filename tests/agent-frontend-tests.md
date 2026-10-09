@@ -1,6 +1,6 @@
 # 前端：浏览器集成测试
 
-先读 [语言说明](../src/agent-frontend.md)；维护规则与隐私要求见根规范。
+先读 [语言说明](../frontend/agent-frontend.md)；维护规则与隐私要求见根规范。
 
 ## 职责与边界
 
@@ -16,4 +16,4 @@
 
 ## 验证
 
-统一检查见 [语言说明](../src/agent-frontend.md#验证与维护)。执行完整浏览器套件，保留失败 trace/截图；真实计算采用两个 worker，不用重试掩盖失败。
+统一检查见 [语言说明](../frontend/agent-frontend.md#验证与维护)。执行完整浏览器套件，保留失败 trace/截图；真实计算采用两个 worker，不用重试掩盖失败。

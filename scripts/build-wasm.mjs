@@ -13,5 +13,5 @@ function run(command,args) {
     process.exit(result.status || 1)
   }
 }
-run('cargo',['build','--manifest-path','src-tauri/Cargo.toml','--lib','--target','wasm32-unknown-unknown','--release','--locked'])
-run(bindgen,['src-tauri/target/wasm32-unknown-unknown/release/lmbox.wasm','--target','web','--out-dir','src/platform/desktop/lib/generated'])
+run('cargo',['build','--manifest-path','src-rust/Cargo.toml','--lib','--target','wasm32-unknown-unknown','--release','--locked'])
+run(bindgen,['src-rust/target/wasm32-unknown-unknown/release/lmbox.wasm','--target','web','--out-dir','frontend/platform/desktop/lib/generated'])

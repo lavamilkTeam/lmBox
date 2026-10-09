@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { zipSync, strToU8 } from 'fflate'
-const paste=readFileSync('src-tauri/tests/fixtures/basic.gbr')
+const paste=readFileSync('src-rust/tests/fixtures/basic.gbr')
 const outline=strToU8('%FSLAX34Y34*%\n%MOMM*%\n%ADD10C,0.1*%\nD10*\nX0Y0D02*\nX100000Y0D01*\nX100000Y100000D01*\nX0Y100000D01*\nX0Y0D01*\nM02*')
 async function ready(page:import('@playwright/test').Page) {await expect(page.getByRole('button',{name:'STL',exact:true})).toBeEnabled({timeout:20000})}
 async function open(page:import('@playwright/test').Page) {

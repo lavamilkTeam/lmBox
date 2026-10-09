@@ -10,7 +10,7 @@
 
 ## 行为约束
 
-本目录是 lmBox 的桌面适配与打包入口。依赖方向为 `src/platform/desktop → commands → lmbox 核心公开入口`。核心库位于 `src-rust/`，不依赖桌面 crate，也不依赖 Tauri 或原生对话框。
+本目录是 lmBox 的桌面适配与打包入口。依赖方向为 `frontend/platform/desktop → commands → lmbox 核心公开入口`。核心库位于 `src-rust/`，不依赖桌面 crate，也不依赖 Tauri 或原生对话框。
 
 ## 验证
 

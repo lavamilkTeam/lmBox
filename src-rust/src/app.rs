@@ -25,3 +25,5 @@ pub fn build_bundled_preview(
 
 mod preview_tasks;
 pub use preview_tasks::PreviewTasks;
+mod thermochemistry;
+pub use thermochemistry::{CeaBackend, CeaError};

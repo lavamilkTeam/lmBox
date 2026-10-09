@@ -10,6 +10,7 @@
 ```text
 scripts/
 ├── agent-javascript-build.md
+├── agent-javascript-cea.md
 ├── agent-javascript-desktop.md
 ├── agent-javascript-preview-api.md
 ├── agent-javascript-release-assets.md

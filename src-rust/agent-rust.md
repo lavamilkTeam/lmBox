@@ -4,7 +4,7 @@
 
 ## 结构与职责
 
-单个业务核心 crate，按能力组织 feature；负责格式解析、业务校验和计算调用，不依赖 Tauri。当前已实现 Gerber/ZIP、WASM 导入、模型预览和导出业务入口；工程持久化、持久任务队列、STEP 与切片尚未实现，不创建无用占位模块。
+单个业务核心 crate，按能力组织 feature；负责格式解析、业务校验和计算调用，不依赖 Tauri。当前已实现 Gerber/ZIP、WASM 导入、模型预览、导出和原生 CEA 热化学业务入口；工程持久化、持久任务队列、STEP 与切片尚未实现，不创建无用占位模块。
 
 `src/lib.rs` 为公开入口，`app` 组装，`browser.rs`/`bin` 是薄适配，`features` 管业务，`runtime` 管外部进程与文件，`contracts` 管类型。Python 负责制造几何；桌面 crate 负责窗口、IPC、原生对话框和资源打包。
 
@@ -18,6 +18,9 @@
 
 | 范围 | 必读说明 |
 | --- | --- |
+| `src/app/thermochemistry.rs` | [CEA 后端](src/app/agent-rust-thermochemistry.md) |
+| `src/features/thermochemistry/` | [热化学校验](src/features/thermochemistry/agent-rust-thermochemistry.md) |
+| `src/runtime/cea/` | [Fortran CEA 适配](src/runtime/cea/agent-rust-cea.md) |
 | `src/app.rs、src/app/` | [业务组装与任务](src/app/agent-rust-app.md) |
 | `src/browser.rs` | [WASM 接入](src/agent-rust-browser.md) |
 | `src/bin/` | [本地预览 CLI](src/bin/agent-rust-preview-cli.md) |

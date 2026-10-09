@@ -4,6 +4,7 @@
 
 | 脚本范围 | 必读说明 |
 | --- | --- |
+| `build-cea.mjs` | [CEA 构建](agent-javascript-cea.md) |
 | `build-wasm/build-worker/check-worker/geometry-env` | [构建与引擎环境](agent-javascript-build.md) |
 | `preview-api.ts` | [开发计算适配](agent-javascript-preview-api.md) |
 | `desktop.mjs/archive-desktop.mjs` | [桌面构建适配](agent-javascript-desktop.md) |

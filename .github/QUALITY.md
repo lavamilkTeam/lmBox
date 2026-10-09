@@ -9,7 +9,8 @@ Development uses `kihon`; both `kihon` and `main` run CI on push and pull reques
 | Backend Python | Ruff, import-linter, complete geometry regression suite |
 | Desktop | Linux, Windows and macOS: relocated standalone worker creates a model and STL; native rustfmt/Clippy/tests pass; Tauri executable, embedded frontend and platform installers build |
 | Workflow validation | Pinned actionlint validates workflow syntax and expressions; release artifact tests reject incomplete or mismatched builds |
-| Quality gate | Every required job succeeds, including every desktop matrix entry; failure, cancellation or skipping rejects the gate |
+| Fortran CEA | Linux, Windows and macOS: compile pinned NASA Fortran/C ABI sources, validate contracts and official rocket references, frozen modes, nonconvergence, concurrent requests and relocated CLI |
+| Quality gate | Every required job succeeds, including every desktop and CEA matrix entry; failure, cancellation or skipping rejects the gate |
 
 There are no path filters that omit checks on documentation-only pull requests. Merge-group events run the same checks. Concurrent obsolete runs are cancelled; cancelled runs never satisfy the aggregate gate. CI jobs have read-only repository permission, actions are pinned to commits, dependency lockfiles are honored, and tests do not receive deployment credentials.
 

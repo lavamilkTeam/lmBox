@@ -17,6 +17,7 @@ contracts/
 │       └── agent-contracts-fixtures.md
 └── schemas/
     ├── v1/
+    │   ├── agent-contracts-cea.md
     │   ├── agent-contracts-import.md
     │   └── agent-contracts-preview.md
     └── v2/

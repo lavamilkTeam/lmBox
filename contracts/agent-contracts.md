@@ -9,6 +9,7 @@
 | graphics v2 / 保留 v1 | [图形 IR](schemas/v2/agent-contracts-graphics.md) |
 | import v1 | [导入](schemas/v1/agent-contracts-import.md) |
 | preview v1 / 编辑与产物 | [预览](schemas/v1/agent-contracts-preview.md) |
+| CEA v1（后端） | [热化学与理想火箭](schemas/v1/agent-contracts-cea.md) |
 | fixtures | [兼容验证](fixtures/v1/agent-contracts-fixtures.md) |
 
 不兼容变更提升主版本，不支持版本明确失败。现有协议不代表已实现工程持久化、完整 project/job、STEP 或切片。字段语义只更新所属 schema 模块说明，两端说明仅记录适配行为，不重复算法细节。

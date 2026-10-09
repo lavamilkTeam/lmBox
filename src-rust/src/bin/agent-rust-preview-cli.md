@@ -2,6 +2,8 @@
 
 先读 [语言说明](../../agent-rust.md)；维护规则与隐私要求见根规范。
 
+独立 CEA CLI `bin/cea.rs` 的契约和验证见 [CEA 后端](../app/agent-rust-thermochemistry.md)。
+
 ## 职责与边界
 
 `bin/preview.rs` 是本地开发的薄进程入口，转发请求至核心 app。

@@ -16,7 +16,8 @@ src-rust/
 ├── src/
 │   ├── agent-rust-browser.md
 │   ├── app/
-│   │   └── agent-rust-app.md
+│   │   ├── agent-rust-app.md
+│   │   └── agent-rust-thermochemistry.md
 │   ├── bin/
 │   │   └── agent-rust-preview-cli.md
 │   ├── contracts/
@@ -26,9 +27,13 @@ src-rust/
 │   │   │   ├── agent-rust-board-import.md
 │   │   │   └── parser/
 │   │   │       └── agent-rust-parser.md
+│   │   ├── thermochemistry/
+│   │   │   └── agent-rust-thermochemistry.md
 │   │   └── stencil/
 │   │       └── agent-rust-stencil.md
 │   └── runtime/
+│       ├── cea/
+│       │   └── agent-rust-cea.md
 │       └── agent-rust-python.md
 └── tests/
 ```

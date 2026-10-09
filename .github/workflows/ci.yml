@@ -265,10 +265,66 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  cea:
+    name: Fortran CEA (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-14]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+      - name: Install the pinned Rust toolchain in a fresh directory
+        shell: bash
+        run: |
+          task_rustup_dir="$(mktemp -d "$RUNNER_TEMP/lmbox-rustup.XXXXXX")"
+          task_rust_channel="$(python -c 'import tomllib; print(tomllib.load(open("rust-toolchain.toml", "rb"))["toolchain"]["channel"])')"
+          echo "RUSTUP_HOME=$task_rustup_dir" >> "$GITHUB_ENV"
+          export RUSTUP_HOME="$task_rustup_dir"
+          rustup toolchain install "$task_rust_channel" --profile minimal --component clippy --component rustfmt
+          rustc --version
+          cargo clippy --version
+          cargo fmt --version
+      - name: Install GNU Fortran on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran cmake ninja-build
+      - name: Install GNU Fortran on macOS
+        if: runner.os == 'macOS'
+        run: brew install gcc ninja
+      - name: Install GNU Fortran on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          & C:\msys64\usr\bin\bash.exe -lc 'pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-gcc-fortran mingw-w64-ucrt-x86_64-ninja'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          'C:\msys64\ucrt64\bin' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Compile the pinned NASA Fortran core and official C ABI
+        env:
+          FC: gfortran
+          CC: gcc
+        run: npm run build:cea
+      - name: Check native adapter and public contract
+        run: |
+          cargo fmt --manifest-path src-rust/Cargo.toml --check
+          cargo clippy --manifest-path src-rust/Cargo.toml --locked --all-targets --features cea-integration -- -D warnings
+          cargo test --manifest-path src-rust/Cargo.toml --locked --test cea_contract
+          npm run check:cea
+
   quality-gate:
     name: Quality gate
     if: ${{ always() }}
-    needs: [frontend, rust, geometry, workflow, desktop]
+    needs: [frontend, rust, geometry, workflow, desktop, cea]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:

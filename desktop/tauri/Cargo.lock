@@ -2039,6 +2039,7 @@ checksum = "47d9d19d1d6efa0109d2f65ff4c85cddd50bd572e5a00127ab10987290bcefae"
 name = "lmbox"
 version = "0.1.1"
 dependencies = [
+ "libloading 0.8.9",
  "serde",
  "serde_json",
  "tempfile",

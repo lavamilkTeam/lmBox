@@ -4,7 +4,7 @@
 
 ## 职责与边界
 
-映射 graphics v2、import v1、preview v1；`mod.rs` 为公开类型入口。
+映射 graphics v2、import v1、preview v1；后端 CEA v1 类型从 `contracts::thermochemistry` 公开，语义见 [CEA 协议](../../../contracts/schemas/v1/agent-contracts-cea.md)。`mod.rs` 为公开类型入口。
 
 来源见 [共享协议](../../../contracts/agent-contracts.md)，不依赖 app/features/runtime/Tauri，不泄漏解析 AST 或业务状态。变更时同步 schema、样例及受影响语言映射。
 

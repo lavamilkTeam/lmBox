@@ -1,23 +1,25 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { NConfigProvider, NDialogProvider, NMessageProvider, type GlobalThemeOverrides } from 'naive-ui'
-import { Layers, Download, ChevronDown, Check, X, AlertCircle, Upload } from '@lucide/vue'
+import { Layers, Check, X, AlertCircle, Upload } from '@lucide/vue'
 import { DocumentTabs } from '../features/project'
-import { ImportButton } from '../features/import-board'
+import { BoardImport, useBoardImport } from '../features/import-board'
+import { useParameterExport } from '../features/export-parameters'
+import { ExportButton } from '../ui/export-button'
 import { PreviewWorkspace } from '../features/preview'
 import { ParameterPanel } from '../features/stencil'
 import { SlicingPanel } from '../features/slicing'
 import { LogPanel } from '../features/logs'
 import { useProjectStore } from '../domain/project'
-import { inspectFiles, saveParameters, loadDemoGraphics } from '../platform/desktop'
+import { loadDemoGraphics } from '../platform/desktop'
 import { useModelExport } from './lib/useModelExport'
 import { useModelPreview } from './lib/useModelPreview'
 const store = useProjectStore()
 const modelPreview=useModelPreview()
 const modelExport=useModelExport(notify)
-const importer = ref<InstanceType<typeof ImportButton>>()
-const busy = ref(false)
-let importController: AbortController | undefined
+const importer = ref<InstanceType<typeof BoardImport>>()
+const { busy, importFiles, cancelImport } = useBoardImport(notify)
+const { exportParams } = useParameterExport(notify)
 const toast = ref('')
 const closeId = ref('')
 const dropDepth = ref(0)
@@ -36,36 +38,24 @@ const overrides: GlobalThemeOverrides = {
   InputNumber: { peers: { Input: { color: '#fafafa' } } },
 }
 function notify(message: string) { toast.value=message; clearTimeout(toastTimeout); toastTimeout=setTimeout(()=>toast.value='',5000) }
-async function importFiles(files: File[]) {
-  if (busy.value) return
-  busy.value=true
-  importController=new AbortController()
-  try { const results=await inspectFiles(files,importController.signal); for (const r of results) store.add(r.name,r.layers); notify(`已读取 ${results.length} 个文件组，${results.flatMap(r=>r.layers).filter(f=>f.ir).length} 个图层已解析`) }
-  catch(e) { const message=e instanceof Error ? e.message : '文件读取失败'; notify(message); if (store.active) store.log(store.active,message,'warning') }
-  finally { busy.value=false;importController=undefined }
-}
-async function exportParams() {
-  const doc=store.active
-  if (!doc) return
-  try {
-    if (!await saveParameters(doc)) return
-    store.log(doc,'参数配置已导出为 JSON。','success'); notify('参数配置已导出')
-  } catch (error) { notify(error instanceof Error ? error.message : '参数导出失败。') }
-}
 function requestClose(id: string) { const doc=store.documents.find(d=>d.id===id); if (doc?.dirty) closeId.value=id; else store.close(id) }
 function drop(event: DragEvent) { dropDepth.value=0; if (event.dataTransfer?.files.length) void importFiles(Array.from(event.dataTransfer.files)) }
 function keydown(event: KeyboardEvent) { if ((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='o') { event.preventDefault(); importer.value?.open() }; if ((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='s') { event.preventDefault(); exportParams() }; if(event.key==='Escape') closeId.value='' }
 function beforeUnload(event: BeforeUnloadEvent) { if(store.documents.some(d=>d.dirty)) { event.preventDefault(); event.returnValue='' } }
 onMounted(()=>{ store.openDemo(loadDemoGraphics()); window.addEventListener('keydown',keydown); window.addEventListener('beforeunload',beforeUnload) })
-onBeforeUnmount(()=>{ importController?.abort(); clearTimeout(toastTimeout); window.removeEventListener('keydown',keydown); window.removeEventListener('beforeunload',beforeUnload) })
+onBeforeUnmount(()=>{ clearTimeout(toastTimeout); window.removeEventListener('keydown',keydown); window.removeEventListener('beforeunload',beforeUnload) })
 </script>
 <template>
   <NConfigProvider :theme-overrides="overrides"><NDialogProvider><NMessageProvider>
     <main class="studio" @dragenter.prevent="dropDepth++" @dragleave.prevent="dropDepth=Math.max(0,dropDepth-1)" @dragover.prevent @drop.prevent="drop">
       <header class="app-header">
         <a class="brand" href="#" @click.prevent="store.openDemo(loadDemoGraphics())"><strong>lm</strong>Box</a>
-        <span class="header-divider"/><ImportButton ref="importer" :busy="busy" @files="importFiles"/><button v-if="busy" class="cancel-import" @click="importController?.abort()">取消导入</button>
-        <div class="header-right"><button class="export-button" :disabled="!store.active" title="导出当前参数配置（⌘ / Ctrl + S）" @click="exportParams"><Download :size="15"/>导出参数<ChevronDown :size="13"/></button></div>
+        <span class="header-divider"/>
+        <div class="header-actions">
+          <BoardImport ref="importer" :busy="busy" @files="importFiles"/>
+          <ExportButton label="导出参数" :disabled="!store.active" aria-keyshortcuts="Control+S Meta+S" @click="exportParams"/>
+        </div>
+        <button v-if="busy" class="cancel-import" @click="cancelImport">取消导入</button>
       </header>
       <DocumentTabs @import="importer?.open()" @close="requestClose"/>
       <div class="work-area"><PreviewWorkspace @cancel-model="modelPreview.cancel" @import="importer?.open()" @demo="store.openDemo(loadDemoGraphics())"/><aside class="inspector" aria-label="参数面板"><SlicingPanel v-if="store.active?.mode==='gcode'"/><ParameterPanel v-else-if="store.active" :exporting="modelExport.exporting.value" @export="modelExport.exportModel"/><div v-else class="inspector-empty"><Layers :size="24"/></div></aside></div>

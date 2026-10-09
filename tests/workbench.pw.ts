@@ -4,6 +4,30 @@ import { readFileSync } from 'node:fs'
 const gerber=readFileSync('src-tauri/tests/fixtures/basic.gbr')
 const outline=strToU8('%FSLAX34Y34*%\n%MOMM*%\n%ADD10C,0.1*%\nD10*\nX0Y0D02*\nX100000Y0D01*\nX100000Y100000D01*\nX0Y100000D01*\nX0Y0D01*\nM02*')
 
+test('import tooltip appears beside its button, dismisses and preserves file selection', async ({ page }) => {
+  await page.goto('/')
+  const button = page.getByRole('button', { name: '导入文件', exact: true })
+  const tooltip = page.getByRole('tooltip', { name: '导入', exact: true })
+  await expect(tooltip).toBeHidden()
+  await button.hover()
+  await expect(tooltip).toBeVisible()
+  const buttonBounds = (await button.boundingBox())!
+  const tooltipBounds = (await tooltip.boundingBox())!
+  expect(tooltipBounds.x).toBeGreaterThan(buttonBounds.x + buttonBounds.width)
+  await page.mouse.move(600, 100)
+  await expect(tooltip).toBeHidden()
+  await page.getByRole('link', { name: 'lm Box', exact: true }).focus()
+  await page.keyboard.press('Tab')
+  await expect(button).toBeFocused()
+  await expect(tooltip).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(tooltip).toBeHidden()
+  await expect(button).toBeFocused()
+  const chooser = page.waitForEvent('filechooser')
+  await button.click()
+  expect((await chooser).isMultiple()).toBe(true)
+})
+
 test('views switch with matching settings and an interactive 3D model', async ({ page }) => {
   const errors: string[]=[];page.on('pageerror',e=>errors.push(e.message))
   await page.goto('/')
@@ -42,8 +66,15 @@ test('ZIP import and per-tab state remain independent', async ({ page }) => {
 
 test('parameter export preserves values and logs can be collapsed and cleared', async ({ page }) => {
   await page.goto('/')
+  const button = page.getByRole('button', { name: '导出参数', exact: true })
+  const tooltip = page.getByRole('tooltip', { name: '导出', exact: true })
+  await button.hover()
+  await expect(tooltip).toBeVisible()
+  const buttonBounds = (await button.boundingBox())!
+  const tooltipBounds = (await tooltip.boundingBox())!
+  expect(tooltipBounds.x + tooltipBounds.width).toBeLessThan(buttonBounds.x)
   const downloadPromise=page.waitForEvent('download')
-  await page.getByRole('button',{name:'导出参数',exact:true}).click()
+  await button.click()
   const download=await downloadPromise
   expect(download.suggestedFilename()).toContain('.parameters.json')
   const stream=await download.createReadStream();const chunks:Buffer[]=[]
@@ -63,6 +94,7 @@ test('empty workspace, invalid file, and compact window are usable', async ({ pa
   await page.goto('/')
   await page.getByRole('button',{name:'关闭 示例板 · 100 × 100',exact:true}).click()
   await expect(page.getByRole('heading',{name:'导入gerber'})).toBeVisible()
+  await expect(page.getByRole('button', { name: '导出参数', exact: true })).toBeDisabled()
   await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'invalid.zip',mimeType:'application/zip',buffer:Buffer.from('not a zip')})
   await expect(page.locator('.toast-message')).toBeVisible()
   await expect(page.locator('.document-tab')).toHaveCount(0)

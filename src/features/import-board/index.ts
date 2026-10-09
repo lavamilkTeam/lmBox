@@ -1,1 +1,2 @@
-export { default as ImportButton } from './lib/ImportButton.vue'
+export { default as BoardImport } from './lib/BoardImport.vue'
+export { useBoardImport } from './lib/useBoardImport'

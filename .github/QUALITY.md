@@ -7,7 +7,7 @@ Development uses `kihon`; both `kihon` and `main` run CI on push and pull reques
 | Frontend | Module boundaries, unit tests, TypeScript, production assets, all Chromium end-to-end tests using the real Rust/Python backend |
 | Backend Rust | rustfmt, Clippy with warnings rejected, parser/contract/task and real Python integration tests |
 | Backend Python | Ruff, import-linter, complete geometry regression suite |
-| Desktop | Linux, Windows and macOS: relocated standalone worker creates a model and STL; native Clippy/tests pass; Tauri executable, embedded frontend and platform installers build |
+| Desktop | Linux, Windows and macOS: relocated standalone worker creates a model and STL; native rustfmt/Clippy/tests pass; Tauri executable, embedded frontend and platform installers build |
 | Workflow validation | Pinned actionlint validates workflow syntax and expressions; release artifact tests reject incomplete or mismatched builds |
 | Quality gate | Every required job succeeds, including every desktop matrix entry; failure, cancellation or skipping rejects the gate |
 
@@ -15,7 +15,7 @@ There are no path filters that omit checks on documentation-only pull requests. 
 
 In the active `main` ruleset, enable **Require status checks to pass**, select **Quality gate** from GitHub Actions, and require the branch to be up to date before merging. The workflow cannot enable this repository setting. After the first approved push, verify the check exists and the rule is bound to it. Do not represent a local configuration as an active remote requirement.
 
-Use Node 24, the checked-in Rust toolchain, and Python 3.11 in CI. Locally, run `npm run setup:wasm` and `npm run setup:geometry` once, then `npm run check`, `npm run check:geometry`, and the Rust checks documented in the backend instructions. Desktop checks additionally require `npm run build:worker` and `npm run check:worker` before building with the `desktop` feature.
+Use Node 24, the checked-in Rust toolchain, and Python 3.11 in CI. Locally, run `npm run setup:wasm` and `npm run setup:geometry` once, then `npm run check`, `npm run check:geometry`, and the Rust checks documented in the backend instructions. Desktop checks additionally require `npm run build:worker` and `npm run check:worker` before checking and building the separate `desktop/tauri` crate; the reusable core lives in `src-rust` and has no Tauri dependency.
 
 Every job using Rust creates a unique, empty temporary directory for `RUSTUP_HOME` after dependency-cache restoration. It explicitly installs the version from `rust-toolchain.toml` with Clippy and rustfmt, then verifies those tools before running any build. The isolated directory is not cached or reused; installation failures immediately fail the job.
 
@@ -26,7 +26,7 @@ Never reduce test coverage, bypass boundary rules, mark tests skipped, add `cont
 
 ## Versioned releases
 
-`.github/workflows/release.yml` runs on pushed `vMAJOR.MINOR.PATCH` tags or demo tags with a minor number padded to two digits, such as `demov0.01.1` for application version `0.1.1`. The demo prefix is a release naming convention; these releases remain normal published releases, not GitHub prereleases. The tag must match `package.json`, `src-tauri/tauri.conf.json` and the Rust package version, and its commit must already belong to the remote default branch. Update the application version and its lockfile entries through a reviewed PR before tagging. Creating or pushing a tag still requires the normal explicit push authorization.
+`.github/workflows/release.yml` runs on pushed `vMAJOR.MINOR.PATCH` tags or demo tags with a minor number padded to two digits, such as `demov0.01.1` for application version `0.1.1`. The demo prefix is a release naming convention; these releases remain normal published releases, not GitHub prereleases. The tag must match `package.json`, `desktop/tauri/tauri.conf.json` and both Rust package versions (`src-rust` and `desktop/tauri`), and its commit must already belong to the remote default branch. Update the application version and its lockfile entries through a reviewed PR before tagging. Creating or pushing a tag still requires the normal explicit push authorization.
 
 Release reuses the entire CI workflow at the tagged commit. Normal branch/PR CI also builds installers so packaging failures block the existing Quality gate before integration. All three desktop jobs, backend/frontend tests and workflow checks must succeed before publication; only the final publication job gets `contents: write`. Builds and tests do not receive a release token.
 

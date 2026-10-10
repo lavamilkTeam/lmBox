@@ -9,10 +9,9 @@ const CfdWorkspace = defineAsyncComponent(() => import('../modules/cfd').then(mo
 const tools = [
   { id: 'stencil', label: '钢网设计与制造', category: '电子电气', available: true },
   { id: 'equilibrium', label: '化学平衡分析', category: '热化学', available: false },
-  { id: 'rocket', label: '火箭发动机性能分析', category: '流体与动力', available: false },
+  { id: 'cfd', label: '计算流体力学', category: '流体与动力', available: true },
   { id: 'nozzle', label: '喷管初步设计', category: '流体与动力', available: true },
   { id: 'injector', label: '喷注器水力设计', category: '流体与动力', available: true },
-  { id: 'cfd', label: '计算流体力学', category: '流体与动力', available: true },
 ]
 const active = ref('guide')
 const opened = ref<string[]>([])

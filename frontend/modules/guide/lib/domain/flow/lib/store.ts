@@ -4,7 +4,7 @@ import { ref } from 'vue'
 export const guideTools = [
   { id: 'stencil', label: '钢网设计与制造', category: '电子电气', description: '从图层导入到钢网建模与制造', kind: 'electrical', available: true },
   { id: 'equilibrium', label: '化学平衡分析', category: '热化学', description: '组织热化学与平衡分析流程', kind: 'chemistry', available: false },
-  { id: 'rocket', label: '火箭发动机性能分析', category: '流体与动力', description: '组织发动机性能分析流程', kind: 'fluid', available: false },
+  { id: 'cfd', label: '计算流体力学', category: '流体与动力', description: '几何导入、网格、流动物理模型与求解', kind: 'fluid', available: true },
   { id: 'nozzle', label: '喷管初步设计', category: '流体与动力', description: '喷管轮廓、尺寸与性能计算', kind: 'fluid', available: true },
   { id: 'injector', label: '喷注器水力设计', category: '流体与动力', description: '流量分配与流道尺寸计算', kind: 'fluid', available: true },
 ] as const

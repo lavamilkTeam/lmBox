@@ -6,7 +6,7 @@ describe('guide flow draft', () => {
   beforeEach(() => setActivePinia(createPinia()))
   it('rejects invalid, duplicate and cyclic connections while allowing branches', () => {
     const flow = useGuideFlow()
-    const a = flow.add('equilibrium', 50, 50)!, b = flow.add('rocket', 350, 50)!, c = flow.add('nozzle', 650, 50)!
+    const a = flow.add('equilibrium', 50, 50)!, b = flow.add('cfd', 350, 50)!, c = flow.add('nozzle', 650, 50)!
     expect(flow.connect(a, a)).not.toBe('')
     expect(flow.connect(a, 'missing')).not.toBe('')
     expect(flow.connect(a, b)).toBe('')

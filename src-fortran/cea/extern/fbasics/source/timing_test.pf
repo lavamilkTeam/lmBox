@@ -1,0 +1,41 @@
+module timing_test
+    use funit
+    use fb_timing
+    use fb_parameters, only: wp
+    implicit none
+
+contains
+
+    @test
+    subroutine test_timer
+        ! Verifies start/stop of timer and averaging of mulitple runs
+        type(timer) :: t
+        real(wp), parameter :: tol = 10.0d-3 ! 10ms
+
+        call t%tick()
+        call waste_time(0.1d0)
+        call t%tock()
+        @assertEqual(0.10d0, t%last_elapsed,    tol)
+        @assertEqual(0.10d0, t%average_elapsed, tol)
+
+        call t%tick()
+        call waste_time(0.2d0)
+        call t%tock()
+        @assertEqual(0.20d0, t%last_elapsed,    tol)
+        @assertEqual(0.15d0, t%average_elapsed, tol)
+    end subroutine
+
+    subroutine waste_time(seconds)
+        ! Make CPU waste time generating random numbers
+        real(wp), intent(in) :: seconds
+        real(wp) :: start, finish, dummies(100)
+        call cpu_time(start)
+        finish = start
+        do while (finish - start < seconds)
+            call random_number(dummies)
+            call cpu_time(finish)
+        end do
+    end subroutine
+
+end module
+

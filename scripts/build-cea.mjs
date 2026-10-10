@@ -1,16 +1,14 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, copyFile, readdir } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // NASA CEA v3.3.4, Apache-2.0. Compile the official Fortran kernel and C ABI.
-const commit = '4c5c612efa2002a94e3a5a1f33b1674d55c65340';
-const sha256 = '313fee27377ff72594313132418521187ad0538ecfcead6109a1f1beeab8c2f2';
 const root = fileURLToPath(new URL('../', import.meta.url));
-const cache = path.join(root, '.tools', 'cea', commit);
-const source = path.join(cache, 'source');
-const build = path.join(cache, 'build');
+const source = path.join(root, 'src-fortran', 'cea');
+const upstream = JSON.parse(await readFile(path.join(source, 'upstream.json'), 'utf8'));
+const build = path.join(root, '.tools', 'cea', 'fortran-build');
 const output = path.join(root, '.tools', 'cea', 'runtime');
 const cmake = process.env.CMAKE || 'cmake';
 
@@ -21,24 +19,24 @@ function run(command, args, options = {}) {
   return result;
 }
 
-await mkdir(cache, { recursive: true });
-const archive = path.join(cache, 'source.tar.gz');
-let bytes;
-try { bytes = await readFile(archive); } catch (error) {
-  if (error.code !== 'ENOENT') throw error;
-  const response = await fetch(`https://codeload.github.com/nasa/cea/tar.gz/${commit}`);
-  if (!response.ok) throw new Error(`CEA download failed: HTTP ${response.status}`);
-  bytes = Buffer.from(await response.arrayBuffer());
+// Fingerprint the actual checked-in sources, including any local modifications.
+// Builds use this tree directly and never fetch or overwrite source files.
+async function sourceFingerprint(directory, digest = createHash('sha256')) {
+  const entries = (await readdir(directory, { withFileTypes: true }))
+    .sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+  for (const entry of entries) {
+    const filename = path.join(directory, entry.name);
+    if (entry.isDirectory()) await sourceFingerprint(filename, digest);
+    else if (entry.isFile()) {
+      const bytes = await readFile(filename);
+      digest.update(path.relative(source, filename).split(path.sep).join('/') + '\0');
+      digest.update(String(bytes.length) + '\0');
+      digest.update(bytes);
+    } else throw new Error(`Unsupported source entry: ${filename}`);
+  }
+  return digest;
 }
-if (createHash('sha256').update(bytes).digest('hex') !== sha256) {
-  throw new Error('CEA source checksum mismatch');
-}
-await writeFile(archive, bytes);
-// Extract only the build inputs. README files remain untouched by this builder.
-await mkdir(source, { recursive: true });
-run('tar', ['-xzf', archive, '--strip-components=1', '--exclude=README*', '--exclude=readme*',
-  '-C', source, ...['CMakeLists.txt', 'cmake', 'source', 'extern', 'data', 'LICENSE.txt', 'NOTICE.txt']
-    .map((entry) => `cea-${commit}/${entry}`)]);
+const sourceSha256 = (await sourceFingerprint(source)).digest('hex');
 const configure = ['-S', source, '-B', build, '-G', 'Ninja',
   // Only explicit database paths are used at runtime; keep this unused fallback
   // short to avoid the upstream generated Fortran line-length limit.
@@ -61,6 +59,7 @@ for (const [from, to] of [[librarySource, library], [path.join(build, 'thermo.li
   [path.join(source, 'NOTICE.txt'), 'CEA-NOTICE.txt']]) {
   await copyFile(from, path.join(output, to));
 }
-await writeFile(path.join(output, 'manifest.json'), JSON.stringify({ version: '3.3.4', commit, sha256,
+await writeFile(path.join(output, 'manifest.json'), JSON.stringify({ version: upstream.version,
+  upstreamCommit: upstream.commit, sourceDirectory: 'src-fortran/cea', sourceSha256,
   platform: process.platform, arch: process.arch, kernel: 'Fortran', interface: 'official C ABI' }, null, 2) + '\n');
 console.log(`CEA backend runtime: ${path.relative(root, output)}`);

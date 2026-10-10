@@ -1,0 +1,196 @@
+module algorithms_test
+
+    use funit
+    use fb_parameters
+    use fb_algorithms
+    implicit none
+
+contains
+
+    @test
+    subroutine test_sort_int
+        integer, allocatable :: a(:)
+        integer, allocatable :: i(:)
+
+        ! Test for length=1
+        a = [301]
+        @assertEqual([301], sorted(a))
+        @assertEqual([301], sorted(a,i))
+        @assertEqual([1], i)
+
+        ! Test for length=2
+        a = [301, 267]
+        @assertEqual([267, 301], sorted(a))
+        @assertEqual([267, 301], sorted(a,i))
+        @assertEqual([2, 1], i)
+
+        ! Test for longer lengths
+        a = [21, 83, 15, 48, 37]
+        @assertEqual([15, 21, 37, 48, 83], sorted(a))
+        @assertEqual([15, 21, 37, 48, 83], sorted(a,i))
+        @assertEqual([3, 1, 5, 4, 2], i)
+
+    end subroutine
+
+    @test
+    subroutine test_sort_real
+        real(wp), allocatable :: a(:)
+        integer, allocatable  :: i(:)
+
+        ! Test for length=1
+        a = [301.0d0]
+        @assertEqual([301.d0], sorted(a))
+        @assertEqual([301.d0], sorted(a,i))
+        @assertEqual([1], i)
+
+        ! Test for length=2
+        a = [301.0d0, 267.0d0]
+        @assertEqual([267.0d0, 301.0d0], sorted(a))
+        @assertEqual([267.0d0, 301.0d0], sorted(a,i))
+        @assertEqual([2, 1], i)
+
+        ! Test for longer lengths
+        a = [21.0d0, 83.0d0, 15.0d0, 48.0d0, 37.0d0]
+        @assertEqual([15.0d0, 21.0d0, 37.0d0, 48.0d0, 83.0d0], sorted(a))
+        @assertEqual([15.0d0, 21.0d0, 37.0d0, 48.0d0, 83.0d0], sorted(a,i))
+        @assertEqual([3, 1, 5, 4, 2], i)
+
+    end subroutine
+
+    @test
+    subroutine test_sort_str
+        character(3), allocatable :: a(:), b(:), c(:)
+        integer, allocatable  :: i(:)
+        integer :: n
+
+        ! Test for length=1
+        a = ['foo']
+        b = sorted(a)
+        @assertEqual(a(1), b(1))
+        b = sorted(a,i)
+        @assertEqual(a(1), b(1))
+        @assertEqual([1], i)
+
+        ! Test for length=2
+        a = ['foo', 'bar']
+        b = ['bar', 'foo']
+        c = sorted(a)
+        do n = 1,size(c)
+            @assertEqual(b(n), c(n))
+        end do
+        c = sorted(a,i)
+        do n = 1,size(c)
+            @assertEqual(b(n), c(n))
+        end do
+        @assertEqual([2, 1], i)
+
+        ! Test for longer lengths
+        a = ['foo', 'bar', 'baz', 'zum', 'hum', 'dum']
+        b = ['bar', 'baz', 'dum', 'foo', 'hum', 'zum']
+        c = sorted(a)
+        do n = 1,size(c)
+            @assertEqual(b(n),c(n))
+        end do
+        c = sorted(a,i)
+        do n = 1,size(c)
+            @assertEqual(b(n),c(n))
+        end do
+        @assertEqual([2, 3, 6, 1, 5, 4], i)
+
+    end subroutine
+
+    @test
+    subroutine test_unique_int
+        integer, allocatable :: a(:), b(:)
+        integer, allocatable :: map(:)
+        a = [1, 1, 1, 3, 3, 5, 7, 7, 7, 9]
+
+        b = uniqued(a)
+        @assertEqual(5, size(b))
+        @assertEqual(1, b(1))
+        @assertEqual(3, b(2))
+        @assertEqual(5, b(3))
+        @assertEqual(7, b(4))
+        @assertEqual(9, b(5))
+
+        b = uniqued(a, map)
+        @assertEqual(5, size(b))
+        @assertEqual(1, b(1))
+        @assertEqual(3, b(2))
+        @assertEqual(5, b(3))
+        @assertEqual(7, b(4))
+        @assertEqual(9, b(5))
+        @assertEqual(1, map( 1))
+        @assertEqual(1, map( 2))
+        @assertEqual(1, map( 3))
+        @assertEqual(2, map( 4))
+        @assertEqual(2, map( 5))
+        @assertEqual(3, map( 6))
+        @assertEqual(4, map( 7))
+        @assertEqual(4, map( 8))
+        @assertEqual(4, map( 9))
+        @assertEqual(5, map(10))
+
+    end subroutine
+
+    @test
+    subroutine test_unique_real
+        real(wp), allocatable :: a(:), b(:)
+        integer, allocatable :: map(:)
+        a = [1.0d0, 1.0d0, 1.0d0, 3.0d0, 3.0d0, 5.0d0, 7.0d0, 7.0d0, 7.0d0, 9.0d0]
+
+        b = uniqued(a)
+        @assertEqual(5, size(b))
+        @assertEqual(1.0d0, b(1))
+        @assertEqual(3.0d0, b(2))
+        @assertEqual(5.0d0, b(3))
+        @assertEqual(7.0d0, b(4))
+        @assertEqual(9.0d0, b(5))
+
+        b = uniqued(a, map)
+        @assertEqual(5, size(b))
+        @assertEqual(1.0d0, b(1))
+        @assertEqual(3.0d0, b(2))
+        @assertEqual(5.0d0, b(3))
+        @assertEqual(7.0d0, b(4))
+        @assertEqual(9.0d0, b(5))
+        @assertEqual(1, map( 1))
+        @assertEqual(1, map( 2))
+        @assertEqual(1, map( 3))
+        @assertEqual(2, map( 4))
+        @assertEqual(2, map( 5))
+        @assertEqual(3, map( 6))
+        @assertEqual(4, map( 7))
+        @assertEqual(4, map( 8))
+        @assertEqual(4, map( 9))
+        @assertEqual(5, map(10))
+
+    end subroutine
+
+    @test
+    subroutine test_unique_str
+        character(3), allocatable :: a(:), b(:)
+        integer, allocatable :: map(:)
+        a = ["bar", "bar", "baz", "foo", "foo"]
+
+
+        b = uniqued(a)
+        @assertEqual(3, size(b))
+        @assertEqual("bar", b(1))
+        @assertEqual("baz", b(2))
+        @assertEqual("foo", b(3))
+
+        b = uniqued(a, map)
+        @assertEqual(3, size(b))
+        @assertEqual("bar", b(1))
+        @assertEqual("baz", b(2))
+        @assertEqual("foo", b(3))
+        @assertEqual(1, map(1))
+        @assertEqual(1, map(2))
+        @assertEqual(2, map(3))
+        @assertEqual(3, map(4))
+        @assertEqual(3, map(5))
+
+    end subroutine
+
+end module

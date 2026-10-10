@@ -1,0 +1,72 @@
+module detonation_test
+    use funit
+    use cea_detonation
+    use cea_equilibrium
+    use cea_thermo
+    use cea_mixture
+    use cea_units
+    use cea_param, only: R=>gas_constant
+
+    type(ThermoDB) :: all_thermo
+
+contains
+
+    @before
+    subroutine setup_mixture()
+        all_thermo = read_thermo('data/thermo.lib')
+    end subroutine
+
+    @test
+    subroutine test_deton
+
+        type(Mixture) :: products
+        type(Mixture) :: reactants
+        type(DetonSolver) :: solver
+        type(DetonSolution) :: soln
+        character(:), allocatable :: product_names(:)
+        real(dp) :: p_reac, t_reac, weights(2), of
+        real(dp), parameter :: tol = 1.0d-5
+
+        reactants = Mixture(all_thermo, ['H2', 'O2'])
+        product_names = reactants%get_products(all_thermo)
+        products = Mixture(all_thermo, product_names)
+
+        of = reactants%of_from_equivalence([0.0d0, 1.0d0], [1.0d0, 0.0d0], 1.0d0)
+        weights = reactants%weights_from_of([0.0d0, 1.0d0], [1.0d0, 0.0d0], of)
+        p_reac = 1.0d0
+        t_reac = 298.15d0
+
+        solver = DetonSolver(products, reactants)
+
+        soln = solver%solve(weights, t_reac, p_reac)
+
+        ! write(*,*) "Detonation:"
+        ! write(*,*) 'Pressure: ', soln%pressure,     abs((18.768446693571065d0-soln%pressure)/18.768446693571065d0)
+        ! write(*,*) "Temperature: ", soln%eq_soln%T, abs((3674.2808311051022d0-soln%eq_soln%T)/3674.2808311051022d0)
+        ! write(*,*) "H: ", soln%eq_soln%ln_nj(1),    abs((-5.1988780046358229d0-soln%eq_soln%ln_nj(1))/5.1988780046358229d0)
+        ! write(*,*) "H2: ", soln%eq_soln%ln_nj(2),   abs((-4.4936123449492360d0-soln%eq_soln%ln_nj(2))/4.4936123449492360d0)
+        ! write(*,*) "H2O: ", soln%eq_soln%ln_nj(3),  abs((-3.3054643936875623d0-soln%eq_soln%ln_nj(3))/3.3054643936875623d0)
+        ! write(*,*) "H2O2: ", soln%eq_soln%ln_nj(4), abs((-13.491896007609208d0-soln%eq_soln%ln_nj(4))/13.491896007609208d0)
+        ! write(*,*) "HO2: ", soln%eq_soln%ln_nj(5),  abs((-11.274611381692784d0-soln%eq_soln%ln_nj(5))/11.274611381692784d0)
+        ! write(*,*) "O: ", soln%eq_soln%ln_nj(6),    abs((-5.9592580737369722d0-soln%eq_soln%ln_nj(6))/5.9592580737369722d0)
+        ! write(*,*) "O2: ", soln%eq_soln%ln_nj(7),   abs((-5.7349172604861884d0-soln%eq_soln%ln_nj(7))/5.7349172604861884d0)
+        ! write(*,*) "O3: ", soln%eq_soln%ln_nj(8),   abs((-17.988324291187364d0-soln%eq_soln%ln_nj(8))/17.988324291187364d0)
+        ! write(*,*) "OH: ", soln%eq_soln%ln_nj(9),  abs((-4.6300836293723897d0-soln%eq_soln%ln_nj(9))/4.6300836293723897d0)
+        ! write(*,*) ""
+
+        ! Products order: H, H2, H2O, H2O2, HO2, O, O2, O3, OH, H2O(L), H2O(cr)
+        @assertRelativelyEqual(18.768446693571065d0, soln%pressure, tol)
+        @assertRelativelyEqual(3674.2808311051022d0, soln%eq_soln%T, tol)
+        @assertRelativelyEqual(-5.1988780046358229d0, soln%eq_soln%ln_nj(1), tol)
+        @assertRelativelyEqual(-4.4936123449492360d0, soln%eq_soln%ln_nj(2), tol)
+        @assertRelativelyEqual(-3.3054643936875623d0, soln%eq_soln%ln_nj(3), tol)
+        @assertRelativelyEqual(-13.491896007609208d0, soln%eq_soln%ln_nj(4), tol)
+        @assertRelativelyEqual(-11.274611381692784d0, soln%eq_soln%ln_nj(5), tol)
+        @assertRelativelyEqual(-5.9592580737369722d0, soln%eq_soln%ln_nj(6), tol)
+        @assertRelativelyEqual(-5.7349172604861884d0, soln%eq_soln%ln_nj(7), tol)
+        @assertRelativelyEqual(-17.988324291187364d0, soln%eq_soln%ln_nj(8), tol)
+        @assertRelativelyEqual(-4.6300836293723897d0, soln%eq_soln%ln_nj(9), tol)
+
+    end subroutine
+
+end module

@@ -21,6 +21,7 @@
     "dev:desktop": "vite --host 127.0.0.1 --port 1421",
     "desktop:dev": "node scripts/desktop.mjs dev",
     "desktop:build": "node scripts/desktop.mjs build",
+    "build:backend": "npm run build:cea && cargo build --manifest-path src-rust/Cargo.toml --locked --bins",
     "build:cea": "node scripts/build-cea.mjs",
     "check:cea": "cargo test --manifest-path src-rust/Cargo.toml --locked --features cea-integration --test cea_native",
     "build:worker": "node scripts/build-worker.mjs",

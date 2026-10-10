@@ -309,11 +309,11 @@ jobs:
           & C:\msys64\usr\bin\bash.exe -lc 'pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-gcc-fortran mingw-w64-ucrt-x86_64-ninja'
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           'C:\msys64\ucrt64\bin' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      - name: Compile the pinned NASA Fortran core and official C ABI
+      - name: Build the in-repository Fortran core and Rust backend
         env:
           FC: gfortran
           CC: gcc
-        run: npm run build:cea
+        run: npm run build:backend
       - name: Check native adapter and public contract
         run: |
           cargo fmt --manifest-path src-rust/Cargo.toml --check

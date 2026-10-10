@@ -89,6 +89,14 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── platform/
 │   ├── contracts/
 │   └── ui/
+├── src-fortran/
+│   ├── agent-fortran.md
+│   └── cea/
+│       ├── agent-fortran-cea.md
+│       ├── CMakeLists.txt
+│       ├── source/
+│       ├── data/
+│       └── extern/
 ├── src-rust/
 │   ├── AGENTS.md
 │   ├── agent-rust.md

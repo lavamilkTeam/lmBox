@@ -11,7 +11,7 @@
 `src/bin/cea.rs` 是单请求 JSON stdin/stdout 薄适配，限制请求为 64 KiB，诊断走 stderr，失败退出码非零。示例（仓库根目录）：
 
 ```sh
-npm run build:cea
+npm run build:backend
 cargo run --manifest-path src-rust/Cargo.toml --locked --bin cea -- .tools/cea/runtime < contracts/fixtures/v1/cea-rocket-request.json
 ```
 

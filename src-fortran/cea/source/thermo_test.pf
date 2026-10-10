@@ -1,0 +1,177 @@
+module thermo_test
+
+    use funit
+    use cea_thermo
+    implicit none
+
+    ! Test data
+    character(3), parameter :: names(7) = [              &
+        'C  ', 'O  ', 'CO ', 'CO2', 'O2 ', 'C  ', 'O2 '  &
+    ]
+    character(3), parameter :: sym(7,2) = reshape([ &
+        'C  ', 'O  ', 'C  ', 'C  ', 'O  ', 'C  ', 'O  ', &
+        '   ', '   ', 'O  ', 'O  ', '   ', '   ', '   '  &
+    ], shape(sym))
+    real(dp), parameter :: fno(7,2) = reshape([          &
+        1,     1,     1,     1,     2,     1,     2,     &
+        0,     0,     1,     2,     0,     0,     0      &
+    ], shape(fno))
+    real(dp), parameter :: mwt(7) = [             &
+        12.0, 16.0, 28.0, 44.0, 32.0, 12.0, 32.0  &
+    ]
+
+contains
+
+    subroutine verify_sizes(db)
+        ! Verify array dimensions are consistent with size variables
+        type(ThermoDB), intent(in) :: db
+        @assertEqual(size(db%product_thermo), db%num_products)
+        @assertEqual(size(db%reactant_thermo), db%num_reactants)
+    end subroutine
+
+    @test
+    subroutine test_read_thermo()
+        type(ThermoDB) :: db
+        db = read_thermo("data/thermo.lib")
+
+        @assertEqual(1269, db%num_gas)
+        @assertEqual( 750, db%num_condensed)
+        @assertEqual(  80, db%num_reactants)
+        @assertEqual(2019, db%num_products)
+        @assertEqual(  59, db%num_elems)
+        call verify_sizes(db)
+
+    end subroutine
+
+    @test
+    subroutine test_species_list()
+        character(:), allocatable :: species(:)
+        integer, allocatable :: name_map(:)
+
+        call build_product_list(names, 7, 0, species, name_map)
+
+        @assertEqual(5, size(species))
+        @assertEqual("C     ", species(1))
+        @assertEqual("CO    ", species(2))
+        @assertEqual("CO2   ", species(3))
+        @assertEqual("O     ", species(4))
+        @assertEqual("O2    ", species(5))
+        @assertEqual(names(1), species(name_map(1)))
+        @assertEqual(names(2), species(name_map(2)))
+        @assertEqual(names(3), species(name_map(3)))
+        @assertEqual(names(4), species(name_map(4)))
+        @assertEqual(names(5), species(name_map(5)))
+        @assertEqual(names(6), species(name_map(6)))
+
+    end subroutine
+
+    @test
+    subroutine test_build_elem_list()
+        character(:), allocatable :: elem(:)
+        integer, allocatable :: sym_map(:,:)
+
+        call build_elem_list(sym, elem, sym_map)
+
+        @assertEqual(2, size(elem))
+        @assertEqual("C ", elem(1))
+        @assertEqual("O ", elem(2))
+        @assertEqual([1, 0], sym_map(1,:))
+        @assertEqual([2, 0], sym_map(2,:))
+        @assertEqual([1, 2], sym_map(3,:))
+        @assertEqual([1, 2], sym_map(4,:))
+        @assertEqual([2, 0], sym_map(5,:))
+        @assertEqual([1, 0], sym_map(6,:))
+        @assertEqual([2, 0], sym_map(7,:))
+
+    end subroutine
+
+    @test
+    subroutine test_product_thermo()
+
+        type(ThermoDB) :: db
+        db = read_thermo("data/thermo.lib")
+
+        @assertEqual("(CH3COOH)2" ,db%product_thermo(1)%name)
+        @assertEqual("C "  ,db%product_thermo(1)%formula%elements(1))
+        @assertRelativelyEqual(4.0d0 ,db%product_thermo(1)%formula%coefficients(1), 1.d-2)
+        @assertEqual("H "  ,db%product_thermo(1)%formula%elements(2))
+        @assertRelativelyEqual(8.0d0 ,db%product_thermo(1)%formula%coefficients(2), 1.d-2)
+        @assertEqual("O "  ,db%product_thermo(1)%formula%elements(3))
+        @assertRelativelyEqual(4.0d0 ,db%product_thermo(1)%formula%coefficients(3), 1.d-2)
+        @assertEqual(0     ,db%product_thermo(1)%i_phase)
+        @assertEqual(3     ,db%product_thermo(1)%num_intervals)
+        @assertRelativelyEqual(120.10390d0 ,db%product_thermo(1)%molecular_weight, 1.d-2)
+        @assertRelativelyEqual(200.0d0 ,db%product_thermo(1)%T_fit(1, 1), 1.d-2)
+        @assertRelativelyEqual(1000.0d0 ,db%product_thermo(1)%T_fit(1, 2), 1.d-2)
+        @assertRelativelyEqual(1000.0d0 ,db%product_thermo(1)%T_fit(2, 1), 1.d-2)
+        @assertRelativelyEqual(6000.0d0 ,db%product_thermo(1)%T_fit(2, 2), 1.d-2)
+        @assertRelativelyEqual(6000.0d0 ,db%product_thermo(1)%T_fit(3, 1), 1.d-2)
+        @assertRelativelyEqual(20000.0d0 ,db%product_thermo(1)%T_fit(3, 2), 1.d-2)
+        ! @assertRelativelyEqual(-309472.0023d0 ,db%product_thermo(1)%thermo_coeffs(1, 1), 1.d-2)
+        ! @assertRelativelyEqual(6571327.59d0 ,db%product_thermo(1)%thermo_coeffs(1, 2), 1.d-2)
+        ! @assertEqual(0.0d0 ,db%product_thermo(1)%thermo_coeffs(1, 3))
+        ! @assertRelativelyEqual(5983.3386d0 ,db%product_thermo(1)%thermo_coeffs(2, 1), 1.d-2)
+        ! @assertEqual( ,db%product_thermo(1)%thermo_coeffs(2, 2))
+        ! @assertEqual( ,db%product_thermo(1)%thermo_coeffs(2, 3))
+        ! @assertRelativelyEqual(-35.73003d0 ,db%product_thermo(1)%thermo_coeffs(3, 1), 1.d-2)
+        ! @assertEqual( ,db%product_thermo(1)%thermo_coeffs(3, 2))
+        ! @assertEqual( ,db%product_thermo(1)%thermo_coeffs(3, 3))
+
+        ! @assertEqual("ZrO2(L)" ,db%product_thermo(2012)%name)
+        ! @assertEqual("ZR"  ,db%product_thermo(2012)%formula%elements(1))
+        ! @assertRelativelyEqual(1.0d0 ,db%product_thermo(2012)%formula%coefficients(1), 1.d-2)
+        ! @assertEqual("O "  ,db%product_thermo(2012)%formula%elements(2))
+        ! @assertRelativelyEqual(2.0d0 ,db%product_thermo(2012)%formula%coefficients(2), 1.d-2)
+        ! @assertEqual(5     ,db%product_thermo(2012)%i_phase)
+        ! @assertEqual(1     ,db%product_thermo(2012)%num_intervals)
+        ! @assertRelativelyEqual(123.2228d0 ,db%product_thermo(2012)%molecular_weight, 1.d-2)
+        ! @assertRelativelyEqual(2983.0d0 ,db%product_thermo(2012)%T_fit(1, 1), 1.d-2)
+        ! @assertRelativelyEqual(6000.0d0 ,db%product_thermo(2012)%T_fit(1, 2), 1.d-2)
+
+    end subroutine
+
+    @test
+    subroutine test_reactant_thermo()
+
+        type(ThermoDB) :: db
+        real(dp) :: T_min, T_max
+        integer :: i
+        db = read_thermo("data/thermo.lib")
+
+        @assertEqual("(CH2)x(cr)" ,db%reactant_thermo(1)%name)
+        @assertEqual("C "  ,db%reactant_thermo(1)%formula%elements(1))
+        @assertEqual(1.0d0 ,db%reactant_thermo(1)%formula%coefficients(1))
+        @assertEqual("H "  ,db%reactant_thermo(1)%formula%elements(2))
+        @assertEqual(2.0d0 ,db%reactant_thermo(1)%formula%coefficients(2))
+        @assertEqual(1     ,db%reactant_thermo(1)%i_phase)
+        @assertEqual(0     ,db%reactant_thermo(1)%num_intervals)
+        @assertEqual(14.026579999999999d0 ,db%reactant_thermo(1)%molecular_weight)
+        @assertEqual(298.14999999999998d0 ,db%reactant_thermo(1)%T_ref)
+        @assertEqual(-25600.000000000000d0 ,db%reactant_thermo(1)%enthalpy_ref)
+
+        call db%reactant_thermo(1)%get_valid_temperature_range(T_min, T_max)
+        @assertEqual(288.14999999999998d0, T_min)
+        @assertEqual(308.14999999999998d0, T_max)
+
+        do i = 1, db%num_reactants
+            if (allocated(db%reactant_thermo(i)%T_fit)) exit
+        end do
+        @assertTrue(i <= db%num_reactants)
+        call db%reactant_thermo(i)%get_valid_temperature_range(T_min, T_max)
+        @assertEqual(minval(db%reactant_thermo(i)%T_fit(:, 1)), T_min)
+        @assertEqual(maxval(db%reactant_thermo(i)%T_fit(:, 2)), T_max)
+
+        ! @assertEqual("RP-1" ,db%reactant_thermo(62)%name)
+        ! @assertEqual("C "  ,db%reactant_thermo(62)%formula%elements(1))
+        ! @assertEqual(1.0d0 ,db%reactant_thermo(62)%formula%coefficients(1))
+        ! @assertEqual("H "  ,db%reactant_thermo(62)%formula%elements(2))
+        ! @assertEqual(1.95d0 ,db%reactant_thermo(62)%formula%coefficients(2))
+        ! @assertEqual(1     ,db%reactant_thermo(62)%i_phase)
+        ! @assertEqual(0     ,db%reactant_thermo(62)%num_intervals)
+        ! @assertEqual(13.976183000000001d0 ,db%reactant_thermo(62)%molecular_weight)
+        ! @assertEqual(298.14999999999998d0 ,db%reactant_thermo(62)%T_ref)
+        ! @assertEqual(-24717.700000000001d0 ,db%reactant_thermo(62)%enthalpy_ref)
+
+    end subroutine
+
+end module

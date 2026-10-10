@@ -6,7 +6,7 @@
 
 单个业务核心 crate，按能力组织 feature；负责格式解析、业务校验和计算调用，不依赖 Tauri。当前已实现 Gerber/ZIP、WASM 导入、模型预览、导出和原生 CEA 热化学业务入口；工程持久化、持久任务队列、STEP 与切片尚未实现，不创建无用占位模块。
 
-`src/lib.rs` 为公开入口，`app` 组装，`browser.rs`/`bin` 是薄适配，`features` 管业务，`runtime` 管外部进程与文件，`contracts` 管类型。Python 负责制造几何；桌面 crate 负责窗口、IPC、原生对话框和资源打包。
+`src/lib.rs` 为公开入口，`app` 组装，`browser.rs`/`bin` 是薄适配，`features` 管业务，`runtime` 管外部进程与文件，`contracts` 管类型。[CEA Fortran 内核](../src-fortran/agent-fortran.md) 负责热化学求解，Rust 经官方 C ABI 调用；Python 负责制造几何；桌面 crate 负责窗口、IPC、原生对话框和资源打包。
 
 ## 依赖
 

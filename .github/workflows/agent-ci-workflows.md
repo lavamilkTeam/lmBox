@@ -7,3 +7,5 @@
 不得通过 path filter、跳过测试、弱化边界或忽略错误获得绿色状态。Actions、工具链和依赖版本按现有约定固定；凭证不进入构建/测试。远端 required checks 需核对实际绑定，配置文件不能证明设置生效。运行 actionlint 与受影响的本地检查；三平台与 Release 以实际 hosted run 为准。
 
 前端任务安装 GNU Fortran/CMake/Ninja 并构建本地后端，以真实推进计算运行浏览器集成测试。
+
+Python 门禁安装 AI extra 验证 LangGraph 工具循环；桌面矩阵另打包并搬移检查独立 AI worker。AI 检查使用本机可辨识模型服务替身，不接收云端凭据，不声称验证实际云端推理。

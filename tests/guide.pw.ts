@@ -1,13 +1,15 @@
 import { test, expect } from '@playwright/test'
 import { selectWorkspace } from './workspace-navigation'
 
-test('startup offers five tools; drag, zoom, move, connect and remove operate on the same graph', async ({ page }) => {
+test('startup offers seven tools including video and Agent; drag, zoom, move, connect and remove operate on the same graph', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.goto('/')
   await expect(page.getByRole('region', { name: '引导界面', exact: true })).toBeVisible()
   const library = page.getByRole('navigation', { name: '引导功能库' })
-  await expect(library.getByRole('button')).toHaveCount(5)
+  await expect(library.getByRole('button')).toHaveCount(7)
+  await expect(library.getByRole('button', { name: '添加视频工作流', exact: true })).toBeEnabled()
+  await expect(library.getByRole('button', { name: '添加AI 工作助手', exact: true })).toBeEnabled()
   const canvas = page.getByLabel('流程画布', { exact: true })
   await library.getByRole('button', { name: '添加化学平衡分析' }).dragTo(canvas, { targetPosition: { x: 180, y: 160 } })
   const chemistry = page.getByRole('article', { name: '化学平衡分析', exact: true })
@@ -91,6 +93,8 @@ test('fixed entries and dynamic workspace tabs support opening, deduplication an
   await expect(tabs.getByRole('button')).toHaveCount(0)
   await library.click()
   await expect(page.getByRole('navigation', { name: '可用功能' }).getByRole('button', { name: '化学平衡分析 未接入', exact: true })).toBeDisabled()
+  await expect(page.getByRole('navigation', { name: '可用功能' }).getByRole('button', { name: '视频工作流', exact: true })).toBeEnabled()
+  await expect(page.getByRole('navigation', { name: '可用功能' }).getByRole('button', { name: 'AI 工作助手', exact: true })).toBeEnabled()
   await selectWorkspace(page, '喷管初步设计')
   const nozzle = tabs.getByRole('tab', { name: '喷管初步设计', exact: true })
   await expect(nozzle).toHaveAttribute('aria-selected', 'true')

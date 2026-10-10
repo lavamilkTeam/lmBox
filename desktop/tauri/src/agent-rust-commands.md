@@ -23,3 +23,5 @@
 按 [打包说明](../agent-rust-packaging.md) 执行宿主 fmt/Clippy/tests 与搬移后的 worker 验证；三平台 GUI、签名和公证不能由编译结果推断。
 
 宿主同时注册 [推进计算 IPC](agent-rust-propulsion.md)，模型任务和推进阻塞任务使用各自边界。
+
+宿主注册 [AI 任务 IPC](agent-rust-ai.md)，退出时等待 AI 子进程取消与临时产物清理。

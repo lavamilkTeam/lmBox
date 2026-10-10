@@ -13,9 +13,14 @@
 engine/
 ├── src/
 │   └── lmbox_geometry/
+│       ├── ai_worker.py
 │       ├── contracts/
 │       │   └── agent-python-contracts.md
 │       └── modules/
+│           ├── agent/
+│           │   └── agent-python-agent.md
+│           ├── video/
+│           │   └── agent-python-video.md
 │           └── stencil/
 │               ├── features/
 │               │   ├── export_2d/

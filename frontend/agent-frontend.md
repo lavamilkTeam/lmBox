@@ -23,6 +23,8 @@
 | `frontend/app` | [平台组装](app/agent-frontend-app.md) |
 | `frontend/ui/installer-welcome` | [安装欢迎页](ui/installer-welcome/agent-frontend-installer-welcome.md) |
 | `frontend/modules/guide` | [引导模块](modules/guide/agent-frontend-guide.md) |
+| `frontend/modules/video` | [视频工作流](modules/video/agent-frontend-video.md) |
+| `frontend/modules/agent` | [AI 工作助手](modules/agent/agent-frontend-agent.md) |
 | `frontend/modules/cfd` | [流体分析模块](modules/cfd/agent-frontend-cfd.md) |
 | `frontend/modules/propulsion` | [推进设计模块](modules/propulsion/agent-frontend-propulsion.md) |
 | `frontend/ui/engineering-shell` | [工程工具箱](ui/engineering-shell/agent-frontend-engineering-shell.md) |

@@ -8,6 +8,8 @@
 
 来源见 [共享协议](../../../contracts/agent-contracts.md)，不依赖 app/features/runtime/Tauri，不泄漏解析 AST 或业务状态。变更时同步 schema、样例及受影响语言映射。
 
+`contracts::ai` 映射 AI v1 的工程、请求、输入版本、能力、任务及产物描述；执行依赖和私有工作区不进入公共协议。错误响应保留请求身份，任务状态与结果由 [AI 模块](../modules/ai/agent-rust-ai.md) 管理。
+
 ## 验证
 
 统一检查见 [语言说明](../../agent-rust.md#验证与维护)。经共享 schema/fixtures 验证序列化、未知版本、枚举、有限数值与兼容默认值。

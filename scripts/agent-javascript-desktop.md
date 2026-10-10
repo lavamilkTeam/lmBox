@@ -11,3 +11,5 @@
 ## 验证
 
 按实际改动运行对应 npm 脚本；发布资源边界运行 `node --test scripts/release-assets.check.mjs`。跨语言/打包同时执行涉及端的模块检查。
+
+开发启动可读取[AI 本地环境配置](agent-javascript-ai.md)；发布归档同时保留 `geometry` 与 `ai` 资源目录及运行权限。

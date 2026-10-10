@@ -16,6 +16,9 @@ contracts/
 │       └── agent-contracts-fixtures.md
 ├── schemas/
 │   ├── v1/
+│   │   ├── agent-contracts-ai.md
+│   │   ├── ai-request.schema.json
+│   │   ├── ai-response.schema.json
 │   │   ├── agent-contracts-cea.md
 │   │   ├── agent-contracts-import.md
 │   │   ├── agent-contracts-preview.md

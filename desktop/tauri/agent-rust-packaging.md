@@ -31,3 +31,5 @@
 ## 验证
 
 全部矩阵与质量门禁须成功；本地检查不代表实际发布完成。
+
+AI 使用独立 `resources/lmbox-ai → ai` 目录。先运行 `npm run setup:ai`、`npm run build:ai-worker`、`npm run check:ai-worker`；资源搬移后以明确的本地模型夹具验证 LangGraph、工具和文本产物。AI 凭据从宿主环境读取，不打入安装器。视频预览只允许应用自身与 Blob 媒体来源。

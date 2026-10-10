@@ -5,8 +5,9 @@ import { readFileSync } from 'node:fs'
 import { propulsionApi } from './scripts/propulsion-api.ts'
 import { previewApi } from './scripts/preview-api.ts'
 import { cfdApi } from './scripts/cfd-api.ts'
+import { aiApi } from './scripts/ai-api.ts'
 export default defineConfig({
-  plugins: [vue(), tailwindcss(), previewApi(), propulsionApi(), cfdApi(), {
+  plugins: [vue(), tailwindcss(), previewApi(), propulsionApi(), cfdApi(), aiApi(), {
     name: 'ui-license-notices',
     generateBundle() {
       for (const name of ['LICENSE', 'NOTICE']) {

@@ -17,6 +17,8 @@ src-rust/
 │   ├── contracts/
 │   │   └── agent-rust-contracts.md
 │   ├── modules/
+│   │   ├── ai/
+│   │   │   └── agent-rust-ai.md
 │   │   ├── cfd/
 │   │   │   ├── app/
 │   │   │   ├── runtime/

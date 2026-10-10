@@ -9,6 +9,7 @@
 | `build-propulsion.mjs` | [推进设计构建](agent-javascript-propulsion.md) |
 | `build-cea.mjs` | [CEA 构建](agent-javascript-cea.md) |
 | `build-wasm/build-worker/check-worker/geometry-env` | [构建与引擎环境](agent-javascript-build.md) |
+| `ai-api.ts`、`ai-env.mjs`、`build-ai-worker.mjs` | [AI 传输与环境](agent-javascript-ai.md) |
 | `cfd-api.ts` | [CFD 开发传输](agent-javascript-cfd-api.md) |
 | `propulsion-api.ts` | [推进计算开发适配](agent-javascript-propulsion-api.md) |
 | `preview-api.ts` | [开发计算适配](agent-javascript-preview-api.md) |

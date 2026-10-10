@@ -102,6 +102,7 @@ pub fn run() {
         .manage(ShutdownStarted::default())
         .setup(|app| {
             app.manage(crate::cfd::backend(app).map_err(std::io::Error::other)?);
+            app.manage(crate::ai::backend(app).map_err(std::io::Error::other)?);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -112,7 +113,9 @@ pub fn run() {
             crate::propulsion::propulsion_run,
             crate::cfd::cfd_request,
             crate::cfd::choose_cfd_path,
-            crate::cfd::save_cfd_document
+            crate::cfd::save_cfd_document,
+            crate::ai::ai_request,
+            crate::ai::save_ai_artifact
         ])
         .build(tauri::generate_context!())
         .expect("Unable to initialize lmBox")
@@ -128,9 +131,11 @@ pub fn run() {
                 }
                 let tasks = Arc::clone(app.state::<Arc<PreviewTasks>>().inner());
                 let cfd = Arc::clone(app.state::<Arc<lmbox::modules::cfd::CfdBackend>>().inner());
+                let ai = Arc::clone(app.state::<Arc<lmbox::modules::ai::AiBackend>>().inner());
                 tasks.cancel_all();
                 let handle = app.clone();
                 std::thread::spawn(move || {
+                    ai.close_all();
                     cfd.close_all();
                     while !tasks.is_idle() {
                         std::thread::sleep(std::time::Duration::from_millis(20));

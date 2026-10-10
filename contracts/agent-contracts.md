@@ -11,6 +11,7 @@
 | preview v1 / 编辑与产物 | [预览](schemas/v1/agent-contracts-preview.md) |
 | CEA v1（后端） | [热化学与理想火箭](schemas/v1/agent-contracts-cea.md) |
 | propulsion v1 | [喷管与喷注器初算](schemas/v1/agent-contracts-propulsion.md) |
+| AI v1 | [AI 任务与工作流](schemas/v1/agent-contracts-ai.md) |
 | CFD v1 | [原生流体分析会话](schemas/v1/agent-contracts-cfd.md) |
 | fixtures | [兼容验证](fixtures/v1/agent-contracts-fixtures.md) |
 

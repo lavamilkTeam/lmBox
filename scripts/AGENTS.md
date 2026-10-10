@@ -9,6 +9,7 @@
 <!-- agent-directory:start -->
 ```text
 scripts/
+├── agent-javascript-ai.md
 ├── agent-javascript-installer.md
 ├── agent-javascript-build.md
 ├── agent-javascript-cfd.md

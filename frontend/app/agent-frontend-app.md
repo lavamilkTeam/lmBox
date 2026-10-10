@@ -7,3 +7,5 @@
 独立安装预览由根 `installer.html → frontend/installer.ts → InstallerApp.vue` 启动，组装共享主题与[安装欢迎 UI](../ui/installer-welcome/agent-frontend-installer-welcome.md)，不加载工作台、Pinia 或计算服务。欢迎页下一步尚未接入。
 
 验证执行根目录 `npm run check`，确认异步工作区加载、共享主题、真实导入及建模流程。
+
+视频工作流与 AI 工作助手通过各自公开入口加载；关闭或切换页签保留领域会话，重新进入恢复任务查询，关闭页签不等同取消原生任务。

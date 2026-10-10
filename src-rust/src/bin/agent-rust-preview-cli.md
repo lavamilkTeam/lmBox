@@ -21,3 +21,5 @@ stdin/stdout 属适配边界，不复制参数验证；源环境和打包环境�
 `bin/propulsion.rs` 的协议与调用方式见 [推进设计入口](../modules/propulsion/app/agent-rust-propulsion.md)。
 
 `bin/cfd.rs` 是持久 JSONL 入口，生命周期和约束见 [CFD 原生会话](../modules/cfd/agent-rust-cfd.md)。
+
+`bin/ai.rs <python> <engine-source> <task-directory>` 是持久 AI JSONL 入口；每个请求保留关联身份，EOF 等待子进程取消与工作区清理。任务规则见 [AI 任务](../modules/ai/agent-rust-ai.md)。

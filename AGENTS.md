@@ -81,6 +81,14 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── installer.ts
 │   ├── app/
 │   ├── modules/
+│   │   ├── video/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-video.md
+│   │   │   └── lib/
+│   │   ├── agent/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-agent.md
+│   │   │   └── lib/
 │   │   ├── guide/
 │   │   │   ├── index.ts
 │   │   │   ├── agent-frontend-guide.md
@@ -133,6 +141,7 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── agent-rust.md
 │   └── src/
 │       └── modules/
+│           ├── ai/
 │           ├── cfd/
 │           ├── stencil/
 │           └── propulsion/
@@ -150,8 +159,11 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── AGENTS.md
 │   ├── agent-python.md
 │   └── src/lmbox_geometry/
+│       ├── ai_worker.py
 │       ├── cfd_worker.py
 │       └── modules/
+│           ├── video/
+│           ├── agent/
 │           ├── cfd/
 │           └── stencil/
 ├── contracts/

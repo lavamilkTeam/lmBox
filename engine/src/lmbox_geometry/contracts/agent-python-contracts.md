@@ -11,6 +11,7 @@
 ## 行为约束
 
 - `contracts` 校验共享 preview/graphics schema；`__main__` 只输出一条 JSONL 响应，失败诊断写 stderr。Rust 分配工作目录并管理进程。
+- `contracts.ai` 是 AI 请求校验与库无关错误的聚焦入口，读取共享 `ai-request.schema.json`；不依赖业务模块。`ai_worker` 只输出进度及一条终态 JSONL，宿主负责请求关联和任务状态；提供方原始异常不得直接进入协议。
 
 ## 验证
 

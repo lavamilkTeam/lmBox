@@ -17,9 +17,9 @@
     "test:e2e": "playwright test",
     "setup:wasm": "rustup target add wasm32-unknown-unknown && cargo install wasm-bindgen-cli --version 0.2.129 --locked --root .tools/wasm-bindgen",
     "build:wasm": "node scripts/build-wasm.mjs",
-    "predev": "npm run build:wasm && npm run build:preview && npm run build:cfd",
+    "predev": "npm run build:wasm && npm run build:preview && npm run build:cfd && npm run build:ai",
     "prebuild": "npm run build:wasm",
-    "precheck": "npm run build:wasm && npm run build:preview && npm run build:cfd",
+    "precheck": "npm run build:wasm && npm run build:preview && npm run build:cfd && npm run build:ai",
     "setup:cfd": "node scripts/setup-cfd.mjs",
     "build:cfd": "cargo build --manifest-path src-rust/Cargo.toml --bin cfd --locked",
     "setup:geometry": "node scripts/geometry-env.mjs setup",
@@ -34,7 +34,12 @@
     "build:worker": "node scripts/build-worker.mjs",
     "check:worker": "node scripts/check-worker.mjs",
     "build:propulsion": "node scripts/build-propulsion.mjs",
-    "check:propulsion": "cargo test --manifest-path src-rust/Cargo.toml --locked --features cea-integration --test propulsion_native"
+    "check:propulsion": "cargo test --manifest-path src-rust/Cargo.toml --locked --features cea-integration --test propulsion_native",
+    "build:ai": "cargo build --manifest-path src-rust/Cargo.toml --bin ai --locked",
+    "setup:ai": "node scripts/ai-env.mjs setup",
+    "check:ai": "node scripts/ai-env.mjs check",
+    "build:ai-worker": "node scripts/build-ai-worker.mjs",
+    "check:ai-worker": "node scripts/check-ai-worker.mjs"
   },
   "dependencies": {
     "@lucide/vue": "^1.49.0",

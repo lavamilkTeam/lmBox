@@ -49,6 +49,8 @@ jobs:
         run: npm ci
       - name: Install geometry engine for real browser integration tests
         run: npm run setup:geometry
+      - name: Install the isolated AI runtime
+        run: npm run setup:ai
       - name: Install the pinned Rust and WASM tools
         run: npm run setup:wasm
       - name: Install Chromium and Linux browser dependencies
@@ -120,7 +122,7 @@ jobs:
           cache: pip
           cache-dependency-path: engine/pyproject.toml
       - name: Install geometry and checking dependencies
-        run: python -m pip install -e 'engine[dev]'
+        run: python -m pip install -e 'engine[dev,ai]'
       - name: Check lint, module boundaries and geometry regressions
         working-directory: engine
         run: |
@@ -203,11 +205,14 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf libfuse2t64
       - run: npm ci
       - run: npm run setup:geometry
+      - run: npm run setup:ai
       - run: npm run setup:wasm
       - name: Bundle and exercise the standalone geometry runtime
         run: |
           npm run build:worker
           npm run check:worker
+          npm run build:ai-worker
+          npm run check:ai-worker
       - name: Reject desktop Rust warnings and test native integration
         run: |
           cargo fmt --manifest-path desktop/tauri/Cargo.toml --check
@@ -223,7 +228,7 @@ jobs:
           set -o pipefail
           if [ "$RUNNER_OS" = "Linux" ]; then
             # PyInstaller normally adds this path when its worker starts. linuxdeploy scans ELF files directly.
-            export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/desktop/tauri/resources/lmbox-geometry/_internal${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+            export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/desktop/tauri/resources/lmbox-geometry/_internal:$GITHUB_WORKSPACE/desktop/tauri/resources/lmbox-ai/_internal${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           fi
           npm run desktop:build -- --bundles "$BUNDLE_TARGETS" --verbose 2>&1 | tee desktop-build.log
       - name: Preserve installer failure diagnostics
@@ -244,9 +249,11 @@ jobs:
           trap 'rm -rf "$appimage_check_dir"' EXIT
           (cd "$appimage_check_dir" && "${installers[0]}" --appimage-extract > /dev/null)
           npm run check:worker -- "$appimage_check_dir/squashfs-root/usr/lib/lmBox/geometry"
+          npm run check:ai-worker -- "$appimage_check_dir/squashfs-root/usr/lib/lmBox/ai"
       - name: Validate the copied application resources and preserve file permissions
         run: |
           npm run check:worker -- desktop/tauri/target/release/geometry
+          npm run check:ai-worker -- desktop/tauri/target/release/ai
           node scripts/archive-desktop.mjs
       - name: Upload executable and bundled runtime
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

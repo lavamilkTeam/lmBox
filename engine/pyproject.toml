@@ -9,6 +9,7 @@ requires-python = ">=3.9"
 dependencies = ["shapely==2.0.7", "trimesh==4.5.3", "mapbox-earcut==1.0.3", "numpy==2.0.2", "jsonschema==4.23.0", "manifold3d==3.0.1"]
 
 [project.optional-dependencies]
+ai = ["langgraph==1.2.12; python_version >= '3.10'"]
 bundle = ["pyinstaller==6.22.3", "pyinstaller-hooks-contrib==2026.8"]
 dev = ["pytest==8.3.5", "ruff==0.11.13", "import-linter==2.2"]
 
@@ -55,9 +56,26 @@ type = "layers"
 layers = ["lmbox_geometry.modules.cfd.application", "lmbox_geometry.modules.cfd.runtime"]
 
 [[tool.importlinter.contracts]]
-name = "CFD and stencil implementations stay independent"
+name = "Business capability implementations stay independent"
 type = "independence"
-modules = ["lmbox_geometry.modules.cfd", "lmbox_geometry.modules.stencil"]
+modules = ["lmbox_geometry.modules.cfd", "lmbox_geometry.modules.stencil", "lmbox_geometry.modules.video", "lmbox_geometry.modules.agent"]
+
+[[tool.importlinter.contracts]]
+name = "AI worker uses public capability facades"
+type = "forbidden"
+source_modules = ["lmbox_geometry.ai_worker", "lmbox_geometry.contracts"]
+forbidden_modules = ["lmbox_geometry.modules.video.application", "lmbox_geometry.modules.video.features", "lmbox_geometry.modules.video.runtime", "lmbox_geometry.modules.agent.application", "lmbox_geometry.modules.agent.features", "lmbox_geometry.modules.agent.runtime"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Video application owns provider coordination"
+type = "layers"
+layers = ["lmbox_geometry.modules.video.application", "lmbox_geometry.modules.video.features | lmbox_geometry.modules.video.runtime", "lmbox_geometry.contracts"]
+
+[[tool.importlinter.contracts]]
+name = "Agent application owns tool and provider coordination"
+type = "layers"
+layers = ["lmbox_geometry.modules.agent.application", "lmbox_geometry.modules.agent.features | lmbox_geometry.modules.agent.runtime", "lmbox_geometry.contracts"]
 
 [[tool.importlinter.contracts]]
 name = "3D export internals stay private"

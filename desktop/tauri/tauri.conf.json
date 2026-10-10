@@ -22,8 +22,8 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ipc: http://ipc.localhost; worker-src 'self' blob:",
-      "devCsp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws://127.0.0.1:6522 http://127.0.0.1:6522 ipc: http://ipc.localhost; worker-src 'self' blob:"
+      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ipc: http://ipc.localhost; worker-src 'self' blob:; media-src 'self' blob:",
+      "devCsp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws://127.0.0.1:6522 http://127.0.0.1:6522 ipc: http://ipc.localhost; worker-src 'self' blob:; media-src 'self' blob:"
     }
   },
   "bundle": {
@@ -35,7 +35,8 @@
       "icons/icon.icns"
     ],
     "resources": {
-      "resources/lmbox-geometry/": "geometry/"
+      "resources/lmbox-geometry/": "geometry/",
+      "resources/lmbox-ai/": "ai/"
     }
   }
 }

@@ -19,3 +19,5 @@
 `propulsion.ts` 手工映射喷管/喷注器 v1 及内嵌 CEA 火箭结果；SI 字段和任务身份保持后端语义。平台边界校验响应类型、身份、版本、有限数值和图形数组后交给模块。
 
 `cfd.ts` 手工映射 CFD 会话、原生控件与几何投影；Rust 版本和请求身份按共享 CFD 协议匹配，翻译不改变原生选项值。
+
+`ai.ts` 手工映射[AI v1 协议](../../contracts/schemas/v1/agent-contracts-ai.md)，只定义任务、节点与产物数据，不携带 ComfyUI 对象或提供商凭据。

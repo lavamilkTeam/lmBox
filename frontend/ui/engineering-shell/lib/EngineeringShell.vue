@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import { ChevronDown, X, PanelsTopLeft } from '@lucide/vue'
 import { Button, Popover, PopoverTrigger, PopoverContent } from '../../shadcn'
-const props = defineProps<{ active: string; tools: { id: string; label: string; category: string }[] }>()
+const props = withDefaults(defineProps<{ active: string; tools: { id: string; label: string; category: string }[]; showToolbox?: boolean }>(), { showToolbox: true })
 const emit = defineEmits<{ select: [id: string] }>()
 const open = ref(false)
 watch(() => props.active, () => { open.value = false })
@@ -10,7 +10,7 @@ watch(() => props.active, () => { open.value = false })
 <template>
   <div class="engineering-shell">
     <header class="engineering-bar">
-      <Popover v-model:open="open">
+      <Popover v-if="showToolbox" v-model:open="open">
         <PopoverTrigger as-child><Button variant="outline" size="sm" class="toolbox-toggle"><PanelsTopLeft :size="15" />工程工具箱<ChevronDown :size="13" /></Button></PopoverTrigger>
         <PopoverContent align="start" class="engineering-toolbox">
           <nav aria-label="工程工具箱">

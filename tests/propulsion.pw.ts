@@ -1,8 +1,7 @@
 import { selectWorkspace } from './workspace-navigation'
 import { expect, test, type Page } from '@playwright/test'
 async function open(page: Page, label: string) {
-  await page.getByRole('button', { name: '工程工具箱', exact: true }).click()
-  await page.getByRole('navigation', { name: '工程工具箱' }).getByRole('button', { name: label, exact: true }).click()
+  await selectWorkspace(page, label)
   await expect(page.getByRole('heading', { name: label, exact: true })).toBeVisible()
 }
 async function select(page: Page, label: string, option: string) {

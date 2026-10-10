@@ -24,4 +24,4 @@
 
 `cfd-native.pw.ts` 仅在 `LMBOX_CFD_INTEGRATION=1` 时运行，`LMBOX_CFD_TEST_FILE` 指向公开来源的纯几何 CAD 夹具。通过真实原生会话验证导入、物理模型动态控件、单位输入、属性回写与 FCStd 保存，并关闭测试自身的会话；不替换后端响应。
 
-`guide.pw.ts` 覆盖默认启动、功能搜索与拖放、缩放坐标、指针和键盘移动、连线、删除及返回后的会话草稿。现有钢网测试通过 `workspace-navigation.ts` 从工具箱显式进入工作区。
+`guide.pw.ts` 覆盖默认启动、功能搜索与拖放、缩放坐标、指针和键盘移动、连线、删除及返回后的会话草稿。现有钢网测试通过 `workspace-navigation.ts` 从引导页节点进入工作区，其他工作区间的切换使用工具箱。

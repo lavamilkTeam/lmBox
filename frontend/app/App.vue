@@ -17,7 +17,7 @@ const active = ref('guide')
 function selectTool(id: string) { if (tools.some(tool => tool.id === id)) active.value = id }
 </script>
 <template>
-  <AppTheme><EngineeringShell :active="active" :tools="tools" @select="selectTool">
+  <AppTheme><EngineeringShell :active="active" :tools="tools" :show-toolbox="active !== 'guide'" @select="selectTool">
     <GuideWorkspace v-if="active === 'guide'" @open="selectTool" />
     <StencilWorkspace v-else-if="active === 'stencil'" />
     <CfdWorkspace v-else-if="active === 'cfd'" />

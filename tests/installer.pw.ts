@@ -12,7 +12,10 @@ test('welcome keeps the pig still during entry and starts the GIF after landing'
   })
   await page.goto('/installer.html')
   await expect(page.getByRole('heading', { name: /让我们开始安装\s*lmbox/ })).toBeVisible()
-  await expect(page.getByRole('img', { name: '猪猪' }).locator('img[src$=".gif"]')).toBeVisible()
+  const gif = page.getByRole('img', { name: '猪猪' }).locator('img[src$=".gif"]')
+  await expect(gif).toBeVisible()
+  // Resource Timing entries are available after the image finishes loading, not when its element becomes visible.
+  await gif.evaluate((image: HTMLImageElement) => image.decode())
   const timing = await page.evaluate(() => ({
     landed: performance.getEntriesByName('pig-landed')[0]?.startTime,
     gif: performance.getEntriesByType('resource').find(entry => entry.name.endsWith('/pig.gif'))?.startTime,

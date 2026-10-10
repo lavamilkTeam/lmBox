@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { selectWorkspace } from './workspace-navigation'
 import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { basename } from 'node:path'
@@ -43,6 +44,7 @@ test('native CAD, physics controls, properties and FCStd export retain original 
   const physicsProperty = (name: string) => state?.document.objects.find(object => object.id === 'PhysicsModel')?.properties.find(property => property.name === name)?.value
   try {
     await page.goto('/')
+    await selectWorkspace(page, '喷管初步设计')
     await page.getByRole('button', { name: '工程工具箱', exact: true }).click()
     await page.getByRole('navigation', { name: '工程工具箱' }).getByRole('button', { name: '计算流体力学', exact: true }).click()
     await waitState(value => Boolean(value.runtime.freecadVersion) && !value.busy)

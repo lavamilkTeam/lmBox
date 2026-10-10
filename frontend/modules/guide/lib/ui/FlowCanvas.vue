@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { ArrowUpRight, CircuitBoard, FlaskConical, Wind, X, Minus, Plus, Trash2 } from '@lucide/vue'
+import { Button, Card, CardHeader, CardTitle, CardFooter } from '../../../../ui/shadcn'
 import type { NodeView, EdgeView } from './types'
 const props = defineProps<{ nodes: NodeView[]; edges: EdgeView[] }>()
 const emit = defineEmits<{
@@ -98,24 +99,26 @@ function setZoom(value: number) { zoom.value = Math.min(1.5, Math.max(0.5, Math.
             </g>
             <path v-if="sourceNode" class="guide-edge guide-edge-preview" :d="path(sourceNode.x + 248, sourceNode.y + 76, cursor.x, cursor.y)" />
           </svg>
-          <article v-for="node in nodes" :key="node.id" class="guide-node" :data-kind="node.kind" :data-node-id="node.id" :aria-label="node.label"
+          <Card role="article" v-for="node in nodes" :key="node.id" class="guide-node" :data-kind="node.kind" :data-node-id="node.id" :aria-label="node.label"
             :class="{ 'is-link-source': source === node.id, 'is-moving': drag?.id === node.id }" :style="{ left: `${node.x}px`, top: `${node.y}px` }">
-            <button class="guide-node-heading" :aria-label="`移动${node.label}`" @pointerdown="startMove($event, node)" @pointerup="drag = null" @pointercancel="drag = null" @lostpointercapture="drag = null" @keydown="keyboardMove($event, node)">
+            <CardHeader class="guide-node-header"><CardTitle class="guide-node-title">
+            <Button variant="ghost" size="sm" class="guide-node-heading" :aria-label="`移动${node.label}`" @pointerdown="startMove($event, node)" @pointerup="drag = null" @pointercancel="drag = null" @lostpointercapture="drag = null" @keydown="keyboardMove($event, node)">
               <span class="guide-tool-icon"><CircuitBoard v-if="node.kind === 'electrical'" :size="17" /><FlaskConical v-else-if="node.kind === 'chemistry'" :size="17" /><Wind v-else :size="17" /></span>
-              <strong>{{ node.label }}</strong>
-            </button>
-            <button class="guide-node-delete" :aria-label="`移除${node.label}`" @click="removeNode(node.id)"><X :size="13" /></button>
-            <div class="guide-node-bottom"><button :disabled="!node.available" :aria-label="`打开${node.label}`" @click="emit('open', node.id)">{{ node.available ? '打开' : '未接入' }} <ArrowUpRight v-if="node.available" :size="13" /></button></div>
-            <button class="guide-port guide-port-in" :class="{ 'is-ready': source && source !== node.id }" :aria-label="`${node.label}输入端`" :title="`${node.label}输入端`" @click="finishLink(node.id)" />
-            <button class="guide-port guide-port-out" :aria-label="`${node.label}输出端`" :title="`${node.label}输出端`" :aria-pressed="source === node.id" @click="startLink(node)" />
-          </article>
+              <span>{{ node.label }}</span>
+            </Button>
+            </CardTitle></CardHeader>
+            <Button variant="ghost" size="icon-xs" class="guide-node-delete" :aria-label="`移除${node.label}`" @click="removeNode(node.id)"><X :size="13" /></Button>
+            <CardFooter class="guide-node-bottom"><Button variant="ghost" size="sm" :disabled="!node.available" :aria-label="`打开${node.label}`" @click="emit('open', node.id)">{{ node.available ? '打开' : '未接入' }} <ArrowUpRight v-if="node.available" :size="13" /></Button></CardFooter>
+            <Button variant="ghost" size="icon-xs" class="guide-port guide-port-in" :class="{ 'is-ready': source && source !== node.id }" :aria-label="`${node.label}输入端`" :title="`${node.label}输入端`" @click="finishLink(node.id)" />
+            <Button variant="ghost" size="icon-xs" class="guide-port guide-port-out" :aria-label="`${node.label}输出端`" :title="`${node.label}输出端`" :aria-pressed="source === node.id" @click="startLink(node)" />
+          </Card>
         </div>
       </div>
     </div>
     <div class="guide-floating-tools">
-      <button v-if="source" class="guide-remove-link" @click="source = null">取消连线 <X :size="12" /></button>
-      <button v-if="selected" class="guide-remove-link" @click="removeSelected"><Trash2 :size="14" />删除所选连接</button>
-      <div class="guide-zoom"><button aria-label="缩小画布" :disabled="zoom <= 0.5" @click="setZoom(zoom - 0.1)"><Minus :size="14" /></button><button aria-label="重置画布缩放" @click="setZoom(1)">{{ Math.round(zoom * 100) }}%</button><button aria-label="放大画布" :disabled="zoom >= 1.5" @click="setZoom(zoom + 0.1)"><Plus :size="14" /></button></div>
+      <Button variant="outline" size="sm" v-if="source" class="guide-remove-link" @click="source = null">取消连线 <X :size="12" /></Button>
+      <Button variant="outline" size="sm" v-if="selected" class="guide-remove-link" @click="removeSelected"><Trash2 :size="14" />删除所选连接</Button>
+      <div class="guide-zoom"><Button variant="ghost" size="sm" aria-label="缩小画布" :disabled="zoom <= 0.5" @click="setZoom(zoom - 0.1)"><Minus :size="14" /></Button><Button variant="ghost" size="sm" aria-label="重置画布缩放" @click="setZoom(1)">{{ Math.round(zoom * 100) }}%</Button><Button variant="ghost" size="sm" aria-label="放大画布" :disabled="zoom >= 1.5" @click="setZoom(zoom + 0.1)"><Plus :size="14" /></Button></div>
     </div>
   </section>
 </template>

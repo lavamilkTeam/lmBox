@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { GripVertical, Plus, Search } from '@lucide/vue'
+import { Badge, Button, Input } from '../../../../ui/shadcn'
 import type { ToolView } from './types'
 const props = defineProps<{ tools: readonly ToolView[] }>()
 const emit = defineEmits<{ add: [id: string] }>()
@@ -14,16 +15,16 @@ function drag(event: DragEvent, id: string) {
 </script>
 <template>
   <aside class="guide-library" aria-label="功能列表">
-    <div class="guide-library-heading"><span>功能库</span><span class="guide-count">{{ tools.length }}</span></div>
-    <label class="guide-search"><Search :size="15" /><input v-model="query" aria-label="搜索功能" placeholder="搜索功能…" /></label>
+    <div class="guide-library-heading"><span>功能库</span><Badge variant="secondary" class="guide-count">{{ tools.length }}</Badge></div>
+    <label class="guide-search"><Search :size="15" /><Input v-model="query" class="guide-search-input" aria-label="搜索功能" placeholder="搜索功能…" /></label>
     <nav aria-label="引导功能库">
       <section v-for="category in [...new Set(filtered.map(tool => tool.category))]" :key="category" class="guide-category">
         <h2>{{ category }}</h2>
-        <button v-for="tool in filtered.filter(tool => tool.category === category)" :key="tool.id" class="guide-tool"
+        <Button variant="ghost" size="sm" v-for="tool in filtered.filter(tool => tool.category === category)" :key="tool.id" class="guide-tool"
           draggable="true" :aria-label="`添加${tool.label}`" @dragstart="drag($event, tool.id)" @click="emit('add', tool.id)">
           <span class="guide-tool-copy"><strong>{{ tool.label }}</strong></span>
           <GripVertical class="guide-grip" :size="15" /><Plus class="guide-plus" :size="15" />
-        </button>
+        </Button>
       </section>
       <p v-if="!filtered.length" class="guide-search-empty" role="status">没有匹配的功能</p>
     </nav>

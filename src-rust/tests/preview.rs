@@ -1,4 +1,4 @@
-use lmbox::{app::build_preview, contracts::PreviewRequest, features::stencil::validate_preview};
+use lmbox::{app::build_preview, contracts::PreviewRequest, modules::stencil::validate_preview};
 use std::{
     path::Path,
     sync::{atomic::AtomicBool, Arc},

@@ -11,27 +11,25 @@
 <!-- agent-directory:start -->
 ```text
 engine/
-├── .import_linter_cache
-├── .pytest_cache
-├── .ruff_cache
-├── agent-python-bundle.md
-├── agent-python.md
 ├── src/
 │   └── lmbox_geometry/
-│       ├── agent-python-runner.md
 │       ├── contracts/
 │       │   └── agent-python-contracts.md
-│       ├── features/
-│       │   ├── export_2d/
-│       │   │   └── agent-python-export-2d.md
-│       │   ├── export_3d/
-│       │   │   └── agent-python-export-3d.md
-│       │   ├── inspection/
-│       │   │   └── agent-python-inspection.md
-│       │   └── stencil/
-│       │       └── agent-python-stencil.md
-│       └── runtime/
-│           └── agent-python-artifacts.md
-└── tests/
+│       └── modules/
+│           └── stencil/
+│               ├── features/
+│               │   ├── export_2d/
+│               │   │   └── agent-python-export-2d.md
+│               │   ├── export_3d/
+│               │   │   └── agent-python-export-3d.md
+│               │   ├── inspection/
+│               │   │   └── agent-python-inspection.md
+│               │   └── modeling/
+│               │       └── agent-python-stencil.md
+│               ├── runtime/
+│               │   └── agent-python-artifacts.md
+│               └── agent-python-stencil.md
+├── agent-python-bundle.md
+└── agent-python.md
 ```
 <!-- agent-directory:end -->

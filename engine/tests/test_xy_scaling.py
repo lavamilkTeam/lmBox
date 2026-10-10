@@ -12,9 +12,7 @@ from trimesh import Trimesh, load
 from trimesh.intersections import mesh_plane
 
 from lmbox_geometry.contracts import validate_request
-from lmbox_geometry.features.inspection import inspect_mesh
-from lmbox_geometry.features.stencil import build_preview
-from lmbox_geometry.runtime.artifacts import serialize
+from lmbox_geometry.modules.stencil import build_preview, export_mesh, inspect_mesh
 
 
 @pytest.fixture
@@ -49,7 +47,7 @@ def test_xy_modes_change_real_selected_contour_and_mesh(data, mode):
     assert summary["holeCount"] == 2
     assert min(Polygon(r).symmetric_difference(shape).area for r in mesh.contours[1:]) < 1e-10
     assert summary["volume"] == pytest.approx((18 * 15 - shape.area - 2) * 0.2)
-    stl = load(io.BytesIO(serialize(mesh, summary, "stl").encode()), file_type="stl")
+    stl = load(io.BytesIO(export_mesh(mesh, "stl").encode()), file_type="stl")
     assert stl.is_watertight
     assert stl.volume == pytest.approx(summary["volume"])
     assert_cross_section(stl, shape)
@@ -76,7 +74,7 @@ def test_xy_shape_composes_with_both_thickness_tapers_and_stl(data, mode, invers
     middle = affinity.scale(shape, middle_scale, middle_scale, origin=shape.centroid)
     native = Trimesh(np.array(mesh.positions).reshape(-1, 3), np.array(mesh.indices).reshape(-1, 3))
     assert_cross_section(native, middle)
-    exported = load(io.BytesIO(serialize(mesh, summary, "stl").encode()), file_type="stl")
+    exported = load(io.BytesIO(export_mesh(mesh, "stl").encode()), file_type="stl")
     assert exported.is_watertight and exported.is_winding_consistent
     assert_cross_section(exported, middle)
 

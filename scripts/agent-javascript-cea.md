@@ -1,8 +1,8 @@
 # JavaScript 工具：CEA 构建适配
 
-先读 [工具说明](agent-javascript.md) 和 [原生接口](../src-rust/src/runtime/cea/agent-rust-cea.md)。`build-cea.mjs` 是独立构建入口，不实现热化学算法。
+先读 [工具说明](agent-javascript.md) 和 [原生接口](../src-rust/src/modules/propulsion/runtime/cea/agent-rust-cea.md)。`build-cea.mjs` 是独立构建入口，不实现热化学算法。
 
-`npm run build:cea` 从仓库 [src-fortran/cea/](../src-fortran/cea/agent-fortran-cea.md) 直接编译 Fortran 内核和官方 C ABI，不联网下载或覆盖源码。`npm run build:backend` 顺序编译 CEA 和 Rust 后端入口。来源由 `src-fortran/cea/upstream.json` 记录；构建对实际源码树计算摘要并写入运行库 manifest，允许通过正常代码变更维护本地源码。构建缓存位于 `.tools/cea/fortran-build/`，不提交二进制。
+`npm run build:cea` 从仓库 [src-fortran/modules/propulsion/cea/](../src-fortran/modules/propulsion/cea/agent-fortran-cea.md) 直接编译 Fortran 内核和官方 C ABI，不联网下载或覆盖源码。`npm run build:backend` 顺序编译 CEA、推进设计库和 Rust 后端入口。来源由 `src-fortran/modules/propulsion/cea/upstream.json` 记录；构建对实际源码树计算摘要并写入运行库 manifest，允许通过正常代码变更维护本地源码。构建缓存位于 `.tools/cea/modules-build/`，不提交二进制。
 
 要求 Node 24、CMake ≥3.19、Ninja、C 编译器及 GNU Fortran ≥13。编译器可通过 `CC`/`FC` 指定，工具可通过 `CMAKE`/`NINJA` 指定。Linux 使用系统 GCC/gfortran；macOS 可用 Homebrew GCC；Windows 使用 MSYS2 UCRT64 GCC/Fortran，构建和运行时保持其 bin 在 PATH。Rust 可用原生 MSVC 工具链，通过动态 C ABI 调用 GNU Fortran DLL。
 

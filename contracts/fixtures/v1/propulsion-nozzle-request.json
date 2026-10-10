@@ -1,0 +1,34 @@
+{
+  "type": "nozzle",
+  "request": {
+    "identity": {
+      "schemaVersion": 1,
+      "projectId": "design-example",
+      "jobId": "example-nozzle",
+      "inputRevision": 1
+    },
+    "reactants": [
+      {
+        "species": "H2(L)",
+        "massFraction": 0.15263516989057585,
+        "temperatureK": 20.27
+      },
+      {
+        "species": "O2(L)",
+        "massFraction": 0.8473648301094242,
+        "temperatureK": 90.17
+      }
+    ],
+    "chemistry": "equilibrium",
+    "chamberPressurePa": 5331720.0,
+    "massFlowKgS": 1.0,
+    "ambientPressurePa": 0.0,
+    "expansionRatio": 25.0,
+    "segments": 32,
+    "contour": {
+      "type": "conical",
+      "halfAngleDeg": 15.0,
+      "throatArcRadiusRatio": 0.5
+    }
+  }
+}

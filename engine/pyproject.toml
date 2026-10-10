@@ -28,16 +28,37 @@ root_package = "lmbox_geometry"
 [[tool.importlinter.contracts]]
 name = "Application owns coordination"
 type = "layers"
-layers = ["lmbox_geometry.runner", "lmbox_geometry.features | lmbox_geometry.runtime", "lmbox_geometry.contracts"]
+layers = ["lmbox_geometry.modules.stencil.application", "lmbox_geometry.modules.stencil.features | lmbox_geometry.modules.stencil.runtime", "lmbox_geometry.contracts"]
 
 [[tool.importlinter.contracts]]
 name = "Features stay independent"
 type = "independence"
-modules = ["lmbox_geometry.features.stencil", "lmbox_geometry.features.inspection"]
+modules = ["lmbox_geometry.modules.stencil.features.modeling", "lmbox_geometry.modules.stencil.features.inspection", "lmbox_geometry.modules.stencil.features.export_3d", "lmbox_geometry.modules.stencil.features.export_2d"]
 
 [[tool.importlinter.contracts]]
 name = "Stencil internals stay private"
 type = "forbidden"
-source_modules = ["lmbox_geometry.runner", "lmbox_geometry.runtime", "lmbox_geometry.features.inspection"]
-forbidden_modules = ["lmbox_geometry.features.stencil._pipeline", "lmbox_geometry.features.stencil._contours", "lmbox_geometry.features.stencil._editing", "lmbox_geometry.features.stencil._frame", "lmbox_geometry.features.stencil._solid", "lmbox_geometry.features.stencil._xy_scaling"]
+source_modules = ["lmbox_geometry.modules.stencil.application", "lmbox_geometry.modules.stencil.runtime", "lmbox_geometry.modules.stencil.features.inspection", "lmbox_geometry.modules.stencil.features.export_3d", "lmbox_geometry.modules.stencil.features.export_2d"]
+forbidden_modules = ["lmbox_geometry.modules.stencil.features.modeling._pipeline", "lmbox_geometry.modules.stencil.features.modeling._contours", "lmbox_geometry.modules.stencil.features.modeling._editing", "lmbox_geometry.modules.stencil.features.modeling._frame", "lmbox_geometry.modules.stencil.features.modeling._solid", "lmbox_geometry.modules.stencil.features.modeling._xy_scaling"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "3D export internals stay private"
+type = "forbidden"
+source_modules = ["lmbox_geometry.modules.stencil.application", "lmbox_geometry.modules.stencil.runtime", "lmbox_geometry.modules.stencil.features.modeling", "lmbox_geometry.modules.stencil.features.inspection", "lmbox_geometry.modules.stencil.features.export_2d"]
+forbidden_modules = ["lmbox_geometry.modules.stencil.features.export_3d._stl"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "2D export internals stay private"
+type = "forbidden"
+source_modules = ["lmbox_geometry.modules.stencil.application", "lmbox_geometry.modules.stencil.runtime", "lmbox_geometry.modules.stencil.features.modeling", "lmbox_geometry.modules.stencil.features.inspection", "lmbox_geometry.modules.stencil.features.export_3d"]
+forbidden_modules = ["lmbox_geometry.modules.stencil.features.export_2d._formats"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Process adapter uses the stencil module facade"
+type = "forbidden"
+source_modules = ["lmbox_geometry.runner", "lmbox_geometry.contracts"]
+forbidden_modules = ["lmbox_geometry.modules.stencil.application", "lmbox_geometry.modules.stencil.features", "lmbox_geometry.modules.stencil.runtime"]
 allow_indirect_imports = true

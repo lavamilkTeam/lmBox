@@ -14,4 +14,5 @@ pub use import::{ImportResult, ImportedLayer, LayerDiagnostic, LayerRole};
 mod preview;
 pub use preview::{ModelSettings, PreviewRequest};
 
+pub mod propulsion;
 pub mod thermochemistry;

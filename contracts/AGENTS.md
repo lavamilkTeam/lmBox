@@ -11,16 +11,17 @@
 <!-- agent-directory:start -->
 ```text
 contracts/
-├── agent-contracts.md
 ├── fixtures/
 │   └── v1/
 │       └── agent-contracts-fixtures.md
-└── schemas/
-    ├── v1/
-    │   ├── agent-contracts-cea.md
-    │   ├── agent-contracts-import.md
-    │   └── agent-contracts-preview.md
-    └── v2/
-        └── agent-contracts-graphics.md
+├── schemas/
+│   ├── v1/
+│   │   ├── agent-contracts-cea.md
+│   │   ├── agent-contracts-import.md
+│   │   ├── agent-contracts-preview.md
+│   │   └── agent-contracts-propulsion.md
+│   └── v2/
+│       └── agent-contracts-graphics.md
+└── agent-contracts.md
 ```
 <!-- agent-directory:end -->

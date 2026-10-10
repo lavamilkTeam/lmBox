@@ -7,9 +7,7 @@ import pytest
 from trimesh import load
 
 from lmbox_geometry.contracts import validate_request
-from lmbox_geometry.features.inspection import inspect_mesh
-from lmbox_geometry.features.stencil import build_preview
-from lmbox_geometry.runtime.artifacts import serialize
+from lmbox_geometry.modules.stencil import build_preview, export_mesh, inspect_mesh
 
 
 @pytest.mark.parametrize("mirror", [False, True])
@@ -35,7 +33,7 @@ def test_almost_aligned_tapered_openings_keep_valid_faces_through_export(mirror)
     assert summary["holeCount"] == 4
     assert summary["volume"] == pytest.approx(mesh.expected_volume, rel=1e-12)
 
-    stl = serialize(mesh, summary, "stl")
+    stl = export_mesh(mesh, "stl")
     exported = load(io.BytesIO(stl.encode()), file_type="stl")
     assert exported.is_watertight
     assert exported.is_winding_consistent
@@ -68,7 +66,7 @@ def test_taper_changes_real_mesh_cross_sections_and_export(inverse, lower):
         vertices=np.array(mesh.positions).reshape(-1, 3),
         faces=np.array(mesh.indices).reshape(-1, 3), process=False,
     )
-    exported = load(io.BytesIO(serialize(mesh, summary, "stl").encode()), file_type="stl")
+    exported = load(io.BytesIO(export_mesh(mesh, "stl").encode()), file_type="stl")
     for model in (native, exported):
         assert model.is_watertight
         top = model.vertices[np.isclose(model.vertices[:, 2], 0.2, atol=1e-10)]

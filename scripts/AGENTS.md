@@ -13,6 +13,7 @@ scripts/
 ├── agent-javascript-cea.md
 ├── agent-javascript-desktop.md
 ├── agent-javascript-preview-api.md
+├── agent-javascript-propulsion.md
 ├── agent-javascript-release-assets.md
 └── agent-javascript.md
 ```

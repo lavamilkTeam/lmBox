@@ -23,3 +23,5 @@ CEA 的 `cea-rocket-request.json` / `cea-hp-request.json` 供原生后端与 CLI
 ## 验证
 
 运行受影响语言的检查；schema 通过不等于几何语义正确。保持版本接受/拒绝行为一致，不声称尚未建立的自动生成工具已运行。
+
+推进设计 fixture 见 [propulsion 协议](../../schemas/v1/agent-contracts-propulsion.md)。喷管复用公开 CEA 参考输入；喷注器两路使用相同的示例水物性，仅用于模型数值校验。

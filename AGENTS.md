@@ -91,16 +91,18 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   └── ui/
 ├── src-fortran/
 │   ├── agent-fortran.md
-│   └── cea/
-│       ├── agent-fortran-cea.md
-│       ├── CMakeLists.txt
-│       ├── source/
-│       ├── data/
-│       └── extern/
+│   └── modules/
+│       └── propulsion/
+│           ├── agent-fortran-propulsion.md
+│           ├── cea/
+│           └── design/
 ├── src-rust/
 │   ├── AGENTS.md
 │   ├── agent-rust.md
 │   └── src/
+│       └── modules/
+│           ├── stencil/
+│           └── propulsion/
 ├── desktop/tauri/
 │   ├── AGENTS.md
 │   ├── agent-rust.md
@@ -109,6 +111,8 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── AGENTS.md
 │   ├── agent-python.md
 │   └── src/lmbox_geometry/
+│       └── modules/
+│           └── stencil/
 ├── contracts/
 │   ├── AGENTS.md
 │   ├── agent-contracts.md

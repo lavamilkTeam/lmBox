@@ -320,6 +320,7 @@ jobs:
           cargo clippy --manifest-path src-rust/Cargo.toml --locked --all-targets --features cea-integration -- -D warnings
           cargo test --manifest-path src-rust/Cargo.toml --locked --test cea_contract
           npm run check:cea
+          npm run check:propulsion
 
   quality-gate:
     name: Quality gate

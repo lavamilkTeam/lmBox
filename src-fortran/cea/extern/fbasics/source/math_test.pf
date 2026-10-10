@@ -1,0 +1,81 @@
+module math_test
+
+    use funit
+    use fb_math
+    use fb_parameters, only: wp, tol, pi
+    implicit none
+
+contains
+
+    @test
+    subroutine test_cross2d
+        real(wp) :: x(2), y(2)
+
+        ! Zero if co-linear
+        x = [ 5.0d0, 5.0d0 ]
+        y = [ 2.0d0, 2.0d0 ]
+        @assertEqual(0.0d0, cross2d(x,y), tol)
+
+        ! Product of lengths if 90deg apart
+        x = [ 2.0d0, 0.0d0 ]
+        y = [ 0.0d0, 3.0d0 ]
+        @assertEqual(6.0d0, cross2d(x,y), tol)
+
+        ! Check for arbitrary inputs
+        x = [ sqrt(3.0d0), 1.0d0 ]        ! L=2, ang=30deg
+        y = [ sqrt(2.0d0), -sqrt(2.0d0) ] ! L=2, ang=-45
+        @assertEqual(-4.0d0*sin(5*pi/12), cross2d(x,y), tol)
+
+        return
+    end subroutine
+
+    @test
+    subroutine test_cross3d
+        real(wp) :: x(3), y(3), z(3)
+
+        ! Zero if co-linear
+        x = [ 5.0d0, 5.0d0, 5.0d0 ]
+        y = [ 2.0d0, 2.0d0, 2.0d0 ]
+        z = cross(x,y)
+        @assertEqual(0.0d0, maxval(abs(z)), tol)
+
+        ! Product of lengths if 90deg apart
+        x = [ 2.0d0, 0.0d0, 0.0d0 ]
+        y = [ 0.0d0, 3.0d0, 0.0d0 ]
+        z = cross(x,y)
+        @assertEqual(6.0d0, z(3), tol)
+
+        ! Check for arbitrary inputs
+        x = [ 0.0d0, sqrt(3.0d0), 1.0d0 ]        ! L=2, ang=30deg
+        y = [ 0.0d0, sqrt(2.0d0), -sqrt(2.0d0) ] ! L=2, ang=-45
+        z = cross(x,y)
+        @assertEqual(-4.0d0*sin(5*pi/12), z(1), tol)
+
+        return
+    end subroutine
+
+    @test
+    subroutine test_norm
+        real(wp) :: x(2)
+        x = [3.0, 4.0]
+        @assertEqual(5.0d0, norm(x), tol)
+    end subroutine
+
+    @test
+    subroutine test_orthogonal_vectors
+        real(wp) :: n2(2), t2(2)
+        real(wp) :: n3(3), t3(3,2)
+
+        n2 = [1.0, 0.0]
+        call orthogonal_vectors(n2, t2)
+        @assertEqual([0.0, 1.0], t2, tol)
+
+        n3 = [1.0, 1.0, 1.0]/sqrt(3.0d0)
+        call orthogonal_vectors(n3, t3)
+        @assertEqual(0.0, dot_product(n3, t3(:,1)), tol)
+        @assertEqual(0.0, dot_product(n3, t3(:,2)), tol)
+
+        return
+    end subroutine
+
+end module

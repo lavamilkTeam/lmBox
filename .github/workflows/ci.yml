@@ -96,10 +96,10 @@ jobs:
           engine/.venv/bin/python -m pip install -e 'engine[dev]'
       - name: Check Rust format and reject Clippy warnings
         run: |
-          cargo fmt --manifest-path src-tauri/Cargo.toml --check
-          cargo clippy --manifest-path src-tauri/Cargo.toml --locked --all-targets -- -D warnings
+          cargo fmt --manifest-path src-rust/Cargo.toml --check
+          cargo clippy --manifest-path src-rust/Cargo.toml --locked --all-targets -- -D warnings
       - name: Test parsing, contracts, cancellation and Python integration
-        run: cargo test --manifest-path src-tauri/Cargo.toml --locked
+        run: cargo test --manifest-path src-rust/Cargo.toml --locked
 
   geometry:
     name: Backend Python
@@ -205,8 +205,9 @@ jobs:
           npm run check:worker
       - name: Reject desktop Rust warnings and test native integration
         run: |
-          cargo clippy --manifest-path src-tauri/Cargo.toml --features desktop --locked --all-targets -- -D warnings
-          cargo test --manifest-path src-tauri/Cargo.toml --features desktop --locked
+          cargo fmt --manifest-path desktop/tauri/Cargo.toml --check
+          cargo clippy --manifest-path desktop/tauri/Cargo.toml --locked --all-targets -- -D warnings
+          cargo test --manifest-path desktop/tauri/Cargo.toml --locked
       - name: Build desktop installers and embedded frontend
         env:
           BUNDLE_TARGETS: ${{ matrix.bundles }}
@@ -217,7 +218,7 @@ jobs:
           set -o pipefail
           if [ "$RUNNER_OS" = "Linux" ]; then
             # PyInstaller normally adds this path when its worker starts. linuxdeploy scans ELF files directly.
-            export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/src-tauri/resources/lmbox-geometry/_internal${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+            export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/desktop/tauri/resources/lmbox-geometry/_internal${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           fi
           npm run desktop:build -- --bundles "$BUNDLE_TARGETS" --verbose 2>&1 | tee desktop-build.log
       - name: Preserve installer failure diagnostics
@@ -232,7 +233,7 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          installers=("$GITHUB_WORKSPACE"/src-tauri/target/release/bundle/appimage/*.AppImage)
+          installers=("$GITHUB_WORKSPACE"/desktop/tauri/target/release/bundle/appimage/*.AppImage)
           test "${#installers[@]}" -eq 1
           appimage_check_dir="$(mktemp -d)"
           trap 'rm -rf "$appimage_check_dir"' EXIT
@@ -240,7 +241,7 @@ jobs:
           npm run check:worker -- "$appimage_check_dir/squashfs-root/usr/lib/lmBox/geometry"
       - name: Validate the copied application resources and preserve file permissions
         run: |
-          npm run check:worker -- src-tauri/target/release/geometry
+          npm run check:worker -- desktop/tauri/target/release/geometry
           node scripts/archive-desktop.mjs
       - name: Upload executable and bundled runtime
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -255,7 +256,7 @@ jobs:
         env:
           RELEASE_PLATFORM: ${{ matrix.platform }}
         shell: bash
-        run: node scripts/release-assets.mjs collect "$RELEASE_PLATFORM" src-tauri/target/release/bundle .tools/release-assets
+        run: node scripts/release-assets.mjs collect "$RELEASE_PLATFORM" desktop/tauri/target/release/bundle .tools/release-assets
       - name: Upload installers for release
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -264,10 +265,66 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  cea:
+    name: Fortran CEA (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-14]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+      - name: Install the pinned Rust toolchain in a fresh directory
+        shell: bash
+        run: |
+          task_rustup_dir="$(mktemp -d "$RUNNER_TEMP/lmbox-rustup.XXXXXX")"
+          task_rust_channel="$(python -c 'import tomllib; print(tomllib.load(open("rust-toolchain.toml", "rb"))["toolchain"]["channel"])')"
+          echo "RUSTUP_HOME=$task_rustup_dir" >> "$GITHUB_ENV"
+          export RUSTUP_HOME="$task_rustup_dir"
+          rustup toolchain install "$task_rust_channel" --profile minimal --component clippy --component rustfmt
+          rustc --version
+          cargo clippy --version
+          cargo fmt --version
+      - name: Install GNU Fortran on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran cmake ninja-build
+      - name: Install GNU Fortran on macOS
+        if: runner.os == 'macOS'
+        run: brew install gcc ninja
+      - name: Install GNU Fortran on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          & C:\msys64\usr\bin\bash.exe -lc 'pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-gcc-fortran mingw-w64-ucrt-x86_64-ninja'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          'C:\msys64\ucrt64\bin' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Build the in-repository Fortran core and Rust backend
+        env:
+          FC: gfortran
+          CC: gcc
+        run: npm run build:backend
+      - name: Check native adapter and public contract
+        run: |
+          cargo fmt --manifest-path src-rust/Cargo.toml --check
+          cargo clippy --manifest-path src-rust/Cargo.toml --locked --all-targets --features cea-integration -- -D warnings
+          cargo test --manifest-path src-rust/Cargo.toml --locked --test cea_contract
+          npm run check:cea
+
   quality-gate:
     name: Quality gate
     if: ${{ always() }}
-    needs: [frontend, rust, geometry, workflow, desktop]
+    needs: [frontend, rust, geometry, workflow, desktop, cea]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:

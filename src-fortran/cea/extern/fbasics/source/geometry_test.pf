@@ -1,0 +1,45 @@
+module geometry_test
+
+    use funit
+    use fb_geometry
+    use fb_parameters, only: wp, tol
+    implicit none
+
+contains
+
+    @test
+    subroutine test_quad_area
+        real(wp) :: x(2,2), y(2,2)
+
+        x(1,1) =  0.00d0
+        x(2,1) =  1.00d0
+        x(1,2) = -0.20d0
+        x(2,2) =  1.40d0
+
+        y(1,1) =  0.00d0
+        y(2,1) =  0.20d0
+        y(1,2) =  1.00d0
+        y(2,2) =  1.20d0
+
+        @assertEqual(1.280d0, quad_area(x,y), tol)
+    end subroutine
+
+    @test
+    subroutine test_quad_volume
+        double precision :: x(2,2), y(2,2)
+
+        x(1,1) =  0.00d0
+        x(2,1) =  1.00d0
+        x(1,2) = -0.20d0
+        x(2,2) =  1.40d0
+
+        y(1,1) =  0.00d0
+        y(2,1) =  0.20d0
+        y(1,2) =  1.00d0
+        y(2,2) =  1.20d0
+
+        @assertEqual(0.8160d0, quad_volume(x,y), tol)
+    end subroutine
+
+end module
+

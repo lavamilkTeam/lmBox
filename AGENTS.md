@@ -1,49 +1,38 @@
-# lmBox 项目工作规范
+**AI 仅可在真实目录结构变化时更新本文件标记内的目录树；其他规范、标题和文字一律禁止 AI 自行修改。**
 
-## 开始工作前必须阅读
+# lmBox 总规范
 
-任何写代码、修改、修复、重构、测试、审查、搭建或架构设计任务，都必须先应用 `$code-boundary-standards` 技能。
+## 必须阅读与维护
 
-先读本文件和 [README.md](README.md)，再根据实际改动范围读取对应目录的说明；不能只读根文件就开始实现。
+- 代码修改、修复、重构、测试、审查、搭建和架构设计前，先应用 `$code-boundary-standards`，阅读本文件、只读 [README.md](README.md)、对应语言说明及所有受影响模块说明。不能只读总文件就实现；跨语言、跨模块和打包必须读涉及的每一端。
+- 根及目录 `AGENTS.md` 是固定规范与自动加载的阅读入口。仅 `agent-directory:start` / `agent-directory:end` 标记之间的目录树可在真实目录变化时由 AI 更新；标记、目录外的标题、正文、链接、表格、规范一律不可自行修改。目录区块只能写实际路径，不能夹带规则、职责、进度或新说明。`agent-语言.md` 说明结构、依赖方向和模块索引；`agent-语言-模块.md` 在对应目录说明职责、公开入口、约束及必要验证。共享协议/CI 使用对应领域名，规则相同。
+- 代码变动时先判断职责、公开接口或约束是否改变；只最小修改所属模块 MD。结构/依赖方向/模块索引变化才更新语言 MD，禁止因普通代码变化扩写总 AGENTS。新增实际模块时就近建立模块说明并更新语言索引，不为未来能力创建空模块或空文档。
+- 语言及模块 MD 允许 AI 随代码维护，但只写稳定、必要、可验证的信息；不得追加对话、进度、历史方案、无关信息、重复规则或虚假的检查结果。同一详细约束只在所属模块维护，其他文件通过链接引用。
 
-| 工作范围 | 必须阅读 |
+| 范围 | 语言或领域说明 |
 | --- | --- |
-| Vue 界面、前端状态、桌面调用接口 | [src/AGENTS.md](src/AGENTS.md) |
-| Rust/Tauri、导入解析、工程管理、任务调度、切片器调用 | [src-tauri/AGENTS.md](src-tauri/AGENTS.md) |
-| Python 几何算法、模板生成、模型检查 | [engine/AGENTS.md](engine/AGENTS.md) |
-| 跨语言数据、命令、事件、模型产物格式 | [contracts/AGENTS.md](contracts/AGENTS.md)，以及涉及的两端说明 |
-| 打包、集成测试或涉及多个模块的改动 | 所有受影响目录的说明 |
+| Vue / TypeScript 前端 | [前端](src/agent-frontend.md) |
+| Rust 业务核心 | [Rust](src-rust/agent-rust.md) |
+| Rust / Tauri 桌面宿主 | [桌面 Rust](desktop/tauri/agent-rust.md) |
+| Python 计算引擎 | [Python](engine/agent-python.md) |
+| 共享 schema 与通信 | [协议](contracts/agent-contracts.md) |
+| JavaScript / TypeScript 构建适配 | [构建工具](scripts/agent-javascript.md) |
+| CI 与发布工作流 | [CI](.github/agent-ci.md) |
 
-子目录说明细化本文件的规则。改变职责或公开接口时，同步修改对应目录的架构说明；README 由用户维护，遵守下文的只读规则。若 README 的架构描述与用户最新决定冲突，以用户决定及对应目录的规范为准，告知差异，不自行改 README。
+## 全局架构与约束
 
-## 确定的架构
+lmBox 是可扩展的工业软件平台，现有导入与钢网建模是业务能力。采用按能力组织的模块化单体，只按实际用例增加功能。调用方向为 `Vue → 桌面/开发适配 → Rust 业务 → 计算引擎/切片器`；具体结构、实现状态和边界见语言与模块说明。
 
-采用**模块化单体，按业务能力组织模块**。前端使用 Feature-first；Rust 按导入、工程、模板、切片划分 feature；Python 按模板生成、几何检查划分 feature。每个 feature 聚合自己的相关实现，通过小型公开入口被调用。
-
-- **Vue**：用户交互、显示状态、二维/三维/路径渲染。
-- **Rust**：文件导入和解包、Gerber/DXF 格式解析、图层识别、工程持久化、业务校验、任务调度、Python 和切片器进程管理、缓存、导出。
-- **Python**：已解析图形的几何求值、轮廓合成、开孔补偿、实体与网格生成、几何检查。不重复解析 Gerber/DXF 原文件。
-- **成熟切片器**：执行切片、生成 G-code；由 Rust 调用。项目自研几何算法归 Python。
-- **contracts/**：版本化协议的约定与后续 schema，不承担业务实现。
-
-基本调用方向：`Vue → Rust 业务 → Python 计算 / 切片器`。前端不直接启动 Python；Python 不反向调用前端或管理工程。
-
-当前已有前端工作台、Rust Gerber 解析库及 graphics v2 schema。浏览器通过 Web Worker 中的 Rust/WASM 导入 Gerber/ZIP 并显示真实 IR；本地开发服务通过 Rust 调用 Python 生成经过检查的钢网/定位底板网格，并导出 STL、SVG、DXF；已有最小 Tauri 桌面宿主，复用现有导入和打包后的计算引擎；STEP 导出、工程持久化和切片器尚未实现。各目录中的目标结构不表示全部代码或功能已存在，按实际用例逐步落地。
-
-## 全项目约束
-
-1. 跨模块只使用公开入口，禁止引用其他模块的私有实现；依赖必须单向且无环。
-2. 跨 feature 流程由各端的应用组装层协调，避免 feature 互相调用形成网状依赖。不要建立全局 `utils`、`services`、`managers` 大杂烩。
-3. 文件、进程等外部交互放在对应适配边界；算法与业务行为应能通过公开接口独立测试。
-4. Rust 是接入原生功能后的工程事实来源。任务结果必须携带工程、任务和输入版本标识，禁止旧结果覆盖新状态。
-5. 示例几何和路径必须保持可辨识，不能伪装成真实解析结果或可打印 G-code。
-6. 界面不显示“前端工作台”“引擎未连接”“等待接入 Rust/Python”、技术栈版本等开发说明，不添加装饰性状态灯。保留有助于操作的参数、必要的失败原因和真实任务日志。
-7. 保留 LICENSE 中禁止商用和衍生源码公开条款，第三方依赖遵守各自许可证。
+- 跨模块只使用公开入口，依赖单向无环；跨 feature 流程由应用组装层协调。不建立泛化 utils/services/managers 容器。
+- 外观与样式归前端 UI，功能归 feature，外部交互归适配边界；所有语言都必须按职责区分业务/算法、应用协调、状态/数据契约和外部适配，边界清晰、依赖单向；名称可遵循语言惯例，不能机械照搬前端目录，也不能混合所有权。
+- Rust 是原生工程事实来源。请求/结果携带工程、任务、输入版本，旧结果不得覆盖新状态。
+- 示例须可辨识，未实现功能不能伪报成功，示例几何/路径不能冒充真实解析结果或可打印 G-code。
+- 保留 LICENSE 禁止商用及衍生源码公开条款，第三方依赖遵守各自许可证。
 
 ## 文档保护与隐私
 
 - **AI 默认不得修改任何 README 文件**，包括新增、重写、格式化、翻译、自动生成或通过脚本间接更新。可读取；需要更新时提供建议，由用户维护。只有用户针对该次 README 改动明确授权，才可在指定范围内修改，不能据此获得长期修改权限。
-- 所有层级的 README、AGENTS.md、AGENT.md、Agent.md 中都不得写入用户隐私信息：个人姓名与身份标识、邮箱、SSH 连接信息或密钥、账号/用户名、带账号的仓库地址、任意平台的账户信息、令牌、私人主机/IP、带本机用户名的绝对路径等。
+- 所有层级的 README、AGENTS.md、AGENT.md、Agent.md 和 agent-*.md 中都不得写入用户隐私信息：个人姓名与身份标识、邮箱、SSH 连接信息或密钥、账号/用户名、带账号的仓库地址、任意平台的账户信息、令牌、私人主机/IP、带本机用户名的绝对路径等。
 - 示例使用中性占位符、仓库相对路径或不对应用户的示例值。技术包名与不关联用户身份的通用本地开发地址不属于账户信息。
 - 提交身份、远程仓库、连接及认证配置仅使用用户指定的本地配置，不复制到 README 或 Agent 类文档；也不在 PR/合并说明中顺带暴露。
 - 发现已有隐私信息时，清理允许修改的文档；README 没有本次明确清理授权时，只报告所在位置，不自动重写。不要在报告中重复敏感值。
@@ -51,7 +40,7 @@
 ## 验证、提交与推送
 
 - 运行 `npm run check`，它包含前端边界检查、单元测试、类型检查、构建和端到端测试。
-- Rust/Python 建立实现后，另按对应目录说明运行各自检查。尚无清单或工具链时，明确说明未执行，不能声称通过。
+- 代码改动另按受影响语言/模块说明执行各自检查；文档整理检查链接、目录、职责和规则归属。缺少工具链或未执行时如实说明，不能声称通过。
 - 文档改动检查相对链接、目录名及三端职责一致性；不为文案变更添加复述文案的测试。
 - 日常开发提交推送到本地配置中跟踪的开发分支；默认分支通过 PR 集成。不要沿用旧推送目标，也不要自动合并。
 - 使用用户已设置的 Git 提交身份，不在受版本控制的文档中记录具体身份值。未经明确要求，不改写已发布提交历史。
@@ -72,9 +61,67 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 
 ## CI 与质量门禁
 
-- 工作流为 `.github/workflows/ci.yml`，详细执行范围见 [.github/QUALITY.md](.github/QUALITY.md)。开发分支允许直接推送，默认分支要求 PR 与全部必需检查通过；保留仓库现有审阅规则。
-- 前端必须通过 dependency-cruiser、单元测试、类型检查、生产构建及真实导入/建模浏览器测试。只有桌面平台适配模块可导入 Tauri API。
-- Rust 必须通过 rustfmt、Clippy 零警告及解析、协议、取消和真实 Python 集成测试。Python 必须通过 Ruff、import-linter 和几何回归测试。
-- 桌面壳必须在 Linux、Windows、macOS 上编译，并验证打包后的计算引擎移出源码目录后仍能生成模型及 STL。此检查不等于安装器签名、公证或三平台 GUI 自动化已经完成。
-- `Quality gate` 汇总所有必需任务（含工作流检查和桌面矩阵），仅全部成功才通过；失败、取消、跳过均不能放行。禁止通过跳过失败测试、弱化边界或忽略错误获得绿色检查。
-- GitHub 必需状态检查属于远端设置，工作流文件不能自动启用它。首次部署或更名检查时核对规则绑定和实际 CI 结果，未执行不得称为通过。
+工作流与详细验收见 [CI 说明](.github/agent-ci.md) 及 [质量规范](.github/QUALITY.md)。默认分支通过 PR 与全部必需检查集成，保留既有审阅规则。`Quality gate` 仅全部必需任务成功才通过；不得跳过、忽略错误或弱化边界。远端 required checks 需核对实际绑定，不能由本地文件推断生效。具体语言、桌面和发布检查由对应说明维护。
+
+
+## 目录（仅此区块可随真实结构更新）
+
+<!-- agent-directory:start -->
+```text
+.
+├── AGENTS.md
+├── src/
+│   ├── AGENTS.md
+│   └── agent-frontend.md
+├── frontend/
+│   ├── agent-frontend.md
+│   ├── main.ts
+│   ├── app/
+│   ├── modules/
+│   │   └── stencil/
+│   │       ├── index.ts
+│   │       ├── agent-frontend-stencil.md
+│   │       └── lib/
+│   │           ├── app/
+│   │           ├── features/
+│   │           ├── domain/
+│   │           └── ui/
+│   ├── platform/
+│   ├── contracts/
+│   └── ui/
+├── src-fortran/
+│   ├── agent-fortran.md
+│   └── cea/
+│       ├── agent-fortran-cea.md
+│       ├── CMakeLists.txt
+│       ├── source/
+│       ├── data/
+│       └── extern/
+├── src-rust/
+│   ├── AGENTS.md
+│   ├── agent-rust.md
+│   └── src/
+├── desktop/tauri/
+│   ├── AGENTS.md
+│   ├── agent-rust.md
+│   └── src/
+├── engine/
+│   ├── AGENTS.md
+│   ├── agent-python.md
+│   └── src/lmbox_geometry/
+├── contracts/
+│   ├── AGENTS.md
+│   ├── agent-contracts.md
+│   ├── schemas/
+│   └── fixtures/
+├── scripts/
+│   ├── AGENTS.md
+│   └── agent-javascript.md
+├── tests/
+│   └── agent-frontend-tests.md
+└── .github/
+    ├── AGENTS.md
+    ├── agent-ci.md
+    └── workflows/
+```
+<!-- agent-directory:end -->

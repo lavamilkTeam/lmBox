@@ -1,0 +1,215 @@
+module input_test
+    use funit
+    use cea_input
+    use fb_string_scanner
+    implicit none
+contains
+
+    @test
+    subroutine test_read_input
+        type(ProblemDB), allocatable :: problems(:)
+        allocate(problems(0))
+        !call set_log_level(log_levels%debug)
+        problems = read_input('samples/rp1311_examples.inp')
+        @assertEqual(14, size(problems))
+        @assertEqual('Example-1', problems( 1)%problem%name)
+        @assertEqual('CO2',       problems( 2)%only(4))
+        @assertEqual('hp',        problems( 3)%problem%type)
+        @assertEqual(0.4d0,       problems( 4)%reactants(2)%amount%values(1))
+        @assertEqual('cal/mole',  problems( 5)%reactants(2)%enthalpy%units)
+        @assertEqual('bar',       problems( 6)%problem%p_schedule%units)
+        @assertEqual(1200d0,      problems( 7)%problem%u1_schedule%values(3))
+        @assertEqual('fu',        problems( 8)%reactants(1)%type)
+        @assertEqual(.true.,      problems( 9)%problem%rkt_finite_area)
+        @assertEqual(1000.0d0,    problems(10)%problem%pcp_schedule%values(3))
+        @assertEqual(.true.,      problems(11)%problem%include_ions)
+        @assertEqual(75.0d0,      problems(12)%problem%supar_schedule%values(5))
+        @assertEqual(67d0,        problems(13)%problem%of_schedule%values(1))
+        @assertEqual('H',         problems(14)%reactants(1)%formula%elements(1))
+        @assertEqual(2.0d0,       problems(14)%reactants(2)%formula%coefficients(1))
+    end subroutine
+
+    @test
+    subroutine test_embedded
+        character(:), allocatable :: name, units
+
+        call parse_embedded('p', name, units)
+        @assertEqual('p', name)
+        @assertEqual('', units)
+
+        call parse_embedded('p,bars', name, units)
+        @assertEqual('p', name)
+        @assertEqual('bar', units)
+
+        ! call parse_embedded('pbar', name, units)
+        ! @assertEqual('p', name)
+        ! @assertEqual('bar', units)
+
+        call parse_embedded('pressure:bars', name, units)
+        @assertEqual('pressure', name)
+        @assertEqual('bar', units)
+
+        call parse_embedded('t(k)', name, units)
+        @assertEqual('t', name)
+        @assertEqual('k', units)
+
+    end subroutine
+
+    @test
+    subroutine test_parse_schedule
+        character(:), allocatable :: token
+        type(string_scanner) :: scanner
+        type(Schedule) :: sch
+
+        scanner = string_scanner(replace_delimiters('p(atm)=1,.1,.01,'))
+        token = scanner%read_word()
+        sch = parse_schedule(scanner, token)
+        @assertEqual('p',    sch%name)
+        @assertEqual('atm',  sch%units)
+        @assertEqual(3,      size(sch%values))
+        @assertEqual(0.01d0, sch%values(3))
+
+        scanner = string_scanner(replace_delimiters('r,eq.ratio=1,1.5'))
+        token = scanner%read_word()
+        sch = parse_schedule(scanner, token)
+        @assertEqual('r',        sch%name)
+        @assertEqual('eq.ratio', sch%units)
+        @assertEqual(2,          size(sch%values))
+        @assertEqual(1.0d0,      sch%values(1))
+
+        scanner = string_scanner(replace_delimiters('rho,kg/m**3=14.428'))
+        token = scanner%read_word()
+        sch = parse_schedule(scanner, token)
+        @assertEqual('rho',     sch%name)
+        @assertEqual('kg/m**3', sch%units)
+        @assertEqual(1,         size(sch%values))
+        @assertEqual(14.428d0,  sch%values(1))
+
+        scanner = string_scanner(replace_delimiters('p(atm)=1,.1,.01,t(k)=3000,2000,'))
+        token = scanner%read_word(); sch = parse_schedule(scanner, token)
+        token = scanner%read_word(); sch = parse_schedule(scanner, token)
+        @assertEqual('t',    sch%name)
+        @assertEqual('k',    sch%units)
+        @assertEqual(2,      size(sch%values))
+        @assertEqual(2000d0, sch%values(2))
+
+    end subroutine
+
+    @test
+    subroutine test_parse_species
+        character(32), allocatable :: species(:)
+        allocate(species(0))
+
+        species = parse_species('only  Ar    C   CO  CO2  H   H2   H2O  HNO   HO2')
+        @assertEqual(9, size(species))
+        @assertEqual('Ar', species(1))
+        @assertEqual('HNO', species(8))
+
+        ! Test with embedded commas
+        species = parse_species('omit COOH  C2 C2H CHCO,ketyl  C2H2,vinylidene  CH2CO,ketene  C2H3,vinyl')
+        @assertEqual(7, size(species))
+        @assertEqual('C2H2,vinylidene', species(5))
+
+        ! Test with parenthese
+        species = parse_species('omit (HCOOH)2   C6H6(L)  C7H8(L)  C8H18(L),n-octa  Jet-A(L)  H2O(s) H2O(L)')
+        @assertEqual(7, size(species))
+        @assertEqual('(HCOOH)2', species(1))
+        @assertEqual('C8H18(L),n-octa', species(4))
+
+        return
+    end subroutine
+
+    @test
+    subroutine test_parse_outp_repeated_dataset_keywords
+        type(OutputDataset) :: outp
+
+        outp = parse_outp('outp short outp massf outp siunits outp trace=1e-8 outp transport')
+
+        @assertEqual(.true., outp%mass_fractions)
+        @assertEqual(.true., outp%transport)
+        @assertTrue(allocated(outp%trace))
+        @assertEqual(1.0d-8, outp%trace)
+        @assertEqual(.true., outp%siunit)
+    end subroutine
+
+    @test
+    subroutine test_parse_reac_custom_species
+        type(ReactantInput), allocatable :: reac(:)
+        allocate(reac(0))
+
+        reac = parse_reac('reac name=HTPB wt%=100 t,k=298.15 h,kj/mole=-100 C=10 H=15 wt/mol=135.0')
+
+        @assertEqual(1, size(reac))
+        @assertEqual('na', reac(1)%type)
+        @assertEqual('HTPB', reac(1)%name)
+        @assertEqual('weight_frac', reac(1)%amount%name)
+        @assertEqual(100.0d0, reac(1)%amount%values(1))
+        @assertEqual('kj/mole', reac(1)%enthalpy%units)
+        @assertEqual(-100.0d0, reac(1)%enthalpy%values(1))
+        @assertEqual('C', reac(1)%formula%elements(1))
+        @assertEqual(10.0d0, reac(1)%formula%coefficients(1))
+        @assertEqual('H', reac(1)%formula%elements(2))
+        @assertEqual(15.0d0, reac(1)%formula%coefficients(2))
+        @assertEqual(135.0d0, reac(1)%molecular_weight)
+    end subroutine
+
+    @test
+    subroutine test_parse_reac_molecular_weight_alias
+        type(ReactantInput), allocatable :: reac(:)
+        allocate(reac(0))
+
+        reac = parse_reac('reac fuel=CH4 molwt=16 oxid=O2 wt%=100')
+        @assertEqual(16.0d0, reac(1)%molecular_weight)
+        @assertEqual('weight_frac', reac(2)%amount%name)
+    end subroutine
+
+    @test
+    subroutine test_parse_reac_missing_named_amount
+        type(ReactantInput), allocatable :: reac(:)
+        allocate(reac(0))
+
+        reac = parse_reac('reac name=HTPB C=10 H=15 h,kj/mole=-100')
+        @assertEqual(1, size(reac))
+        @assertEqual('na', reac(1)%type)
+        @assertFalse(allocated(reac(1)%amount))
+    end subroutine
+
+    @test
+    subroutine test_parse_reac_density_alias
+        type(ReactantInput), allocatable :: reac(:)
+        allocate(reac(0))
+
+        reac = parse_reac('reac fuel=CH4 wt%=100 den,g/cc=0.42')
+        @assertEqual('g/cc', reac(1)%density%units)
+        @assertEqual(0.42d0, reac(1)%density%values(1))
+
+        reac = parse_reac('reac fuel=CH4 wt%=100 den=0.50')
+        @assertEqual('g/cc', reac(1)%density%units)
+        @assertEqual(0.50d0, reac(1)%density%values(1))
+    end subroutine
+
+    @test
+    subroutine test_parse_reac_formula_default_coeffs
+        type(ReactantInput), allocatable :: reac(:)
+        allocate(reac(0))
+
+        reac = parse_reac('reac name=HTPB wt%=100 C H O')
+        @assertEqual(3, size(reac(1)%formula%elements))
+        @assertEqual(1.0d0, reac(1)%formula%coefficients(1))
+        @assertEqual(1.0d0, reac(1)%formula%coefficients(2))
+        @assertEqual(1.0d0, reac(1)%formula%coefficients(3))
+    end subroutine
+
+    @test
+    subroutine test_parse_reac_case_insensitive_keywords
+        type(ReactantInput), allocatable :: reac(:)
+        allocate(reac(0))
+
+        reac = parse_reac('reac FUEL=CH4 WT%=100 OXID=O2 WT%=100')
+        @assertEqual('fu', reac(1)%type)
+        @assertEqual('ox', reac(2)%type)
+        @assertEqual('weight_frac', reac(1)%amount%name)
+        @assertEqual('weight_frac', reac(2)%amount%name)
+    end subroutine
+
+end module

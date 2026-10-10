@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CEA result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "projectId",
+    "jobId",
+    "inputRevision",
+    "engineVersion",
+    "converged",
+    "solution"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "jobId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "inputRevision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "engineVersion": {
+      "type": "string"
+    },
+    "converged": {
+      "const": true
+    },
+    "solution": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "state"
+          ],
+          "properties": {
+            "type": {
+              "const": "equilibrium"
+            },
+            "state": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "temperatureK",
+                "pressurePa",
+                "densityKgM3",
+                "enthalpyJKg",
+                "entropyJKgK",
+                "cpJKgK",
+                "gammaS",
+                "molecularWeightKgKmol",
+                "species"
+              ],
+              "properties": {
+                "temperatureK": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "pressurePa": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "densityKgM3": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "enthalpyJKg": {
+                  "type": "number"
+                },
+                "entropyJKgK": {
+                  "type": "number"
+                },
+                "cpJKgK": {
+                  "type": "number"
+                },
+                "gammaS": {
+                  "type": "number"
+                },
+                "molecularWeightKgKmol": {
+                  "type": "number"
+                },
+                "species": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "species",
+                      "massFraction"
+                    ],
+                    "properties": {
+                      "species": {
+                        "type": "string"
+                      },
+                      "massFraction": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1.00000001
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "stations"
+          ],
+          "properties": {
+            "type": {
+              "const": "rocket"
+            },
+            "stations": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 34,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "state",
+                  "mach",
+                  "performance"
+                ],
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "chamber",
+                      "throat",
+                      "exit"
+                    ]
+                  },
+                  "state": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "temperatureK",
+                      "pressurePa",
+                      "densityKgM3",
+                      "enthalpyJKg",
+                      "entropyJKgK",
+                      "cpJKgK",
+                      "gammaS",
+                      "molecularWeightKgKmol",
+                      "species"
+                    ],
+                    "properties": {
+                      "temperatureK": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "pressurePa": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "densityKgM3": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "enthalpyJKg": {
+                        "type": "number"
+                      },
+                      "entropyJKgK": {
+                        "type": "number"
+                      },
+                      "cpJKgK": {
+                        "type": "number"
+                      },
+                      "gammaS": {
+                        "type": "number"
+                      },
+                      "molecularWeightKgKmol": {
+                        "type": "number"
+                      },
+                      "species": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "species",
+                            "massFraction"
+                          ],
+                          "properties": {
+                            "species": {
+                              "type": "string"
+                            },
+                            "massFraction": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1.00000001
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "mach": {
+                    "type": "number"
+                  },
+                  "performance": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "areaRatio",
+                          "cStarMS",
+                          "matchedThrustCoefficient",
+                          "matchedSpecificImpulseS",
+                          "vacuumSpecificImpulseS"
+                        ],
+                        "properties": {
+                          "areaRatio": {
+                            "type": "number"
+                          },
+                          "cStarMS": {
+                            "type": "number"
+                          },
+                          "matchedThrustCoefficient": {
+                            "type": "number"
+                          },
+                          "matchedSpecificImpulseS": {
+                            "type": "number"
+                          },
+                          "vacuumSpecificImpulseS": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

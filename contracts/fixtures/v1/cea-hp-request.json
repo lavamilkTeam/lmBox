@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "projectId": "thermochemistry-example",
+  "jobId": "cea-hp-example",
+  "inputRevision": 1,
+  "reactants": [
+    {
+      "species": "H2(L)",
+      "massFraction": 0.15263516989057585,
+      "temperatureK": 20.27
+    },
+    {
+      "species": "O2(L)",
+      "massFraction": 0.8473648301094242,
+      "temperatureK": 90.17
+    }
+  ],
+  "calculation": {
+    "type": "hp",
+    "pressurePa": 5331720.0
+  }
+}

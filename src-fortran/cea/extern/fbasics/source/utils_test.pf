@@ -1,0 +1,231 @@
+module utils_test
+
+    use funit
+    use fb_utils
+    implicit none
+
+    character(*), parameter :: root = 'test/utils/'
+
+contains
+
+    @test
+    subroutine test_is_empty
+
+        @assertTrue (is_empty(empty_int))
+        @assertFalse(is_empty(empty_int-1))
+        @assertFalse(is_empty(empty_int+1))
+        @assertFalse(is_empty(0))
+
+        ! Note: Can't +/- tol below. Will be lost as roundoff error.
+        @assertTrue (is_empty(empty_real))
+        !@assertFalse(is_empty(empty_real * (1.0d0 + tol))) ! Triggers overflow error
+        @assertFalse(is_empty(empty_real * (1.0d0 - tol)))
+        @assertFalse(is_empty(0.0d0))
+
+        @assertTrue (is_empty(""))
+        @assertTrue (is_empty("   "))
+        @assertFalse(is_empty("foo"))
+        @assertFalse(is_empty("  bar"))
+        @assertFalse(is_empty("baz  "))
+
+    end subroutine
+
+    @test
+    subroutine test_path_name_utils
+
+        @assertEqual('./',       dirname ('baz.txt'))
+        @assertEqual('bar/',     dirname ('bar/baz.txt'))
+        @assertEqual('foo/bar/', dirname ('foo/bar/baz.txt'))
+        @assertEqual('bar/',     dirname ('bar/baz.txt    '))
+
+        @assertEqual('baz.txt',  basename('baz.txt'))
+        @assertEqual('baz.txt',  basename('bar/baz.txt'))
+        @assertEqual('baz.txt',  basename('foo/bar/baz.txt'))
+        @assertEqual('baz.txt',  basename('bar/baz.txt    '))
+
+        return
+    end subroutine
+
+    @test
+    subroutine test_path_status_utils
+        character(:), allocatable :: path
+
+        ! Test for a non-existant file
+        path = 'my_non_existant_object'
+        @assertFalse(exists(path))
+        @assertFalse(is_readable(path))
+        @assertFalse(is_writeable(path))
+
+        ! Test for directory
+        ! DISABLED: Fortran does not specify how INQUIRE should handle directories,
+        ! so there's no portable way to get correct behavior (ifort and gfortran
+        ! handle things differently). So we are stuck with routines that work for
+        ! files only...
+        !path = root
+        !@assertTrue(exists(path))
+        !@assertFalse(is_readable(path))
+        !@assertFalse(is_writeable(path))
+
+        ! Test for a read-only file
+        path = root//'read_only_file.txt'
+        @assertTrue(exists(path))
+        @assertTrue(is_readable(path))
+        !@assertFalse(is_writeable(path)) ! git won't preserve rw permissions
+
+        ! Test for read-write file
+        path = root//'read_write_file.txt'
+        @assertTrue(exists(path))
+        @assertTrue(is_readable(path))
+        @assertTrue(is_writeable(path))
+
+        ! Test handles trailing whitespace
+        path = root//'read_write_file.txt   '
+        @assertTrue(exists(path))
+        @assertTrue(is_readable(path))
+        @assertTrue(is_writeable(path))
+
+        return
+    end subroutine
+
+    @test
+    subroutine test_getenv
+        character(:), allocatable :: user
+        user = getenv('USER')
+        @assertTrue(len(user) > 0)
+    end subroutine
+
+    @test
+    subroutine test_substring
+        integer :: is
+        @assertTrue (substring('foo_bar', 'foo', is) .and. is==1)
+        @assertTrue (substring('foo_bar', 'bar', is) .and. is==5)
+        @assertTrue (substring('foo_bar', 'oo' , is) .and. is==2)
+        @assertTrue (substring('foo_bar', '_ba', is) .and. is==4)
+        @assertFalse(substring('foo_bar', 'baz', is))
+        @assertEqual(is,0)
+    end subroutine
+
+    @test
+    subroutine test_startswith
+        @assertTrue (startswith('foo_bar','foo'))
+        @assertTrue (startswith('foo_bar','foo_bar'))
+        @assertFalse(startswith('foo_bar','foo_bar_baz'))
+        @assertFalse(startswith('foo_bar','bar'))
+    end subroutine
+
+    @test
+    subroutine test_endswith
+        @assertTrue (endswith('foo_bar','bar'))
+        @assertTrue (endswith('foo_bar','foo_bar'))
+        @assertFalse(endswith('foo_bar','foo_bar_baz'))
+        @assertFalse(endswith('foo_bar','foo'))
+    end subroutine
+
+    @test
+    subroutine test_upper_lower
+        @assertEqual('FOO',  upper('foo'))
+        @assertEqual('BAR',  upper('BaR'))
+        @assertEqual('baz',  lower('Baz'))
+        @assertEqual('nasa', lower('NASA'))
+    end subroutine
+
+    @test
+    subroutine test_to_from_str
+        integer :: ios
+
+        @assertEqual('123', to_str(123))
+        @assertEqual('T',   to_str(.true.))
+        @assertEqual('F',   to_str(.false.))
+        @assertEqual('1.00000', to_str(1.0d0))
+        @assertEqual('1.00', to_str(1.0d0, digits=3))
+        @assertEqual('1.000000E-12', to_str(1.0d-12))
+        @assertEqual('1.00E-12', to_str(1.0d-12, digits=2))
+
+        @assertEqual(123,     to_int('123'))
+        @assertEqual(.true.,  to_logical('T'))
+        @assertEqual(.true.,  to_logical('true'))
+        @assertEqual(.false., to_logical('F'))
+        @assertEqual(.false., to_logical('false'))
+        @assertEqual(1.0d0,   to_real('1.0'))
+
+        @assertEqual(empty_int, to_int('foo',ios))
+        @assertFalse(ios == 0)
+        @assertEqual(empty_real, to_real('foo',ios))
+        @assertFalse(ios == 0)
+        @assertEqual(.false., to_logical('123',ios))
+        @assertFalse(ios == 0)
+
+        ! Surprisingly, this works. Fortran very forgiving parsing
+        @assertEqual(.false., to_logical('foo',ios))
+        @assertTrue(ios == 0)
+
+        ! Without status, aborts
+        !@assertEqual(1.0d0, to_real('foo'))
+
+    end subroutine
+
+    @test
+    subroutine test_ones_zeros
+        real(wp) :: a(2), b(2,2), c(2,2,2)
+
+        a = 0.0d0
+        b = 0.0d0
+        c = 0.0d0
+        @assertEqual(a, zeros(2))
+        @assertEqual(b, zeros(2,2))
+        @assertEqual(c, zeros(2,2,2))
+
+        a = 1.0d0
+        b = 1.0d0
+        c = 1.0d0
+        @assertEqual(a, ones(2))
+        @assertEqual(b, ones(2,2))
+        @assertEqual(c, ones(2,2,2))
+
+    end subroutine
+
+    @test
+    subroutine test_flat
+        real(wp) :: a(2,2)
+        real(wp) :: i(1,2,3)
+
+        a(1,1) = 1.0d0
+        a(2,1) = 2.0d0
+        a(1,2) = 3.0d0
+        a(2,2) = 4.0d0
+        @assertEqual([1.0d0, 2.0d0, 3.0d0, 4.0d0], flat(a))
+
+        i(1,1,:) = [1, 2, 3]
+        i(1,2,:) = [4, 5, 6]
+        @assertEqual([1, 4, 2, 5, 3, 6], flat(i))
+
+    end subroutine
+
+    @test
+    subroutine test_alloc_size
+        real(wp), allocatable :: f1(:), f2(:,:), f3(:,:,:), f4(:,:,:,:)
+        integer, allocatable  :: i1(:), i2(:,:), i3(:,:,:), i4(:,:,:,:)
+
+        @assertEqual(-1, alloc_size(f1))
+        @assertEqual(-1, alloc_size(f2,2))
+        @assertEqual(-1, alloc_size(f3))
+        @assertEqual(-1, alloc_size(f4,3))
+        allocate(f1(3), f2(3,4), f3(3,4,5), f4(3,4,5,6))
+        @assertEqual( 3, alloc_size(f1))
+        @assertEqual( 4, alloc_size(f2,2))
+        @assertEqual(60, alloc_size(f3))
+        @assertEqual( 5, alloc_size(f4,3))
+
+        @assertEqual(-1, alloc_size(i1))
+        @assertEqual(-1, alloc_size(i2,2))
+        @assertEqual(-1, alloc_size(i3))
+        @assertEqual(-1, alloc_size(i4,3))
+        allocate(i1(3), i2(3,4), i3(3,4,5), i4(3,4,5,6))
+        @assertEqual( 3, alloc_size(i1))
+        @assertEqual( 4, alloc_size(i2,2))
+        @assertEqual(60, alloc_size(i3))
+        @assertEqual( 5, alloc_size(i4,3))
+
+    end subroutine
+
+end module

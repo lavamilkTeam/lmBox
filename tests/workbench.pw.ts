@@ -1,8 +1,32 @@
 import { test, expect } from '@playwright/test'
 import { zipSync, strToU8 } from 'fflate'
 import { readFileSync } from 'node:fs'
-const gerber=readFileSync('src-tauri/tests/fixtures/basic.gbr')
+const gerber=readFileSync('src-rust/tests/fixtures/basic.gbr')
 const outline=strToU8('%FSLAX34Y34*%\n%MOMM*%\n%ADD10C,0.1*%\nD10*\nX0Y0D02*\nX100000Y0D01*\nX100000Y100000D01*\nX0Y100000D01*\nX0Y0D01*\nM02*')
+
+test('import tooltip appears beside its button, dismisses and preserves file selection', async ({ page }) => {
+  await page.goto('/')
+  const button = page.getByRole('button', { name: '导入文件', exact: true })
+  const tooltip = page.getByRole('tooltip', { name: '导入', exact: true })
+  await expect(tooltip).toBeHidden()
+  await button.hover()
+  await expect(tooltip).toBeVisible()
+  const buttonBounds = (await button.boundingBox())!
+  const tooltipBounds = (await tooltip.boundingBox())!
+  expect(tooltipBounds.x).toBeGreaterThan(buttonBounds.x + buttonBounds.width)
+  await page.mouse.move(600, 100)
+  await expect(tooltip).toBeHidden()
+  await page.getByRole('link', { name: 'lm Box', exact: true }).focus()
+  await page.keyboard.press('Tab')
+  await expect(button).toBeFocused()
+  await expect(tooltip).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(tooltip).toBeHidden()
+  await expect(button).toBeFocused()
+  const chooser = page.waitForEvent('filechooser')
+  await button.click()
+  expect((await chooser).isMultiple()).toBe(true)
+})
 
 test('views switch with matching settings and an interactive 3D model', async ({ page }) => {
   const errors: string[]=[];page.on('pageerror',e=>errors.push(e.message))
@@ -42,8 +66,15 @@ test('ZIP import and per-tab state remain independent', async ({ page }) => {
 
 test('parameter export preserves values and logs can be collapsed and cleared', async ({ page }) => {
   await page.goto('/')
+  const button = page.getByRole('button', { name: '导出参数', exact: true })
+  const tooltip = page.getByRole('tooltip', { name: '导出', exact: true })
+  await button.hover()
+  await expect(tooltip).toBeVisible()
+  const buttonBounds = (await button.boundingBox())!
+  const tooltipBounds = (await tooltip.boundingBox())!
+  expect(tooltipBounds.x + tooltipBounds.width).toBeLessThan(buttonBounds.x)
   const downloadPromise=page.waitForEvent('download')
-  await page.getByRole('button',{name:'导出参数',exact:true}).click()
+  await button.click()
   const download=await downloadPromise
   expect(download.suggestedFilename()).toContain('.parameters.json')
   const stream=await download.createReadStream();const chunks:Buffer[]=[]
@@ -63,6 +94,7 @@ test('empty workspace, invalid file, and compact window are usable', async ({ pa
   await page.goto('/')
   await page.getByRole('button',{name:'关闭 示例板 · 100 × 100',exact:true}).click()
   await expect(page.getByRole('heading',{name:'导入gerber'})).toBeVisible()
+  await expect(page.getByRole('button', { name: '导出参数', exact: true })).toBeDisabled()
   await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'invalid.zip',mimeType:'application/zip',buffer:Buffer.from('not a zip')})
   await expect(page.locator('.toast-message')).toBeVisible()
   await expect(page.locator('.document-tab')).toHaveCount(0)
@@ -85,25 +117,28 @@ test('sample IR is rendered after reopening from either empty state', async ({ p
 
 test('IR masks preserve drawing order, transparency and local macro holes', async ({ page }) => {
   await page.goto('/')
-  // Exercise the public store seam with an already parsed layer. This does
-  // not pretend the browser adapter parses source Gerber files.
-  await page.evaluate(async () => {
-    const moduleUrl='/src/domain/project/index.ts'
-    const {useProjectStore}=await import(moduleUrl)
-    const store=useProjectStore()
-    const flash=(aperture:number,polarity='dark',x=0)=>({kind:'flash',aperture,polarity,at:{x,y:0},sourceOffset:0})
-    store.add('Parsed layer',[],false,{
-      schemaVersion:'2',unit:'mm',source:{originalUnit:'MM',zeroSuppression:'L'},
-      apertures:[
-        {code:10,shape:{type:'circle',diameter:20}},
-        {code:11,shape:{type:'circle',diameter:12}},
-        {code:12,shape:{type:'macro',name:'window',primitives:[
-          {exposure:'on',shape:{type:'centerLine',width:8,height:8,center:{x:0,y:0}}},
-          {exposure:'off',shape:{type:'circle',diameter:4,center:{x:0,y:0}}},
-        ]}},
-      ],objects:[flash(10),flash(11,'clear'),flash(12),flash(12,'dark',8)],
-    })
+  // Enter through real file import so the module's private store stays private.
+  const gerber = `%FSLAX46Y46*%
+%MOMM*%
+%AMwindow*21,1,8,8,0,0,0*1,0,4,0,0,0*%
+%ADD10C,20*%
+%ADD11C,12*%
+%ADD12window,0*%
+%LPD*%
+D10*
+X0Y0D03*
+%LPC*%
+D11*
+X0Y0D03*
+%LPD*%
+D12*
+X0Y0D03*
+X8000000Y0D03*
+M02*`
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'mask-window.gtp', mimeType: 'application/octet-stream', buffer: Buffer.from(gerber),
   })
+  await expect(page.locator('.document-tab.active')).toContainText('mask-window.gtp')
   await expect(page.locator('.ir-layer')).toBeVisible()
   const samples=await page.locator('.ir-layer').evaluate(async layer => {
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg')
@@ -128,7 +163,7 @@ test('IR masks preserve drawing order, transparency and local macro holes', asyn
 test('real ZIP layers switch, mirror and retain the document view at narrow widths', async ({page}) => {
   await page.setViewportSize({width:760,height:940})
   await page.goto('/')
-  const zip=zipSync({'TopPaste.GTP':gerber,'BottomPaste.GBP':readFileSync('src-tauri/tests/fixtures/inches.gbr'),'Board.GKO':outline})
+  const zip=zipSync({'TopPaste.GTP':gerber,'BottomPaste.GBP':readFileSync('src-rust/tests/fixtures/inches.gbr'),'Board.GKO':outline})
   await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'layers.zip',mimeType:'application/zip',buffer:Buffer.from(zip)})
   await expect(page.locator('.viewport-top-info')).toContainText('TopPaste.GTP')
   await expect(page.locator('.viewport-status')).toContainText('3 个图形对象')
@@ -171,7 +206,7 @@ test('bad layers report a located error while valid layers remain selectable', a
 
 test('imported Gerber builds an actual 3D stencil and rebuilds thickness', async ({page}) => {
   await page.goto('/')
-  await page.getByLabel('选择 Gerber 文件').setInputFiles('src-tauri/tests/fixtures/demo.gbr')
+  await page.getByLabel('选择 Gerber 文件').setInputFiles('src-rust/tests/fixtures/demo.gbr')
   await expect(page.locator('.viewport-status')).toContainText('124 个图形对象')
   await page.getByRole('button',{name:'3D 模型',exact:true}).click()
   await expect(page.locator('.model-scene canvas')).toBeVisible({timeout:20000})
@@ -195,7 +230,7 @@ test('imported Gerber builds an actual 3D stencil and rebuilds thickness', async
 
 test('3D build failure is actionable and can retry without sample geometry',async({page})=>{
   await page.goto('/')
-  await page.getByLabel('选择 Gerber 文件').setInputFiles('src-tauri/tests/fixtures/demo.gbr')
+  await page.getByLabel('选择 Gerber 文件').setInputFiles('src-rust/tests/fixtures/demo.gbr')
   await expect(page.locator('.viewport-status')).toContainText('124 个图形对象')
   await page.route('**/api/preview',route=>route.fulfill({status:422,contentType:'application/json',body:JSON.stringify({error:'补偿导致开孔消失，请减小补偿。'})}))
   await page.getByRole('button',{name:'3D 模型',exact:true}).click()

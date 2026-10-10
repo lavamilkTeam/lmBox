@@ -6,7 +6,7 @@ import type { Plugin } from 'vite'
 // Local development/preview adapter. Rust owns Python execution and task files.
 export function previewApi(): Plugin {
   const root=fileURLToPath(new URL('../',import.meta.url))
-  const binary=`${root}src-tauri/target/debug/preview${process.platform==='win32'?'.exe':''}`
+  const binary=`${root}src-rust/target/debug/preview${process.platform==='win32'?'.exe':''}`
   let running=0
   const active=new Set<ReturnType<typeof spawn>>()
   function middleware(req:IncomingMessage,res:ServerResponse,next:()=>void) {

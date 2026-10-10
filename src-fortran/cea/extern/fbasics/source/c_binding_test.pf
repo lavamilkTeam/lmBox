@@ -1,0 +1,27 @@
+module c_binding_test
+
+    use funit
+    use fb_c_binding
+    implicit none
+
+contains
+
+    !@test
+    !subroutine test_c_f_strpointer
+    !    character, allocatable :: cstrarray(:)
+    !    character(:), pointer :: fstrptr
+
+    !    cstrarray = [ &
+    !        'H', 'e', 'l', 'l', 'o', ',', ' ',    &
+    !        'W', 'o', 'r', 'l', 'd', '!', char(0) &
+    !    ]
+
+    !    call c_f_strpointer(cstrarray, fstrptr)
+    !    @assertEqual("Hello, World!", fstrptr)
+
+    !    call c_f_strpointer(cstrarray, fstrptr, 5)
+    !    @assertEqual("Hello", fstrptr)
+
+    !end subroutine
+
+end module

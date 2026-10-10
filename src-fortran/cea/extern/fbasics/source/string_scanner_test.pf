@@ -1,0 +1,78 @@
+module string_scanner_test
+    use funit
+    use fb_string_scanner
+    implicit none
+contains
+
+    @test
+    subroutine test_append()
+        type(string_scanner) :: ss
+        ss = string_scanner('foo ')
+        call ss%append(' bar')
+        @assertEqual('foo', ss%read_word())
+        @assertEqual('bar', ss%read_word())
+    end subroutine
+
+    @test
+    subroutine test_read_word_char()
+        type(string_scanner) :: ss
+        character(:), allocatable :: word
+        integer :: ios
+
+        ! peek/read char
+        ss = string_scanner('foo ')
+        @assertEqual('f', ss%peek_char())
+        @assertEqual('f', ss%read_char())
+        @assertEqual('o', ss%read_char())
+        @assertEqual('o', ss%read_char())
+        @assertEqual(' ', ss%read_char())
+        @assertEqual(achar(0), ss%read_char(ios))
+        @assertEqual(-1, ios)
+
+        ! peek/read word
+        ss = string_scanner('  foo bar  baz ')
+        word = ss%peek_word(ios)
+        @assertEqual(0, ios)
+        @assertEqual(3, len(word))
+        @assertEqual('foo', word)
+        @assertEqual('foo', ss%peek_word())
+        @assertEqual('foo', ss%read_word())
+        @assertEqual('bar', ss%read_word())
+        @assertEqual('baz', ss%read_word())
+        @assertEqual('', ss%read_word(ios))
+        @assertEqual(-1, ios)
+
+        ! Corner case: single word / no whitespace
+        ss = string_scanner('foo')
+        @assertEqual('foo', ss%read_word())
+
+        ! Corner case: empty input
+        ss = string_scanner('')
+        @assertEqual('', ss%peek_word(ios))
+        @assertEqual(-1, ios)
+
+        ! Corner case: last word single char
+        ss = string_scanner(' T F T')
+        @assertEqual('T', ss%read_word())
+        @assertEqual('F', ss%read_word())
+        @assertEqual('T', ss%read_word())
+        @assertEqual('',  ss%read_word(ios))
+        @assertEqual(-1, ios)
+
+    end subroutine
+
+    @test
+    subroutine test_read_int_real_logical()
+        type(string_scanner) :: ss
+        integer :: ios
+
+        ss = string_scanner('1.0 123 T')
+        @assertEqual( 1.0d0,  ss%read_real())
+        @assertEqual(   123,  ss%read_int())
+        @assertEqual(.true.,  ss%read_logical())
+        @assertEqual(.false., ss%read_logical(ios))
+        @assertEqual(-1, ios)
+
+    end subroutine
+
+end module

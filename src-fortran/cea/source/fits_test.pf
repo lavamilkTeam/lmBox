@@ -1,0 +1,61 @@
+module fits_test
+
+    use funit
+    use cea_fits
+    use cea_param, only: dp, rgas => gas_constant
+    implicit none
+
+    ! TP-2002-211556, NO, T = [200K-1000K]
+    type(ThermoFit), parameter :: fit = ThermoFit( &
+        a1 = -1.143916503d+04,  &
+        a2 =  1.536467592d+02,  &
+        a3 =  3.431468730d+00,  &
+        a4 = -2.668592368d-03,  &
+        a5 =  8.481399120d-06,  &
+        a6 = -7.685111050d-09,  &
+        a7 =  2.386797655d-12,  &
+        b1 =  9.098214410d+03,  &
+        b2 =  6.728725490d+00   &
+    )
+
+contains
+
+    @test
+    subroutine test_fit_value
+        real(dp), parameter :: T = 298.15
+        real(dp), parameter :: tol = 1.5d-5
+        ! TP-2002-211556, Table B1
+        @assertRelativelyEqual( 29.862d3, rgas*fit%calc_cp(T), tol)
+        @assertRelativelyEqual( 91.271d6, rgas*fit%calc_enthalpy(T,log(T)), tol)
+        @assertRelativelyEqual(210.748d3, rgas*fit%calc_entropy(T,log(T)), tol)
+    end subroutine
+
+    @test
+    subroutine test_thermo_relations
+        real(dp), parameter :: T = 600.0d0
+        real(dp), parameter :: tol = 1.0d-12
+        real(dp) :: logT, cv, cp, e, h, s, g
+        logT = log(T)
+        cv = rgas*fit%calc_cv(T)
+        cp = rgas*fit%calc_cp(T)
+        e  = rgas*fit%calc_energy(T,logT)
+        h  = rgas*fit%calc_enthalpy(T,logT)
+        s  = rgas*fit%calc_entropy(T,logT)
+        g  = rgas*fit%calc_gibbs_energy(T,logT)
+        @assertRelativelyEqual(rgas, cp - cv, tol)
+        @assertRelativelyEqual(h, e + rgas*T, tol)
+        @assertRelativelyEqual(g, h - T*s, tol)
+    end subroutine
+
+    @test
+    subroutine test_thermo_derivatives
+        real(dp), parameter :: T = 600.0d0
+        real(dp), parameter :: tol = 1.0d-12
+        real(dp) :: cp
+        cp = fit%calc_cp(T)
+        @assertRelativelyEqual(cp, fit%calc_denthalpy_dT(T), tol)
+        @assertRelativelyEqual(cp/T, fit%calc_dentropy_dT(T), tol)
+        @assertRelativelyEqual(fit%calc_dcp_dT(T), fit%calc_dcv_dT(T), tol)
+    end subroutine
+
+end module

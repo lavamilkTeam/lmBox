@@ -23,3 +23,5 @@
 `propulsion.pw.ts` 验证工具箱、真实 Fortran 锥形/钟形和液体圆孔/环隙计算、三类收敛段、SVG 转义与 DXF 毫米坐标、JSON 导出身份配对、参数失效、迟到响应、错误恢复、模块返回和窄屏。运行前先构建 `npm run build:backend`；不以计算 mock 替代正常路径。
 
 `cfd-native.pw.ts` 仅在 `LMBOX_CFD_INTEGRATION=1` 时运行，`LMBOX_CFD_TEST_FILE` 指向公开来源的纯几何 CAD 夹具。通过真实原生会话验证导入、物理模型动态控件、单位输入、属性回写与 FCStd 保存，并关闭测试自身的会话；不替换后端响应。
+
+`guide.pw.ts` 覆盖默认启动、功能搜索与拖放、缩放坐标、指针和键盘移动、连线、删除及返回后的会话草稿。现有钢网测试通过 `workspace-navigation.ts` 从工具箱显式进入工作区。

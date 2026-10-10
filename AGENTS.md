@@ -81,6 +81,13 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── installer.ts
 │   ├── app/
 │   ├── modules/
+│   │   ├── guide/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-guide.md
+│   │   │   └── lib/
+│   │   │       ├── app/
+│   │   │       ├── domain/
+│   │   │       └── ui/
 │   │   ├── cfd/
 │   │   │   ├── index.ts
 │   │   │   ├── agent-frontend-cfd.md

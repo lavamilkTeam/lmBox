@@ -1,0 +1,7 @@
+# 前端：引导功能库与画布
+
+先读 [模块说明](../../agent-frontend-guide.md)。`index.ts` 公开 `GuideLibrary` 与 `FlowCanvas`。UI 只接收显示数据并发送操作事件，不导入 domain、平台或其他领域模块。`workspace.css` 作用域限定在引导界面。
+
+功能库支持搜索、原生拖放及按钮添加。画布负责滚动、缩放坐标换算、节点指针拖动和方向键移动；输出端与输入端点击连接，Escape 取消。连线可选中删除，也可键盘聚焦后删除。`insertionPoint()` 仅提供当前视口内的初始添加坐标，业务校验由 domain 负责。移动节点使用 pointer capture，取消或丢失 capture 立即结束移动。
+
+内部视图类型归本 UI；连接数量及可用状态来自 props。小屏功能库横向滚动，画布有独立滚动区域。

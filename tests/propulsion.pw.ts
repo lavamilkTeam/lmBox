@@ -1,3 +1,4 @@
+import { selectWorkspace } from './workspace-navigation'
 import { expect, test, type Page } from '@playwright/test'
 async function open(page: Page, label: string) {
   await page.getByRole('button', { name: '工程工具箱', exact: true }).click()
@@ -83,6 +84,7 @@ test('a changed input rejects a delayed response and service errors remain actio
 
 test('returning to the stencil module preserves an intentionally empty workspace', async ({ page }) => {
   await page.goto('/')
+  await selectWorkspace(page, '钢网设计与制造')
   await page.getByRole('button', { name: '关闭 示例板 · 100 × 100' }).click()
   await open(page, '喷管初步设计')
   await page.getByRole('button', { name: '工程工具箱', exact: true }).click()

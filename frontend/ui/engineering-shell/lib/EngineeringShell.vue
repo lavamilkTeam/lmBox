@@ -11,7 +11,7 @@ async function close(id: string) {
   bar.value?.querySelector<HTMLElement>('[role="tab"][data-state="active"]')?.focus()
 }
 function reveal(event: FocusEvent) {
-  if (event.target instanceof HTMLElement) event.target.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  if (event.target instanceof HTMLElement) event.target.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'nearest' })
 }
 </script>
 <template>
@@ -33,5 +33,6 @@ function reveal(event: FocusEvent) {
   </Tabs>
 </template>
 <style scoped>
+.engineering-tab-trigger,.engineering-tab-close{transition:none;animation:none}
 .engineering-shell{height:100dvh;display:flex;flex-direction:column;gap:0;overflow:hidden}.engineering-bar{height:42px;flex-shrink:0;min-width:0;border-bottom:1px solid var(--border);background:var(--muted);padding:5px 8px 0}.engineering-tabs{display:flex;justify-content:flex-start;gap:4px;width:100%;height:36px;padding:0;border-radius:0;background:transparent}.engineering-open-tabs{display:flex;gap:4px;min-width:0;height:100%;overflow-x:auto;scrollbar-width:none}.engineering-open-tabs::-webkit-scrollbar{display:none}.engineering-tab{display:flex;align-items:center;flex-shrink:0;max-width:240px;border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;padding-right:4px}.engineering-tab.is-active{background:var(--background);border-color:var(--border)}.engineering-tab-trigger{height:100%;flex:none;min-width:0;padding:0 12px;border-radius:8px 8px 0 0;font-size:12px;font-weight:400;box-shadow:none!important}.engineering-tab .engineering-tab-trigger{overflow:hidden;text-overflow:ellipsis;display:block;border:0;background:transparent}.engineering-fixed-tab{border-bottom:0}.engineering-fixed-tab[data-state=active]{border-color:var(--border)}.engineering-tab-close{width:22px;height:22px;border-radius:5px;flex-shrink:0;color:var(--muted-foreground)}.engineering-content{min-height:0;flex:1;overflow:auto}.engineering-content :deep(.stencil-workspace .studio){height:calc(100dvh - 42px)}@media(max-width:600px){.engineering-bar{padding-left:4px;padding-right:4px}.engineering-tab-trigger{padding:0 10px}.engineering-tab{max-width:210px}}
 </style>

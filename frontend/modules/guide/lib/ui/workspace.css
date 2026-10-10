@@ -3,9 +3,9 @@
 .guide-library { display: flex; flex-direction: column; padding: 26px 16px 16px; border-right: 1px solid var(--border); overflow-y: auto; background: var(--background); }
 .guide-library-heading { display: flex; align-items: center; gap: 9px; padding: 0 8px; font-size: 14px; font-weight: 600; }
 .guide-count { background: var(--muted); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; color: var(--muted-foreground); font-size: 10px; }
-.guide-search { display: flex; align-items: center; gap: 8px; height: 34px; margin-top: 16px; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; color: var(--muted-foreground); }
-.guide-search:focus-within { outline: 2px solid var(--ring); outline-offset: 2px; }
-.guide-search .guide-search-input { height: 100%; padding: 0; border: 0; border-radius: 0; outline: 0; box-shadow: none; background: transparent; min-width: 0; width: 100%; color: var(--foreground); font-size: 11px; }
+.guide-search { position: relative; margin-top: 16px; }
+.guide-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted-foreground); }
+.guide-search .guide-search-input { padding-left: 32px; font-size: 11px; }
 .guide-search-empty { margin: 12px 8px; font-size: 11px; }
 .guide-category { margin-top: 16px; }
 .guide-category h2 { margin: 0 8px 4px; color: var(--muted-foreground); font-size: 10px; font-weight: 500; }
@@ -65,7 +65,7 @@
   .guide-workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: 200px minmax(440px, 1fr); min-height: 640px; height: 100%; }
   .guide-library { padding: 14px; border-right: 0; border-bottom: 1px solid var(--border); }
   .guide-library-heading { padding: 0; flex-shrink: 0; }
-  .guide-search { min-height: 30px; margin-top: 10px; }
+  .guide-search { margin-top: 10px; }
   .guide-library nav { display: flex; gap: 12px; overflow-x: auto; flex-shrink: 0; }
   .guide-category { min-width: 214px; margin-top: 14px; }
   .guide-workspace .guide-tool { padding: 6px; }

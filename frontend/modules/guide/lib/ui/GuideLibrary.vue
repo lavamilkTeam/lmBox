@@ -16,7 +16,7 @@ function drag(event: DragEvent, id: string) {
 <template>
   <aside class="guide-library" aria-label="功能列表">
     <div class="guide-library-heading"><span>功能库</span><Badge variant="secondary" class="guide-count">{{ tools.length }}</Badge></div>
-    <label class="guide-search"><Search :size="15" /><Input v-model="query" class="guide-search-input" aria-label="搜索功能" placeholder="搜索功能…" /></label>
+    <div class="guide-search"><Search class="guide-search-icon" :size="15" aria-hidden="true" /><Input v-model="query" class="guide-search-input" aria-label="搜索功能" placeholder="搜索功能…" /></div>
     <nav aria-label="引导功能库">
       <section v-for="category in [...new Set(filtered.map(tool => tool.category))]" :key="category" class="guide-category">
         <h2>{{ category }}</h2>

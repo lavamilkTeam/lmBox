@@ -37,3 +37,7 @@
 ## 验证
 
 统一检查见 [语言说明](../../agent-frontend.md#验证与维护)。验证资源限制、Worker 超时与取消、IPC 准备期取消、保存取消和真实计算接入。
+
+`calculatePropulsion` 统一调用同源 `/api/propulsion` 或原生 `propulsion_run`，共享结果结构与身份校验；数值模型归 Fortran。浏览器取消请求会使本地适配终止 CLI，原生停止等待仅丢弃响应。缺库或静态部署明确报错，不回退客户端计算。
+
+`cfdRequest` 经同源 `/api/cfd` 或 `cfd_request` 传输持续 CFD 会话，校验身份及有界原生状态/几何；`readCfdFile` 读取用户选择的有界 CAD 文件，`saveCfdFile` 保存后端返回的 FCStd。控件和单位语义由原生 CfdOF 控制器处理，轮询断开不代表求解取消。`getCfdSessionId` 在当前标签页保留会话标识，以幂等初始化恢复热更新前的原生会话。工作区选择由平台 app 管理，启动默认进入引导界面。`chooseCfdPath` 仅在原生宿主处理当前原生文件对话框，用户选择的路径由宿主直接交给 Rust，不经过前端。

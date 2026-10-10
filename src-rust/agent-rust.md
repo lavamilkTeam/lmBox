@@ -4,31 +4,26 @@
 
 ## 结构与职责
 
-单个业务核心 crate，按能力组织 feature；负责格式解析、业务校验和计算调用，不依赖 Tauri。当前已实现 Gerber/ZIP、WASM 导入、模型预览、导出和原生 CEA 热化学业务入口；工程持久化、持久任务队列、STEP 与切片尚未实现，不创建无用占位模块。
+单个业务核心 crate，先按业务域划分 `src/modules/stencil`、`src/modules/propulsion`、`src/modules/cfd`，再在模块内按职责组织 `features`、`app` 和 `runtime`。每个模块通过自己的 `mod.rs` 提供窄公开入口，内部目录不对外公开；不依赖 Tauri，不为未来能力建立空模块。
 
-`src/lib.rs` 为公开入口，`app` 组装，`browser.rs`/`bin` 是薄适配，`features` 管业务，`runtime` 管外部进程与文件，`contracts` 管类型。[CEA Fortran 内核](../src-fortran/agent-fortran.md) 负责热化学求解，Rust 经官方 C ABI 调用；Python 负责制造几何；桌面 crate 负责窗口、IPC、原生对话框和资源打包。
+`src/lib.rs` 为 crate 入口；`browser.rs`/`bin` 为薄适配；根 `app.rs` 和 `parse_gerber` 仅保留既有宿主兼容转导出。共享数据类型留在 `contracts`。Rust 管格式解析、业务身份、协议及计算调用；制造几何归 Python 钢网模块，热化学和喷管/喷注器数值计算归 Fortran 推进模块。桌面 crate 管窗口、IPC、对话框和资源打包。
 
 ## 依赖
 
-`宿主 → 核心公开入口`；核心内部 `app → features/runtime/contracts`、`features → runtime 的窄公开接口/contracts`、`runtime → contracts`。feature 之间不相互导入，runtime 和 contracts 不反向依赖业务。可替换的外部能力由 app 注入，勿为每个函数建 trait。
+`宿主/CLI → modules/<业务>/mod.rs → app → features/runtime → contracts`。模块之间不导入内部 feature/runtime；实际跨业务流程由外层应用协调，经公开入口组合。各模块内部 feature 依赖单向无环，runtime/contracts 不反向依赖业务。共享协议不能成为业务算法容器。
 
-各模块通过 `mod.rs` 声明最小接口，优先 `pub(crate)`；实现及测试保持私有。遵循 Rust 入口和 WASM 绑定的必要局部例外，不借此公开整个目录。不要建立通用 utils/services 容器。工程版本、任务策略和产物是否可用归业务；执行、超时和子进程回收归 runtime。
+只为实际用例添加模块和 feature；业务域是完整能力边界，feature 是其内部用例。可替换外部能力在真实调用边界注入，不机械地为每个函数建 trait。Rust 的模块可见性保护私有实现；WASM 与原生通过条件编译隔离。
 
 ## 模块索引
 
 | 范围 | 必读说明 |
 | --- | --- |
-| `src/app/thermochemistry.rs` | [CEA 后端](src/app/agent-rust-thermochemistry.md) |
-| `src/features/thermochemistry/` | [热化学校验](src/features/thermochemistry/agent-rust-thermochemistry.md) |
-| `src/runtime/cea/` | [Fortran CEA 适配](src/runtime/cea/agent-rust-cea.md) |
-| `src/app.rs、src/app/` | [业务组装与任务](src/app/agent-rust-app.md) |
+| `src/modules/stencil/` | [钢网模块及内部索引](src/modules/stencil/agent-rust-stencil.md) |
+| `src/modules/cfd/` | [CFD 原生会话](src/modules/cfd/agent-rust-cfd.md) |
+| `src/modules/propulsion/` | [推进模块及内部索引](src/modules/propulsion/agent-rust-propulsion.md) |
 | `src/browser.rs` | [WASM 接入](src/agent-rust-browser.md) |
-| `src/bin/` | [本地预览 CLI](src/bin/agent-rust-preview-cli.md) |
-| `src/features/board_import/` | [文件导入](src/features/board_import/agent-rust-board-import.md) |
-| `src/features/board_import/parser/` | [Gerber 解析器](src/features/board_import/parser/agent-rust-parser.md) |
-| `src/features/stencil/` | [建模业务验证](src/features/stencil/agent-rust-stencil.md) |
-| `src/runtime/` | [计算进程与产物](src/runtime/agent-rust-python.md) |
-| `src/contracts/` | [Rust 协议映射](src/contracts/agent-rust-contracts.md) |
+| `src/bin/` | [开发 CLI](src/bin/agent-rust-preview-cli.md) |
+| `src/contracts/` | [共享协议映射](src/contracts/agent-rust-contracts.md) |
 
 ## 验证与维护
 

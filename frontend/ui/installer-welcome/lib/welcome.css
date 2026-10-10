@@ -1,0 +1,92 @@
+@font-face {
+  font-family: 'LmBox Welcome Soft';
+  src: url('./assets/welcome-soft.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+/* Loaded only by the standalone installer entry. */
+html, body, #app { margin: 0; min-height: 100%; background: #fff; }
+.installer-welcome {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #fff;
+  color: #242424;
+  font-family: 'LmBox Welcome Soft', 'PingFang SC', sans-serif;
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+}
+.installer-welcome *, .installer-welcome *::before, .installer-welcome *::after { box-sizing: border-box; }
+.installer-welcome__content {
+  display: grid;
+  grid-template-columns: 310px auto;
+  align-items: center;
+  gap: 82px;
+  padding: 72px 40px 96px;
+}
+.installer-welcome__pig { position: relative; width: 310px; height: 310px; opacity: 0; }
+.installer-welcome__pig img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.installer-welcome__still.is-hidden { visibility: hidden; }
+.installer-welcome__animation { position: absolute; inset: 0; }
+.installer-welcome__copy { padding-top: 18px; }
+.installer-welcome__heading {
+  margin: 0;
+  font: inherit;
+  font-size: clamp(30px, 3.6vw, 44px);
+  line-height: 1.45;
+  letter-spacing: -.035em;
+  opacity: 0;
+}
+.installer-welcome__heading span { display: block; }
+.installer-welcome__heading .installer-welcome__name { font-size: 76px; line-height: 1.2; letter-spacing: -.045em; margin-top: 3px; }
+.installer-welcome__action { margin-top: 36px; opacity: 0; }
+.installer-welcome__continue {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+  min-width: 146px;
+  min-height: 52px;
+  padding: 12px 24px;
+  font: inherit;
+  font-size: 18px;
+  transition: background 160ms, transform 160ms, box-shadow 160ms;
+}
+.installer-welcome__continue:hover { transform: translateY(-2px); box-shadow: 0 7px 16px #00000012; }
+.installer-welcome__continue:active { transform: translateY(0) scale(.98); }
+.installer-welcome__continue:disabled { cursor: default; }
+.is-ready .installer-welcome__pig { animation: installer-pig-enter 920ms both; }
+.is-ready .installer-welcome__heading { animation: installer-text-enter 800ms 140ms both; }
+.is-ready .installer-welcome__action { animation: installer-action-enter 500ms 660ms both; }
+
+@keyframes installer-pig-enter {
+  0% { opacity: 0; transform: translateX(calc(-50vw - 100%)) rotate(-12deg) scale(.9); animation-timing-function: cubic-bezier(.16, 1, .3, 1); }
+  66% { opacity: 1; transform: translateX(18px) rotate(3deg) scale(1.035); animation-timing-function: ease-in-out; }
+  84% { opacity: 1; transform: translateX(-7px) rotate(-1deg) scale(.985); animation-timing-function: ease-out; }
+  100% { opacity: 1; transform: translateX(0) rotate(0) scale(1); }
+}
+@keyframes installer-text-enter {
+  0% { opacity: 0; transform: translateY(-65px); animation-timing-function: cubic-bezier(.16, 1, .3, 1); }
+  72% { opacity: 1; transform: translateY(8px); animation-timing-function: ease-out; }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes installer-action-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.is-ready.is-reduced .installer-welcome__pig,
+.is-ready.is-reduced .installer-welcome__heading,
+.is-ready.is-reduced .installer-welcome__action { animation: none; opacity: 1; }
+.is-reduced .installer-welcome__continue { transition: none; }
+
+@media (max-width: 720px) {
+  .installer-welcome__content { grid-template-columns: 1fr; justify-items: center; gap: 22px; padding: 42px 24px 56px; }
+  .installer-welcome__pig { width: 220px; height: 220px; }
+  .installer-welcome__copy { text-align: center; padding-top: 0; }
+  .installer-welcome__heading { font-size: 30px; }
+  .installer-welcome__heading .installer-welcome__name { font-size: 60px; }
+  .installer-welcome__action { margin-top: 28px; }
+}

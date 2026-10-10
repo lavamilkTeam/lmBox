@@ -11,30 +11,43 @@
 <!-- agent-directory:start -->
 ```text
 src-rust/
-├── agent-rust.md
-├── examples/
 ├── src/
-│   ├── agent-rust-browser.md
-│   ├── app/
-│   │   ├── agent-rust-app.md
-│   │   └── agent-rust-thermochemistry.md
 │   ├── bin/
 │   │   └── agent-rust-preview-cli.md
 │   ├── contracts/
 │   │   └── agent-rust-contracts.md
-│   ├── features/
-│   │   ├── board_import/
-│   │   │   ├── agent-rust-board-import.md
-│   │   │   └── parser/
-│   │   │       └── agent-rust-parser.md
-│   │   ├── thermochemistry/
-│   │   │   └── agent-rust-thermochemistry.md
+│   ├── modules/
+│   │   ├── cfd/
+│   │   │   ├── app/
+│   │   │   ├── runtime/
+│   │   │   └── agent-rust-cfd.md
+│   │   ├── propulsion/
+│   │   │   ├── app/
+│   │   │   │   ├── agent-rust-propulsion.md
+│   │   │   │   └── agent-rust-thermochemistry.md
+│   │   │   ├── features/
+│   │   │   │   └── thermochemistry/
+│   │   │   │       └── agent-rust-thermochemistry.md
+│   │   │   ├── runtime/
+│   │   │   │   ├── cea/
+│   │   │   │   │   └── agent-rust-cea.md
+│   │   │   │   └── design/
+│   │   │   │       └── agent-rust-propulsion.md
+│   │   │   └── agent-rust-propulsion.md
 │   │   └── stencil/
+│   │       ├── app/
+│   │       │   └── agent-rust-app.md
+│   │       ├── features/
+│   │       │   ├── board_import/
+│   │       │   │   ├── parser/
+│   │       │   │   │   └── agent-rust-parser.md
+│   │       │   │   └── agent-rust-board-import.md
+│   │       │   └── modeling/
+│   │       │       └── agent-rust-stencil.md
+│   │       ├── runtime/
+│   │       │   └── agent-rust-python.md
 │   │       └── agent-rust-stencil.md
-│   └── runtime/
-│       ├── cea/
-│       │   └── agent-rust-cea.md
-│       └── agent-rust-python.md
-└── tests/
+│   └── agent-rust-browser.md
+└── agent-rust.md
 ```
 <!-- agent-directory:end -->

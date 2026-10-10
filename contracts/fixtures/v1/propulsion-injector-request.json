@@ -1,0 +1,34 @@
+{
+  "type": "injector",
+  "request": {
+    "identity": {
+      "schemaVersion": 1,
+      "projectId": "design-example",
+      "jobId": "example-water-hydraulics",
+      "inputRevision": 1
+    },
+    "totalMassFlowKgS": 0.3,
+    "oxidizerFuelMassRatio": 2.0,
+    "oxidizer": {
+      "densityKgM3": 1000.0,
+      "dynamicViscosityPaS": 0.001,
+      "pressureDropPa": 100000.0,
+      "dischargeCoefficient": 0.7,
+      "elementCount": 10,
+      "passage": {
+        "type": "circular"
+      }
+    },
+    "fuel": {
+      "densityKgM3": 1000.0,
+      "dynamicViscosityPaS": 0.001,
+      "pressureDropPa": 100000.0,
+      "dischargeCoefficient": 0.7,
+      "elementCount": 10,
+      "passage": {
+        "type": "annular",
+        "innerDiameterM": 0.002
+      }
+    }
+  }
+}

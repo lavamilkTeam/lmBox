@@ -14,10 +14,12 @@
 
 - 前端只经 `frontend/platform/desktop` 导入 Tauri API。IPC 使用共享协议，不开放通用 shell、任意文件读取或由前端指定 worker 可执行路径的接口。
 
-- `commands` 调用 `app::PreviewTasks` 登记任务，再运行核心业务；退出时取消全部任务，等待实际进程回收后再退出。准备期间的取消不能丢失。
+- `commands` 调用 `app::PreviewTasks` 登记任务，再运行核心业务；退出时取消全部任务，并在后台关闭 CFD 会话，等待实际进程回收后再退出。准备期间的取消不能丢失。
 
 - 保存命令限制 json/stl/svg/dxf 和 32 MB，由用户选择目标；取消返回 false，写入失败返回错误。
 
 ## 验证
 
 按 [打包说明](../agent-rust-packaging.md) 执行宿主 fmt/Clippy/tests 与搬移后的 worker 验证；三平台 GUI、签名和公证不能由编译结果推断。
+
+宿主同时注册 [推进计算 IPC](agent-rust-propulsion.md)，模型任务和推进阻塞任务使用各自边界。

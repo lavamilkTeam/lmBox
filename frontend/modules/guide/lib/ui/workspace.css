@@ -1,0 +1,74 @@
+.guide-workspace { height: 100%; min-height: 520px; display: grid; grid-template-columns: 240px minmax(0, 1fr); background: var(--background); color: var(--foreground); }
+.guide-workspace * { box-sizing: border-box; }
+.guide-library { display: flex; flex-direction: column; padding: 26px 16px 16px; border-right: 1px solid var(--border); overflow-y: auto; background: var(--background); }
+.guide-library-heading { display: flex; align-items: center; gap: 9px; padding: 0 8px; font-size: 14px; font-weight: 600; }
+.guide-count { background: var(--muted); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; color: var(--muted-foreground); font-size: 10px; }
+.guide-search { position: relative; margin-top: 16px; }
+.guide-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted-foreground); }
+.guide-search .guide-search-input { padding-left: 32px; font-size: 11px; }
+.guide-search-empty { margin: 12px 8px; font-size: 11px; }
+.guide-category { margin-top: 16px; }
+.guide-category h2 { margin: 0 8px 4px; color: var(--muted-foreground); font-size: 10px; font-weight: 500; }
+.guide-workspace .guide-tool { width: 100%; height: 30px; justify-content: flex-start; gap: 8px; padding: 6px 8px; margin: 1px 0; border: 1px solid transparent; border-radius: 5px; text-align: left; cursor: grab; }
+.guide-tool:hover { background: var(--muted); border-color: var(--border); }
+.guide-tool:active { cursor: grabbing; }
+.guide-workspace [data-kind='electrical'] { --guide-color: #377663; --guide-tint: #edf5f1; }
+.guide-workspace [data-kind='chemistry'] { --guide-color: #946c31; --guide-tint: #faf3e7; }
+.guide-workspace [data-kind='fluid'] { --guide-color: #536d95; --guide-tint: #edf2f9; }
+.guide-tool-copy { flex: 1; min-width: 0; }
+.guide-tool-copy strong { display: block; font-size: 11px; line-height: 1.4; font-weight: 500; }
+.guide-grip { color: #aaa; }
+.guide-plus { display: none; color: var(--muted-foreground); }
+.guide-tool:hover .guide-grip { display: none; }
+.guide-tool:hover .guide-plus { display: block; }
+.guide-board { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.guide-viewport { position: relative; flex: 1; min-height: 260px; overflow: auto; background: #fafafa; overscroll-behavior: contain; }
+.guide-viewport.is-dropping { outline: 2px solid #536d95; outline-offset: -3px; }
+.guide-scroll-space { position: relative; }
+.guide-surface { position: relative; transform-origin: 0 0; background-image: radial-gradient(#d8d8d8 0.8px, transparent 0.8px); background-size: 20px 20px; }
+.guide-connections { position: absolute; inset: 0; overflow: visible; pointer-events: none; color: #7e8b9f; }
+.guide-edge { fill: none; stroke: #8d9bb0; stroke-width: 1.8px; }
+.guide-edge-hit { fill: none; stroke: transparent; stroke-width: 18px; pointer-events: stroke; cursor: pointer; }
+.guide-connections .is-selected .guide-edge { stroke: #355b97; stroke-width: 3px; }
+.guide-edge-hit:focus-visible { outline: none; stroke: #536d9533; }
+.guide-edge-preview { stroke-dasharray: 5 5; }
+.guide-node { position: absolute; width: 248px; height: 96px; padding: 0; gap: 0; }
+.guide-node-header { display: block; height: 56px; padding: 0; }
+.guide-node-title { margin: 0; }
+.guide-node:hover, .guide-node:focus-within { border-color: var(--guide-color); }
+.guide-node.is-moving { z-index: 3; box-shadow: 0 6px 18px #00000012; }
+.guide-node.is-link-source { outline: 2px solid var(--guide-color); outline-offset: 2px; }
+.guide-workspace .guide-node-heading { width: calc(100% - 25px); height: 56px; padding: 12px; justify-content: flex-start; background: transparent; text-align: left; cursor: grab; touch-action: none; user-select: none; }
+.guide-node-heading:active { cursor: grabbing; }
+.guide-node-heading { font-size: 12px; font-weight: 600; }
+.guide-node-delete { position: absolute; top: 10px; right: 6px; width: 22px; height: 22px; padding: 4px; color: var(--muted-foreground); border-radius: 4px; }
+.guide-node-delete:hover { background: var(--muted); color: var(--foreground); }
+.guide-node-bottom { height: 38px; flex-shrink: 0; padding: 0 8px; border-top: 1px solid var(--border); justify-content: flex-end; font-size: 10px; }
+.guide-node-bottom button { color: var(--foreground); font-size: 10px; }
+.guide-workspace .guide-port { position: absolute; top: 66px; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; z-index: 4; }
+.guide-port::after { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #b7bdc6; pointer-events: none; }
+.guide-port-in { left: -10px; }
+.guide-port-out { right: -10px; }
+.guide-port-out::after, .guide-port:hover::after, .guide-port.is-ready::after { background: var(--guide-color); }
+.guide-port:focus-visible { outline: 1px solid var(--guide-color); outline-offset: -3px; }
+.guide-floating-tools { position: absolute; right: 24px; bottom: 20px; display: flex; gap: 12px; }
+.guide-zoom { display: flex; border: 1px solid var(--border); border-radius: 6px; background: var(--background); box-shadow: 0 2px 7px #00000005; }
+.guide-zoom button { min-width: 32px; height: 32px; padding: 0 8px; border-radius: 0; font-size: 10px; }
+.guide-zoom button:nth-child(2) { min-width: 44px; border-left: 1px solid #eee; border-right: 1px solid #eee; }
+.guide-zoom button:disabled { opacity: 0.3; }
+.guide-remove-link { padding: 0 10px; font-size: 10px; }
+@media (max-width: 900px) {
+  .guide-workspace { grid-template-columns: 224px minmax(0, 1fr); }
+  .guide-library { padding-right: 10px; padding-left: 10px; }
+  .guide-grip, .guide-plus { display: none !important; }
+}
+@media (max-width: 600px) {
+  .guide-workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: 200px minmax(440px, 1fr); min-height: 640px; height: 100%; }
+  .guide-library { padding: 14px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .guide-library-heading { padding: 0; flex-shrink: 0; }
+  .guide-search { margin-top: 10px; }
+  .guide-library nav { display: flex; gap: 12px; overflow-x: auto; flex-shrink: 0; }
+  .guide-category { min-width: 214px; margin-top: 14px; }
+  .guide-workspace .guide-tool { padding: 6px; }
+  .guide-floating-tools { bottom: 16px; right: 16px; }
+}

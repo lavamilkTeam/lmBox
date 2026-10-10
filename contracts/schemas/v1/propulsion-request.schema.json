@@ -1,0 +1,407 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Preliminary propulsion design request v1",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "request"
+      ],
+      "properties": {
+        "type": {
+          "const": "nozzle"
+        },
+        "request": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "identity",
+            "reactants",
+            "chemistry",
+            "chamberPressurePa",
+            "massFlowKgS",
+            "ambientPressurePa",
+            "expansionRatio",
+            "segments",
+            "contour"
+          ],
+          "properties": {
+            "identity": {
+              "$ref": "#/$defs/identity"
+            },
+            "reactants": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 32,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "species",
+                  "massFraction",
+                  "temperatureK"
+                ],
+                "properties": {
+                  "species": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 15,
+                    "pattern": "^[!-~]+$"
+                  },
+                  "massFraction": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1
+                  },
+                  "temperatureK": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                }
+              }
+            },
+            "chemistry": {
+              "enum": [
+                "equilibrium",
+                "frozenAtChamber",
+                "frozenAtThroat"
+              ]
+            },
+            "chamberPressurePa": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "massFlowKgS": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "ambientPressurePa": {
+              "type": "number",
+              "minimum": 0
+            },
+            "expansionRatio": {
+              "type": "number",
+              "exclusiveMinimum": 1
+            },
+            "segments": {
+              "type": "integer",
+              "minimum": 4,
+              "maximum": 2048
+            },
+            "contour": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "halfAngleDeg",
+                    "throatArcRadiusRatio"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "conical"
+                    },
+                    "halfAngleDeg": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "exclusiveMaximum": 90
+                    },
+                    "throatArcRadiusRatio": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "lengthOverThroatRadius",
+                    "startAngleDeg",
+                    "exitAngleDeg",
+                    "throatArcRadiusRatio"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "quadraticBell"
+                    },
+                    "lengthOverThroatRadius": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "startAngleDeg": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "exclusiveMaximum": 90
+                    },
+                    "exitAngleDeg": {
+                      "type": "number",
+                      "minimum": 0,
+                      "exclusiveMaximum": 90
+                    },
+                    "throatArcRadiusRatio": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  }
+                }
+              ]
+            },
+            "chamber": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "innerDiameterM",
+                "cylinderLengthM",
+                "convergence"
+              ],
+              "properties": {
+                "innerDiameterM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "cylinderLengthM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "convergence": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "halfAngleDeg",
+                        "inletRadiusM",
+                        "throatRadiusM"
+                      ],
+                      "properties": {
+                        "type": {
+                          "const": "filletedCone"
+                        },
+                        "halfAngleDeg": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "exclusiveMaximum": 90
+                        },
+                        "inletRadiusM": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        },
+                        "throatRadiusM": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "joinAngleDeg",
+                        "throatRadiusFraction"
+                      ],
+                      "properties": {
+                        "type": {
+                          "const": "tangentArcs"
+                        },
+                        "joinAngleDeg": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "exclusiveMaximum": 90
+                        },
+                        "throatRadiusFraction": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "exclusiveMaximum": 1
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "lengthM",
+                        "startHandleFraction",
+                        "endHandleFraction"
+                      ],
+                      "properties": {
+                        "type": {
+                          "const": "cubicBezier"
+                        },
+                        "lengthM": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        },
+                        "startHandleFraction": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "exclusiveMaximum": 1
+                        },
+                        "endHandleFraction": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "exclusiveMaximum": 1
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "request"
+      ],
+      "properties": {
+        "type": {
+          "const": "injector"
+        },
+        "request": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "identity",
+            "totalMassFlowKgS",
+            "oxidizerFuelMassRatio",
+            "oxidizer",
+            "fuel"
+          ],
+          "properties": {
+            "identity": {
+              "$ref": "#/$defs/identity"
+            },
+            "totalMassFlowKgS": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "oxidizerFuelMassRatio": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "oxidizer": {
+              "$ref": "#/$defs/circuit"
+            },
+            "fuel": {
+              "$ref": "#/$defs/circuit"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "projectId",
+        "jobId",
+        "inputRevision"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "projectId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "jobId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "inputRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        }
+      }
+    },
+    "circuit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "densityKgM3",
+        "dynamicViscosityPaS",
+        "pressureDropPa",
+        "dischargeCoefficient",
+        "elementCount",
+        "passage"
+      ],
+      "properties": {
+        "densityKgM3": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "dynamicViscosityPaS": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "pressureDropPa": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "dischargeCoefficient": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "elementCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "passage": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "const": "circular"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "innerDiameterM"
+              ],
+              "properties": {
+                "type": {
+                  "const": "annular"
+                },
+                "innerDiameterM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

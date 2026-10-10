@@ -2,7 +2,7 @@
 
 先读 [语言说明](../../agent-rust.md)；维护规则与隐私要求见根规范。
 
-独立 CEA CLI `bin/cea.rs` 的契约和验证见 [CEA 后端](../app/agent-rust-thermochemistry.md)。
+独立 CEA CLI `bin/cea.rs` 的契约和验证见 [CEA 后端](../modules/propulsion/app/agent-rust-thermochemistry.md)。
 
 ## 职责与边界
 
@@ -17,3 +17,7 @@ stdin/stdout 属适配边界，不复制参数验证；源环境和打包环境�
 ## 验证
 
 统一检查见 [语言说明](../../agent-rust.md#验证与维护)。验证一行 JSONL 请求/响应、stdin 关闭取消、失败输出与真实模型入口。
+
+`bin/propulsion.rs` 的协议与调用方式见 [推进设计入口](../modules/propulsion/app/agent-rust-propulsion.md)。
+
+`bin/cfd.rs` 是持久 JSONL 入口，生命周期和约束见 [CFD 原生会话](../modules/cfd/agent-rust-cfd.md)。

@@ -21,3 +21,5 @@
 ## 验证
 
 统一检查见 [语言说明](../agent-frontend.md#验证与维护)。查看实际外观及宽窄窗口；涉及交互时验证焦点、禁用和提示，不为文案或 CSS 增加复述测试。
+
+共享基础控件使用 [shadcn-vue](shadcn/agent-frontend-shadcn.md) 的公开入口；已有 icon/import/export/help 外观入口继续复用这些控件，业务调用方不访问其私有源码。

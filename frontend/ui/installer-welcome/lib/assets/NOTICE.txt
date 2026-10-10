@@ -1,0 +1,18 @@
+Welcome illustration
+pig.gif is the user-provided illustration, preserved without alteration.
+pig-still.png is its first frame, extracted for the non-playing entrance.
+
+Font
+Source: Gen Jyuu Gothic Medium (GenJyuuGothic-Medium.ttf), version 20150607.
+Project: http://jikasei.me/font/genjyuu/
+Distribution: https://ftp.iij.ad.jp/pub/osdn.jp/users/8/8642/genjyuugothic-20150607.zip
+Archive SHA-256: 916bbc234b110835b9a66ea47fd62e553fd9a524226b1b1fdac6668f0fc95809
+License: SIL Open Font License 1.1; see FONT-LICENSE.txt.
+The bundled welcome-soft.woff2 and welcome-soft.ttf are the same subset,
+renamed LmBox Welcome Soft. TTF is used by the native Qt welcome screen.
+Original copyright and license records are retained in the font name table.
+Subset glyphs: available welcome and module selection Chinese UI glyphs,
+ASCII letters, digits and space. Characters absent from the source font
+use the platform font fallback.
+Generated using fontTools subset and Brotli; preserve name records and rename
+font name IDs 1, 3, 4, 6, 16 and 17 when regenerating the subset.

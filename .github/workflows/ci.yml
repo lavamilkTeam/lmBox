@@ -53,6 +53,11 @@ jobs:
         run: npm run setup:wasm
       - name: Install Chromium and Linux browser dependencies
         run: npx playwright install --with-deps chromium
+      - name: Build native solvers for real propulsion browser tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran cmake ninja-build
+          npm run build:backend
       - name: Check boundaries, unit tests, types, build and browser behavior
         run: npm run check
       - name: Upload browser diagnostics
@@ -320,6 +325,7 @@ jobs:
           cargo clippy --manifest-path src-rust/Cargo.toml --locked --all-targets --features cea-integration -- -D warnings
           cargo test --manifest-path src-rust/Cargo.toml --locked --test cea_contract
           npm run check:cea
+          npm run check:propulsion
 
   quality-gate:
     name: Quality gate

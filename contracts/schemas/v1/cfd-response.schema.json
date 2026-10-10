@@ -1,0 +1,1220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lmbox.local/contracts/v1/cfd-response.schema.json",
+  "title": "CFD session response and native projection v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "projectId",
+    "requestId",
+    "inputRevision",
+    "revision",
+    "ok"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "projectId": {
+      "type": "string",
+      "maxLength": 1048576
+    },
+    "requestId": {
+      "type": "string",
+      "maxLength": 1048576
+    },
+    "inputRevision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/state"
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "details": {
+          "$ref": "#/$defs/value"
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "base64"
+      ],
+      "properties": {
+        "name": {
+          "const": "session.FCStd"
+        },
+        "base64": {
+          "type": "string",
+          "maxLength": 33554432,
+          "contentEncoding": "base64"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ok": {
+            "const": false
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "error"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "value": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/value"
+          },
+          "maxItems": 100000
+        },
+        {
+          "type": "object",
+          "maxProperties": 10000,
+          "additionalProperties": {
+            "$ref": "#/$defs/value"
+          }
+        }
+      ]
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 1048576
+    },
+    "index": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "placement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "row",
+        "column"
+      ],
+      "properties": {
+        "row": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "rowSpan": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "columnSpan": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "selected": {
+          "type": "boolean"
+        },
+        "checked": {
+          "type": "boolean"
+        },
+        "checkState": {
+          "enum": [
+            0,
+            1,
+            2
+          ]
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "parentId",
+        "label",
+        "columns",
+        "selected",
+        "expanded"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "parentId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 1048576
+          },
+          "maxItems": 1000
+        },
+        "selected": {
+          "type": "boolean"
+        },
+        "expanded": {
+          "type": "boolean"
+        },
+        "checkState": {
+          "enum": [
+            0,
+            1,
+            2
+          ]
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "qtClass",
+        "name",
+        "enabled",
+        "visible"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "kind": {
+          "enum": [
+            "container",
+            "unsupported",
+            "tabs",
+            "select",
+            "radio",
+            "checkbox",
+            "button",
+            "number",
+            "quantity",
+            "text",
+            "label",
+            "list",
+            "tree",
+            "table",
+            "progress"
+          ]
+        },
+        "qtClass": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "tooltip": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "value": {
+          "$ref": "#/$defs/value"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 1048576
+          },
+          "maxItems": 100000
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "checkable": {
+          "type": "boolean"
+        },
+        "multiline": {
+          "type": "boolean"
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "step": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "layout": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "enum": [
+                "vertical",
+                "horizontal",
+                "grid",
+                "form",
+                "stack"
+              ]
+            },
+            "columns": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "placement": {
+          "$ref": "#/$defs/placement"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 10000
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/item"
+          },
+          "maxItems": 100000
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/row"
+          },
+          "maxItems": 100000
+        },
+        "headers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 1048576
+          },
+          "maxItems": 10000
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 1048576
+            },
+            "maxItems": 10000
+          },
+          "maxItems": 10000
+        }
+      }
+    },
+    "property": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "type",
+        "group",
+        "readOnly",
+        "value"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "type": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "group": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "value": {
+          "$ref": "#/$defs/value"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 1048576
+          },
+          "maxItems": 100000
+        }
+      }
+    },
+    "object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "type",
+        "visible",
+        "properties"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "type": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "parentId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 1048576
+          },
+          "maxItems": 10000
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/property"
+          },
+          "maxItems": 10000
+        }
+      }
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "label",
+        "objects"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "objects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object"
+          },
+          "maxItems": 10000
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "fileDialog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "fileMode",
+        "acceptMode",
+        "filters",
+        "selectedFilter",
+        "title"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "openFile",
+            "directory",
+            "saveFile"
+          ]
+        },
+        "fileMode": {
+          "enum": [
+            "file",
+            "files",
+            "directory",
+            "any"
+          ]
+        },
+        "acceptMode": {
+          "enum": [
+            "open",
+            "save"
+          ]
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 1048576
+          },
+          "maxItems": 1000
+        },
+        "selectedFilter": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 1048576
+        }
+      }
+    },
+    "dialog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "text",
+        "buttons"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "roots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 100
+        },
+        "buttons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label",
+              "role"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "role": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            }
+          },
+          "maxItems": 100
+        },
+        "fileDialog": {
+          "$ref": "#/$defs/fileDialog"
+        }
+      }
+    },
+    "editor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "objectId",
+        "roots",
+        "actions"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "objectId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "roots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 100
+        },
+        "actions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "accept",
+            "reject"
+          ],
+          "properties": {
+            "accept": {
+              "type": "boolean"
+            },
+            "reject": {
+              "type": "boolean"
+            },
+            "acceptLabel": {
+              "type": "string",
+              "maxLength": 1048576
+            },
+            "rejectLabel": {
+              "type": "string",
+              "maxLength": 1048576
+            }
+          }
+        }
+      }
+    },
+    "geometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "objectId",
+        "label",
+        "vertices",
+        "triangles",
+        "faces",
+        "edges",
+        "points",
+        "solids"
+      ],
+      "properties": {
+        "objectId": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "vertices": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 6000000
+        },
+        "triangles": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "maxItems": 6000000
+        },
+        "faces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "firstTriangle",
+              "triangleCount"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "firstTriangle": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "triangleCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            }
+          },
+          "maxItems": 100000
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "vertices"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "vertices": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "maxItems": 6000000
+              }
+            }
+          },
+          "maxItems": 100000
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "position"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "position": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "items": false,
+                "minItems": 3,
+                "maxItems": 3
+              }
+            }
+          },
+          "maxItems": 100000
+        },
+        "solids": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "faces"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "faces": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 1048576
+                },
+                "maxItems": 100000
+              }
+            }
+          },
+          "maxItems": 100000
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "plot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "xLabel",
+        "yLabel",
+        "series"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "xScale": {
+          "enum": [
+            "linear",
+            "log"
+          ]
+        },
+        "yScale": {
+          "enum": [
+            "linear",
+            "log"
+          ]
+        },
+        "logarithmic": {
+          "type": "boolean"
+        },
+        "series": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "points"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                "maxItems": 1000000
+              }
+            }
+          },
+          "maxItems": 1000
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "operation"
+      ],
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "operation": {
+          "enum": [
+            "initialize",
+            "command",
+            "inspect",
+            "poll",
+            "setField",
+            "clickField",
+            "editorAccept",
+            "editorReject",
+            "selectGeometry",
+            "selectObject",
+            "editObject",
+            "deleteObject",
+            "setVisibility",
+            "undo",
+            "redo",
+            "setProperty",
+            "importFile",
+            "exportDocument",
+            "dialogResponse",
+            "close"
+          ]
+        }
+      }
+    },
+    "lastAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "operation",
+        "ok"
+      ],
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "operation": {
+          "enum": [
+            "initialize",
+            "command",
+            "inspect",
+            "poll",
+            "setField",
+            "clickField",
+            "editorAccept",
+            "editorReject",
+            "selectGeometry",
+            "selectObject",
+            "editObject",
+            "deleteObject",
+            "setVisibility",
+            "undo",
+            "redo",
+            "setProperty",
+            "importFile",
+            "exportDocument",
+            "dialogResponse",
+            "close"
+          ]
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string",
+          "maxLength": 1048576
+        }
+      }
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision",
+        "runtime",
+        "capabilities",
+        "commands",
+        "document",
+        "selection",
+        "editor",
+        "dialogs",
+        "geometry",
+        "plots",
+        "logs",
+        "busy",
+        "pendingAction"
+      ],
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "freecadVersion"
+          ],
+          "properties": {
+            "freecadVersion": {
+              "type": "string",
+              "maxLength": 1048576
+            },
+            "upstreamCommit": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            }
+          }
+        },
+        "capabilities": {
+          "type": "object",
+          "maxProperties": 1000,
+          "additionalProperties": {
+            "$ref": "#/$defs/value"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label",
+              "tooltip",
+              "enabled"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "tooltip": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "upstreamEnabled": {
+                "type": "boolean"
+              },
+              "commands": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 1048576
+                },
+                "maxItems": 1000
+              }
+            }
+          },
+          "maxItems": 1000
+        },
+        "document": {
+          "$ref": "#/$defs/document"
+        },
+        "selection": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "objectId",
+              "subelements"
+            ],
+            "properties": {
+              "objectId": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "subelements": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 1048576
+                },
+                "maxItems": 10000
+              }
+            }
+          },
+          "maxItems": 10000
+        },
+        "editor": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/editor"
+            }
+          ]
+        },
+        "dialogs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialog"
+          },
+          "maxItems": 100
+        },
+        "geometry": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/geometry"
+          },
+          "maxItems": 10000
+        },
+        "plots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/plot"
+          },
+          "maxItems": 1000
+        },
+        "logs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "level",
+              "text"
+            ],
+            "properties": {
+              "level": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 1048576
+              }
+            }
+          },
+          "maxItems": 20000
+        },
+        "busy": {
+          "type": "boolean"
+        },
+        "pendingAction": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/action"
+            }
+          ]
+        },
+        "lastAction": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/lastAction"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

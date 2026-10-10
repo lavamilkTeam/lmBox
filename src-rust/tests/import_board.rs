@@ -1,4 +1,4 @@
-use lmbox::{contracts::LayerRole, features::board_import::import_board};
+use lmbox::{contracts::LayerRole, modules::stencil::import_board};
 use std::io::{Cursor, Write};
 use zip::write::SimpleFileOptions;
 

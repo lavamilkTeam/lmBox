@@ -23,3 +23,9 @@ CEA 的 `cea-rocket-request.json` / `cea-hp-request.json` 供原生后端与 CLI
 ## 验证
 
 运行受影响语言的检查；schema 通过不等于几何语义正确。保持版本接受/拒绝行为一致，不声称尚未建立的自动生成工具已运行。
+
+推进设计 fixture 见 [propulsion 协议](../../schemas/v1/agent-contracts-propulsion.md)。喷管复用公开 CEA 参考输入；喷注器两路使用相同的示例水物性，仅用于模型数值校验。
+
+`propulsion-chamber-request.json` 为显式示例筒段与圆弧过渡锥形收敛段，和原喷管样例共同验证可选几何的兼容性；不代表已有发动机尺寸。
+
+`cfd-request.json` 是 CFD 会话初始化请求；`cfd-initialized-response.json` 来自真实空文档初始化快照，身份已换成中性示例，不包含伪造几何或仿真结果。

@@ -12,7 +12,7 @@ test('startup offers five tools; drag, zoom, move, connect and remove operate on
   await library.getByRole('button', { name: '添加化学平衡分析' }).dragTo(canvas, { targetPosition: { x: 180, y: 160 } })
   const chemistry = page.getByRole('article', { name: '化学平衡分析', exact: true })
   await expect(chemistry).toBeVisible()
-  await expect(chemistry.getByRole('button', { name: '打开化学平衡分析' })).toBeDisabled()
+  await expect(chemistry.getByRole('button', { name: '打开化学平衡分析' })).toHaveCount(0)
   await page.getByRole('button', { name: '缩小画布' }).click()
   await library.getByRole('button', { name: '添加喷管初步设计' }).dragTo(canvas, { targetPosition: { x: 600, y: 290 } })
   const nozzle = page.getByRole('article', { name: '喷管初步设计', exact: true })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ArrowUpRight, CircuitBoard, FlaskConical, Wind, X, Minus, Plus, Trash2 } from '@lucide/vue'
+import { ArrowUpRight, X, Minus, Plus, Trash2 } from '@lucide/vue'
 import { Button, Card, CardHeader, CardTitle, CardFooter } from '../../../../ui/shadcn'
 import type { NodeView, EdgeView } from './types'
 const props = defineProps<{ nodes: NodeView[]; edges: EdgeView[] }>()
@@ -103,12 +103,11 @@ function setZoom(value: number) { zoom.value = Math.min(1.5, Math.max(0.5, Math.
             :class="{ 'is-link-source': source === node.id, 'is-moving': drag?.id === node.id }" :style="{ left: `${node.x}px`, top: `${node.y}px` }">
             <CardHeader class="guide-node-header"><CardTitle class="guide-node-title">
             <Button variant="ghost" size="sm" class="guide-node-heading" :aria-label="`移动${node.label}`" @pointerdown="startMove($event, node)" @pointerup="drag = null" @pointercancel="drag = null" @lostpointercapture="drag = null" @keydown="keyboardMove($event, node)">
-              <span class="guide-tool-icon"><CircuitBoard v-if="node.kind === 'electrical'" :size="17" /><FlaskConical v-else-if="node.kind === 'chemistry'" :size="17" /><Wind v-else :size="17" /></span>
               <span>{{ node.label }}</span>
             </Button>
             </CardTitle></CardHeader>
             <Button variant="ghost" size="icon-xs" class="guide-node-delete" :aria-label="`移除${node.label}`" @click="removeNode(node.id)"><X :size="13" /></Button>
-            <CardFooter class="guide-node-bottom"><Button variant="ghost" size="sm" :disabled="!node.available" :aria-label="`打开${node.label}`" @click="emit('open', node.id)">{{ node.available ? '打开' : '未接入' }} <ArrowUpRight v-if="node.available" :size="13" /></Button></CardFooter>
+            <CardFooter class="guide-node-bottom"><Button v-if="node.available" variant="ghost" size="sm" :aria-label="`打开${node.label}`" @click="emit('open', node.id)">打开 <ArrowUpRight :size="13" /></Button></CardFooter>
             <Button variant="ghost" size="icon-xs" class="guide-port guide-port-in" :class="{ 'is-ready': source && source !== node.id }" :aria-label="`${node.label}输入端`" :title="`${node.label}输入端`" @click="finishLink(node.id)" />
             <Button variant="ghost" size="icon-xs" class="guide-port guide-port-out" :aria-label="`${node.label}输出端`" :title="`${node.label}输出端`" :aria-pressed="source === node.id" @click="startLink(node)" />
           </Card>

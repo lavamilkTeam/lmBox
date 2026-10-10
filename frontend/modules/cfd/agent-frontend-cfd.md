@@ -1,6 +1,6 @@
 # 前端：计算流体动力学
 
-先读 [前端结构](../../agent-frontend.md)。`index.ts` 仅公开 `CfdWorkspace`；外部不访问模块私有实现。
+先读 [前端结构](../../agent-frontend.md)。`index.ts` 公开 `CfdWorkspace` 与 `closeCfdSession()`；后者在用户确认丢弃工程后释放当前模块的原生会话；外部不访问模块私有实现。
 
 | 内部范围 | 说明 |
 | --- | --- |

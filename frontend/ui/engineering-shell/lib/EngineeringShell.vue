@@ -1,15 +1,22 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import { X } from '@lucide/vue'
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '../../shadcn'
-const props = defineProps<{ active: string; tabs: { id: string; label: string; fixed?: boolean }[] }>()
-const emit = defineEmits<{ select: [id: string]; close: [id: string] }>()
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from '../../shadcn'
+const props = defineProps<{ active: string; tabs: { id: string; label: string; fixed?: boolean }[]; closeConfirmation?: { label: string; pending: boolean; error: string } }>()
+const emit = defineEmits<{ select: [id: string]; close: [id: string]; confirmClose: []; cancelClose: [] }>()
 const bar = ref<HTMLElement>()
 async function close(id: string) {
   emit('close', id)
   await nextTick()
+  if (props.closeConfirmation) return
   bar.value?.querySelector<HTMLElement>('[role="tab"][data-state="active"]')?.focus()
 }
+watch(() => props.closeConfirmation, async (current, previous) => {
+  if (previous && !current) {
+    await nextTick()
+    bar.value?.querySelector<HTMLElement>('[role="tab"][data-state="active"]')?.focus()
+  }
+})
 function reveal(event: FocusEvent) {
   if (event.target instanceof HTMLElement) event.target.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'nearest' })
 }
@@ -30,6 +37,19 @@ function reveal(event: FocusEvent) {
     <TabsContent v-for="tab in tabs" :key="tab.id" :value="tab.id" class="engineering-content">
       <slot v-if="active === tab.id" />
     </TabsContent>
+    <AlertDialog :open="!!closeConfirmation" @update:open="!$event && emit('cancelClose')">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>关闭{{ closeConfirmation?.label }}？</AlertDialogTitle>
+          <AlertDialogDescription>未保存的工程会丢失，正在运行的计算将结束。</AlertDialogDescription>
+        </AlertDialogHeader>
+        <p v-if="closeConfirmation?.error" role="alert">{{ closeConfirmation.error }}</p>
+        <AlertDialogFooter>
+          <Button variant="outline" :disabled="closeConfirmation?.pending" @click="emit('cancelClose')">取消</Button>
+          <Button :disabled="closeConfirmation?.pending" @click="emit('confirmClose')">{{ closeConfirmation?.pending ? '正在关闭…' : '关闭并释放' }}</Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </Tabs>
 </template>
 <style scoped>

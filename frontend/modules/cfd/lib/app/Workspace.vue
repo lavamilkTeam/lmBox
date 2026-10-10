@@ -5,6 +5,7 @@ import { cfdRequest, readCfdFile, saveCfdFile, chooseCfdPath, getCfdSessionId, o
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, Tooltip, TooltipProvider, TooltipTrigger, TooltipContent, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, ScrollArea, Separator } from '../../../../ui/shadcn'
 import { FolderOpen, Save, Undo2, Redo2, Maximize, Layers, Boxes, Grid2X2, Wind, FlaskConical, SquareDashed, Waves, Box, Gauge, ChartNoAxesCombined, SlidersHorizontal, Play, ChevronDown } from '@lucide/vue'
 import { useCfdSession } from '../domain/session'
+import { enqueueCfdOperation } from './session'
 import { TaskPanel } from '../features/tasks'
 import { DocumentPanel } from '../features/document'
 import { GeometryViewer, ResultPlot, QtNode, chinese } from '../ui'
@@ -21,7 +22,6 @@ const viewport=ref<HTMLElement>()
 const viewportSize=ref({width:1,height:1})
 const pixelRatio=Math.min(window.devicePixelRatio || 1,2)
 let stopObserving: (()=>void)|undefined
-let queue:Promise<void>=Promise.resolve()
 let queued=0
 let timer:ReturnType<typeof setTimeout>|undefined
 let disposed=false
@@ -37,8 +37,9 @@ const menuCommands=computed(()=>toolbarIds.filter(id=>id!=='CfdOF_GroupDynamicMe
 const dialog=computed(()=>state.value?.dialogs.at(-1))
 function request(operation:CfdOperation,payload:Record<string,CfdValue>={},nativeChooser=false):Promise<boolean> {
   queued++
-  const next=queue.then(async()=>{
-    queued--;if(disposed)return false;sending.value=true
+  let started=false
+  const next=enqueueCfdOperation(async()=>{
+    started=true;queued--;if(disposed)return false;sending.value=true
     const request:CfdRequest={schemaVersion:1,projectId:session.projectId,requestId:crypto.randomUUID(),expectedRevision:session.revision,operation,payload}
     try {
       session.begin(request)
@@ -56,8 +57,7 @@ function request(operation:CfdOperation,payload:Record<string,CfdValue>={},nativ
     } catch(error) {session.fail(request,error instanceof Error?error.message:String(error));return false}
     finally {sending.value=false}
   })
-  queue=next.then(()=>undefined,()=>undefined)
-  return next
+  return next.finally(()=>{if(!started)queued--})
 }
 async function reconnect() {
   if(reconnecting.value)return

@@ -9,12 +9,13 @@ const CfdWorkspace = defineAsyncComponent(() => import('../modules/cfd').then(mo
 const tools = [
   { id: 'stencil', label: '钢网设计与制造', category: '电子电气', available: true },
   { id: 'equilibrium', label: '化学平衡分析', category: '热化学', available: false },
-  { id: 'cfd', label: '计算流体力学', category: '流体与动力', available: true },
+  { id: 'cfd', label: '流体力学', category: '流体与动力', available: true },
   { id: 'nozzle', label: '喷管初步设计', category: '流体与动力', available: true },
   { id: 'injector', label: '喷注器水力设计', category: '流体与动力', available: true },
 ]
 const active = ref('guide')
 const opened = ref<string[]>([])
+const closeConfirmation = ref<{ label: string; pending: boolean; error: string }>()
 const fixedTabs = [{ id: 'guide', label: '开始', fixed: true }, { id: 'library', label: '功能库', fixed: true }]
 const tabs = computed(() => [...fixedTabs, ...opened.value.map(id => ({ id, label: tools.find(tool => tool.id === id)!.label }))])
 function selectTab(id: string) {
@@ -26,6 +27,25 @@ function openTool(id: string) {
   active.value = id
 }
 function closeTab(id: string) {
+  if (id === 'cfd') { closeConfirmation.value = { label: '流体力学', pending: false, error: '' }; return }
+  removeTab(id)
+}
+function cancelClose() { if (!closeConfirmation.value?.pending) closeConfirmation.value = undefined }
+async function confirmClose() {
+  const confirmation = closeConfirmation.value
+  if (!confirmation || confirmation.pending) return
+  confirmation.pending = true
+  confirmation.error = ''
+  try {
+    const { closeCfdSession } = await import('../modules/cfd')
+    await closeCfdSession()
+    removeTab('cfd')
+    closeConfirmation.value = undefined
+  } catch (error) {
+    confirmation.error = error instanceof Error ? error.message : String(error)
+  } finally { confirmation.pending = false }
+}
+function removeTab(id: string) {
   const index = opened.value.indexOf(id)
   if (index < 0) return
   opened.value.splice(index, 1)
@@ -33,7 +53,7 @@ function closeTab(id: string) {
 }
 </script>
 <template>
-  <AppTheme><EngineeringShell :active="active" :tabs="tabs" @select="selectTab" @close="closeTab">
+  <AppTheme><EngineeringShell :active="active" :tabs="tabs" :close-confirmation="closeConfirmation" @select="selectTab" @close="closeTab" @confirm-close="confirmClose" @cancel-close="cancelClose">
     <GuideWorkspace v-if="active === 'guide'" @open="openTool" />
     <ToolLibrary v-else-if="active === 'library'" :tools="tools" @open="openTool" />
     <StencilWorkspace v-else-if="active === 'stencil'" />

@@ -4,7 +4,7 @@
 
 ## 结构与所有权
 
-前端源码位于 `frontend/`，按领域模块组织。`main.ts` 启动；平台 `app` 默认加载引导模块，并通过工程工具箱选择已实现模块；`modules/propulsion` 封装喷管和喷注器前端，数值仍由原生后端提供；`modules/stencil` 封装现有工作台，包含私有的应用协调、features、domain 和 UI。共享 `ui` 提供主题和基础控件；`platform` 适配桌面/浏览器外部交互；`contracts` 定义通信类型。只建立实际能力，不预建仿真占位模块。
+前端源码位于 `frontend/`，按领域模块组织。`main.ts` 启动；平台 `app` 默认加载引导模块，并通过固定功能库与动态页签选择已实现模块；`modules/propulsion` 封装喷管和喷注器前端，数值仍由原生后端提供；`modules/stencil` 封装现有工作台，包含私有的应用协调、features、domain 和 UI。共享 `ui` 提供主题和基础控件；`platform` 适配桌面/浏览器外部交互；`contracts` 定义通信类型。只建立实际能力，不预建仿真占位模块。
 
 ## 依赖
 

@@ -44,9 +44,7 @@ test('native CAD, physics controls, properties and FCStd export retain original 
   const physicsProperty = (name: string) => state?.document.objects.find(object => object.id === 'PhysicsModel')?.properties.find(property => property.name === name)?.value
   try {
     await page.goto('/')
-    await selectWorkspace(page, '喷管初步设计')
-    await page.getByRole('button', { name: '工程工具箱', exact: true }).click()
-    await page.getByRole('navigation', { name: '工程工具箱' }).getByRole('button', { name: '计算流体力学', exact: true }).click()
+    await selectWorkspace(page, '计算流体力学')
     await waitState(value => Boolean(value.runtime.freecadVersion) && !value.busy)
     expect(state!.document.objects).toHaveLength(0)
     await expect(page.getByRole('tree', { name: '模型树' })).toContainText('流体工程')

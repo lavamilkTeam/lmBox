@@ -20,8 +20,8 @@
 
 统一检查见 [语言说明](../frontend/agent-frontend.md#验证与维护)。执行完整浏览器套件，保留失败 trace/截图；真实计算采用两个 worker，不用重试掩盖失败。
 
-`propulsion.pw.ts` 验证工具箱、真实 Fortran 锥形/钟形和液体圆孔/环隙计算、三类收敛段、SVG 转义与 DXF 毫米坐标、JSON 导出身份配对、参数失效、迟到响应、错误恢复、模块返回和窄屏。运行前先构建 `npm run build:backend`；不以计算 mock 替代正常路径。
+`propulsion.pw.ts` 验证功能页签、真实 Fortran 锥形/钟形和液体圆孔/环隙计算、三类收敛段、SVG 转义与 DXF 毫米坐标、JSON 导出身份配对、参数失效、迟到响应、错误恢复、模块返回和窄屏。运行前先构建 `npm run build:backend`；不以计算 mock 替代正常路径。
 
 `cfd-native.pw.ts` 仅在 `LMBOX_CFD_INTEGRATION=1` 时运行，`LMBOX_CFD_TEST_FILE` 指向公开来源的纯几何 CAD 夹具。通过真实原生会话验证导入、物理模型动态控件、单位输入、属性回写与 FCStd 保存，并关闭测试自身的会话；不替换后端响应。
 
-`guide.pw.ts` 覆盖默认启动、功能搜索与拖放、缩放坐标、指针和键盘移动、连线、删除及返回后的会话草稿。现有钢网测试通过 `workspace-navigation.ts` 从引导页节点进入工作区，其他工作区间的切换使用工具箱。
+`guide.pw.ts` 覆盖默认启动、功能搜索与拖放、缩放坐标、指针和键盘移动、连线、删除及返回后的会话草稿。现有工作区测试通过 `workspace-navigation.ts` 从功能库打开功能，已打开的工作区直接通过顶部页签切换；引导测试另覆盖固定入口、重复打开、关闭相邻页签、焦点与窄屏溢出。

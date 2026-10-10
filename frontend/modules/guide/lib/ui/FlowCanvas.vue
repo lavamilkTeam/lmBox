@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ArrowUpRight, CircuitBoard, FlaskConical, Wind, Workflow, MousePointer2, X, Minus, Plus, Link2, Trash2 } from '@lucide/vue'
+import { ArrowUpRight, CircuitBoard, FlaskConical, Wind, Workflow, X, Minus, Plus, Trash2 } from '@lucide/vue'
 import type { NodeView, EdgeView } from './types'
 const props = defineProps<{ nodes: NodeView[]; edges: EdgeView[]; message: string }>()
 const emit = defineEmits<{
@@ -84,13 +84,6 @@ function setZoom(value: number) { zoom.value = Math.min(1.5, Math.max(0.5, Math.
 </script>
 <template>
   <section class="guide-board" aria-label="引导界面" @keydown.esc="source = null; selectedEdge = null">
-    <header class="guide-board-header">
-      <div><div class="guide-eyebrow">WORKSPACE / 工作流程</div><h1>引导界面<span class="guide-draft">会话草稿</span></h1></div>
-      <div class="guide-board-summary"><span>{{ nodes.length }} 个功能</span><span>{{ edges.length }} 条连接</span></div>
-    </header>
-    <div class="guide-board-toolbar"><span><MousePointer2 :size="14" />拖入功能</span><span class="guide-toolbar-divider" /><span><Link2 :size="14" />点击输出端，再点击输入端连接</span>
-      <button v-if="source" class="guide-cancel" @click="source = null">取消连线 <X :size="12" /></button>
-    </div>
     <div ref="viewport" class="guide-viewport" :class="{ 'is-dropping': dropping, 'is-connecting': source }" aria-label="流程画布"
       @dragover="dragOver" @dragleave="dropping = false" @drop.prevent="drop" @pointermove="move">
       <div class="guide-scroll-space" :style="{ width: `${width * zoom}px`, height: `${height * zoom}px` }">
@@ -122,6 +115,7 @@ function setZoom(value: number) { zoom.value = Math.min(1.5, Math.max(0.5, Math.
       <div v-if="!nodes.length" class="guide-empty"><span class="guide-empty-icon"><Workflow :size="36" :stroke-width="1.3" /></span><h2>从一个功能开始</h2><p>将左侧功能拖到这里，<br />连接不同节点，搭建你的分析流程。</p><span>拖放添加 · 点击端口连接 · 打开功能继续设计</span></div>
     </div>
     <div class="guide-floating-tools">
+      <button v-if="source" class="guide-remove-link" @click="source = null">取消连线 <X :size="12" /></button>
       <button v-if="selected" class="guide-remove-link" @click="removeSelected"><Trash2 :size="14" />删除所选连接</button>
       <div class="guide-zoom"><button aria-label="缩小画布" :disabled="zoom <= 0.5" @click="setZoom(zoom - 0.1)"><Minus :size="14" /></button><button aria-label="重置画布缩放" @click="setZoom(1)">{{ Math.round(zoom * 100) }}%</button><button aria-label="放大画布" :disabled="zoom >= 1.5" @click="setZoom(zoom + 0.1)"><Plus :size="14" /></button></div>
     </div>

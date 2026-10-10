@@ -4,7 +4,7 @@
 .guide-library-heading { display: flex; align-items: center; gap: 9px; padding: 0 8px; font-size: 14px; font-weight: 600; }
 .guide-count { background: var(--muted); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; color: var(--muted-foreground); font-size: 10px; }
 .guide-library-hint { margin: 10px 8px 20px; color: var(--muted-foreground); font-size: 11px; line-height: 1.7; }
-.guide-search { display: flex; align-items: center; gap: 8px; height: 34px; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; color: var(--muted-foreground); }
+.guide-search { display: flex; align-items: center; gap: 8px; height: 34px; margin-top: 16px; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; color: var(--muted-foreground); }
 .guide-search:focus-within { outline: 2px solid var(--ring); outline-offset: 2px; }
 .guide-search input { border: 0; outline: 0; background: transparent; min-width: 0; width: 100%; color: var(--foreground); font-size: 11px; }
 .guide-category { margin-top: 26px; }
@@ -25,15 +25,6 @@
 .guide-tool:hover .guide-plus { display: block; }
 .guide-library-note { margin-top: auto; padding: 24px 8px 4px; display: flex; gap: 7px; color: var(--muted-foreground); font-size: 10px; }
 .guide-board { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-.guide-board-header { min-height: 98px; padding: 25px 32px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-.guide-eyebrow { font-size: 9px; color: var(--muted-foreground); letter-spacing: 1.6px; }
-.guide-board-header h1 { margin: 7px 0 0; font-size: 21px; font-weight: 550; display: flex; align-items: center; gap: 12px; }
-.guide-draft { font-size: 10px; font-weight: 400; border: 1px solid var(--border); padding: 3px 7px; border-radius: 4px; color: var(--muted-foreground); }
-.guide-board-summary { display: flex; gap: 20px; font-size: 11px; color: var(--muted-foreground); }
-.guide-board-toolbar { min-height: 40px; padding: 8px 32px; display: flex; align-items: center; gap: 16px; border-top: 1px solid #eee; border-bottom: 1px solid var(--border); color: var(--muted-foreground); font-size: 10px; }
-.guide-board-toolbar > span { display: inline-flex; align-items: center; gap: 6px; }
-.guide-toolbar-divider { height: 12px; border-left: 1px solid var(--border); }
-.guide-cancel { margin-left: auto; color: var(--foreground); }
 .guide-viewport { position: relative; flex: 1; min-height: 260px; overflow: auto; background: #fafafa; overscroll-behavior: contain; }
 .guide-viewport.is-dropping { outline: 2px solid #536d95; outline-offset: -3px; }
 .guide-scroll-space { position: relative; }
@@ -72,14 +63,11 @@
 .guide-zoom button:nth-child(2) { min-width: 44px; border-left: 1px solid #eee; border-right: 1px solid #eee; }
 .guide-zoom button:disabled { opacity: 0.3; }
 .guide-remove-link { padding: 0 10px; font-size: 10px; }
-.guide-board-footer { min-height: 34px; padding: 9px 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; border-top: 1px solid var(--border); color: var(--muted-foreground); font-size: 9px; }
+.guide-board-footer { position: absolute; bottom: 0; left: 0; right: 0; pointer-events: none; min-height: 34px; padding: 9px 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; color: var(--muted-foreground); font-size: 9px; }
 @media (max-width: 900px) {
   .guide-workspace { grid-template-columns: 224px minmax(0, 1fr); }
   .guide-library { padding-right: 10px; padding-left: 10px; }
   .guide-grip, .guide-plus { display: none !important; }
-  .guide-board-header { padding: 20px; }
-  .guide-board-toolbar { padding: 8px 16px; gap: 8px; flex-wrap: wrap; }
-  .guide-board-summary { gap: 10px; }
 }
 @media (max-width: 600px) {
   .guide-workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: 280px minmax(440px, 1fr); min-height: 720px; height: 100%; }
@@ -90,10 +78,6 @@
   .guide-library nav { display: flex; gap: 12px; overflow-x: auto; flex-shrink: 0; }
   .guide-category { min-width: 214px; margin-top: 14px; }
   .guide-workspace .guide-tool { padding: 6px; }
-  .guide-board-header { min-height: 76px; padding: 14px 18px; }
-  .guide-board-header h1 { font-size: 18px; }
-  .guide-board-summary { font-size: 9px; }
-  .guide-board-toolbar { font-size: 9px; }
   .guide-empty { top: 16%; }
   .guide-empty-icon { padding: 12px; }
   .guide-empty h2 { margin-top: 12px; font-size: 16px; }

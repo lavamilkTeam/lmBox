@@ -5,7 +5,7 @@ test('startup offers five tools; drag, zoom, move, connect and remove operate on
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: '引导界面' })).toBeVisible()
+  await expect(page.getByRole('region', { name: '引导界面', exact: true })).toBeVisible()
   const library = page.getByRole('navigation', { name: '引导功能库' })
   await expect(library.getByRole('button')).toHaveCount(5)
   const canvas = page.getByLabel('流程画布', { exact: true })
@@ -61,7 +61,7 @@ test('opening a workspace and returning preserves the draft; startup always retu
   await expect(page.getByRole('article')).toHaveCount(2)
   await expect(page.getByRole('button', { name: '连接：喷管初步设计 → 喷注器水力设计' })).toHaveCount(1)
   await page.reload()
-  await expect(page.getByRole('heading', { name: '引导界面' })).toBeVisible()
+  await expect(page.getByRole('region', { name: '引导界面', exact: true })).toBeVisible()
   await expect(page.getByRole('article')).toHaveCount(0)
 })
 

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(lmbox_propulsion VERSION 1.0 LANGUAGES Fortran)
-add_library(lmbox_propulsion SHARED source/types.f90 source/nozzle.f90 source/injector.f90 source/api.f90)
+add_library(lmbox_propulsion SHARED source/types.f90 source/nozzle.f90 source/injector.f90 source/chamber.f90 source/api.f90)
 set_target_properties(lmbox_propulsion PROPERTIES
   Fortran_STANDARD 2008 Fortran_STANDARD_REQUIRED YES
   Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/modules"

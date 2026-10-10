@@ -4,7 +4,7 @@
 
 ## 结构与职责
 
-单个业务核心 crate，先按业务域划分 `src/modules/stencil`、`src/modules/propulsion`，再在模块内按职责组织 `features`、`app` 和 `runtime`。每个模块通过自己的 `mod.rs` 提供窄公开入口，内部目录不对外公开；不依赖 Tauri，不为未来能力建立空模块。
+单个业务核心 crate，先按业务域划分 `src/modules/stencil`、`src/modules/propulsion`、`src/modules/cfd`，再在模块内按职责组织 `features`、`app` 和 `runtime`。每个模块通过自己的 `mod.rs` 提供窄公开入口，内部目录不对外公开；不依赖 Tauri，不为未来能力建立空模块。
 
 `src/lib.rs` 为 crate 入口；`browser.rs`/`bin` 为薄适配；根 `app.rs` 和 `parse_gerber` 仅保留既有宿主兼容转导出。共享数据类型留在 `contracts`。Rust 管格式解析、业务身份、协议及计算调用；制造几何归 Python 钢网模块，热化学和喷管/喷注器数值计算归 Fortran 推进模块。桌面 crate 管窗口、IPC、对话框和资源打包。
 
@@ -19,6 +19,7 @@
 | 范围 | 必读说明 |
 | --- | --- |
 | `src/modules/stencil/` | [钢网模块及内部索引](src/modules/stencil/agent-rust-stencil.md) |
+| `src/modules/cfd/` | [CFD 原生会话](src/modules/cfd/agent-rust-cfd.md) |
 | `src/modules/propulsion/` | [推进模块及内部索引](src/modules/propulsion/agent-rust-propulsion.md) |
 | `src/browser.rs` | [WASM 接入](src/agent-rust-browser.md) |
 | `src/bin/` | [开发 CLI](src/bin/agent-rust-preview-cli.md) |

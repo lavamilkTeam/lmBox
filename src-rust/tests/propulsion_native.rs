@@ -342,3 +342,139 @@ fn relocated_cli_needs_only_native_library_for_liquid_calculation_and_keeps_stdo
     std::fs::create_dir(&empty).unwrap();
     assert!(PropulsionBackend::load(empty).is_err());
 }
+
+#[test]
+fn combined_chamber_profiles_join_at_the_throat_and_preserve_ideal_performance() {
+    let backend = backend();
+    let cea = CeaBackend::load(runtime("cea")).unwrap();
+    let mut r = nozzle();
+    let original = backend.design_nozzle(&cea, &r).unwrap();
+    r.segments = 2048;
+    let profiles = [
+        ConvergentProfile::FilletedCone {
+            half_angle_deg: 30.0,
+            inlet_radius_m: 0.012,
+            throat_radius_m: 0.018,
+        },
+        ConvergentProfile::TangentArcs {
+            join_angle_deg: 45.0,
+            throat_radius_fraction: 0.3,
+        },
+        ConvergentProfile::CubicBezier {
+            length_m: 0.07,
+            start_handle_fraction: 0.35,
+            end_handle_fraction: 0.35,
+        },
+    ];
+    for (index, profile) in profiles.into_iter().enumerate() {
+        r.chamber = Some(ChamberRequest {
+            inner_diameter_m: 0.08,
+            cylinder_length_m: 0.12,
+            convergence: profile,
+        });
+        let result = backend.design_nozzle(&cea, &r).unwrap();
+        let c = result.chamber_geometry.as_ref().unwrap();
+        let points = &c.contour;
+        assert_eq!(points.len(), [6146, 4098, 2050][index]);
+        close(points[0].radius_m, 0.04, 1e-14);
+        close(points[1].x_m - points[0].x_m, 0.12, 1e-14);
+        assert_eq!(points.last().unwrap().x_m, result.contour[0].x_m);
+        assert_eq!(points.last().unwrap().radius_m, result.contour[0].radius_m);
+        close(
+            c.total_length_m,
+            -c.inlet_x_m + result.divergent_length_m,
+            1e-14,
+        );
+        close(result.ideal_thrust_n, original.ideal_thrust_n, 1e-14);
+        for p in points.windows(2) {
+            assert!(p[1].x_m > p[0].x_m && p[1].radius_m <= p[0].radius_m);
+        }
+        let slope = |a: usize, b: usize| {
+            (points[b].radius_m - points[a].radius_m) / (points[b].x_m - points[a].x_m)
+        };
+        assert!(slope(1, 2).abs() < 0.001);
+        assert!(slope(points.len() - 2, points.len() - 1).abs() < 0.001);
+        let drop = 0.04 - result.throat_radius_m;
+        if index == 0 {
+            let angle = 30_f64.to_radians();
+            // Equivalent construction: virtual sharp cone plus tangent-circle offsets.
+            let expected = drop / angle.tan() + 0.03 * (angle / 2.0).tan();
+            close(c.convergent_length_m, expected, 1e-13);
+            close(slope(2048, 2049), -angle.tan(), 0.001);
+            close(slope(2049, 2050), -angle.tan(), 0.001);
+            close(slope(4097, 4098), -angle.tan(), 0.001);
+        } else if index == 1 {
+            close(
+                c.convergent_length_m,
+                drop / 22.5_f64.to_radians().tan(),
+                1e-13,
+            );
+            close(
+                c.throat_arc_radius_m / c.inlet_arc_radius_m,
+                3.0 / 7.0,
+                1e-14,
+            );
+            close(slope(2048, 2049), -1.0, 0.001);
+            close(slope(2049, 2050), -1.0, 0.001);
+        } else {
+            close(c.convergent_length_m, 0.07, 1e-14);
+            close(points[1025].x_m, -0.035, 1e-14);
+            close(
+                points[1025].radius_m,
+                (0.04 + result.throat_radius_m) / 2.0,
+                1e-14,
+            );
+        }
+        validate_result(serde_json::to_value(DesignResult::Nozzle(Box::new(result))).unwrap());
+    }
+}
+
+#[test]
+fn invalid_convergent_geometry_never_returns_a_partial_result() {
+    let backend = backend();
+    let cea = CeaBackend::load(runtime("cea")).unwrap();
+    let mut r = nozzle();
+    let valid = ChamberRequest {
+        inner_diameter_m: 0.08,
+        cylinder_length_m: 0.12,
+        convergence: ConvergentProfile::FilletedCone {
+            half_angle_deg: 30.0,
+            inlet_radius_m: 0.012,
+            throat_radius_m: 0.018,
+        },
+    };
+    for diameter in [0.001, f64::NAN, f64::MAX] {
+        r.chamber = Some(ChamberRequest {
+            inner_diameter_m: diameter,
+            ..valid.clone()
+        });
+        assert!(backend.design_nozzle(&cea, &r).is_err());
+    }
+    for convergence in [
+        ConvergentProfile::FilletedCone {
+            half_angle_deg: 90.0,
+            inlet_radius_m: 0.01,
+            throat_radius_m: 0.01,
+        },
+        ConvergentProfile::FilletedCone {
+            half_angle_deg: 30.0,
+            inlet_radius_m: 1.0,
+            throat_radius_m: 1.0,
+        },
+        ConvergentProfile::TangentArcs {
+            join_angle_deg: 45.0,
+            throat_radius_fraction: 1.0,
+        },
+        ConvergentProfile::CubicBezier {
+            length_m: 0.1,
+            start_handle_fraction: 0.6,
+            end_handle_fraction: 0.5,
+        },
+    ] {
+        r.chamber = Some(ChamberRequest {
+            convergence,
+            ..valid.clone()
+        });
+        assert!(backend.design_nozzle(&cea, &r).is_err());
+    }
+}

@@ -1,5 +1,7 @@
 node_modules/
 dist/
+dist-installer/
+dist-installer-qt/
 test-results/
 .DS_Store
 playwright-report/

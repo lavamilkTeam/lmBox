@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { NInputNumber, NSelect, NSlider, NSwitch } from 'naive-ui'
+import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, Slider, Switch } from '../../../../../../ui/shadcn'
 import { RotateCcw, SlidersHorizontal, Layers, Box } from '@lucide/vue'
+import NumberField from './NumberField.vue'
 import { HelpTip } from '../../../../../../ui/help-tip'
 import { useProjectStore } from '../../../domain/project'
 const store = useProjectStore()
@@ -11,36 +12,33 @@ const sides = computed(() => [{ label: '顶层锡膏 · Top Paste', value: 'top'
 </script>
 <template>
   <template v-if="doc">
-    <div class="panel-heading"><span><SlidersHorizontal :size="15"/>{{ modeTitle }}</span><button class="icon-button" title="恢复默认参数" aria-label="恢复默认参数" @click="store.reset"><RotateCcw :size="14"/></button></div>
+    <div class="panel-heading"><span><SlidersHorizontal :size="15"/>{{ modeTitle }}</span><Button variant="ghost" size="icon" class="icon-button" title="恢复默认参数" aria-label="恢复默认参数" @click="store.reset"><RotateCcw :size="14"/></Button></div>
     <div class="parameter-content">
       <section class="parameter-section">
         <h3><Layers :size="14"/>源图层<span>01</span></h3>
         <template v-if="!doc.demo">
           <label class="field-label">预览图层</label>
-          <NSelect class="layer-picker" aria-label="预览图层" :value="doc.selectedLayer" :options="doc.files.map(file=>({label:file.name,value:file.name}))" size="small" @update:value="store.selectLayer"/>
+          <Select :model-value="doc.selectedLayer" @update:model-value="store.selectLayer(String($event))"><SelectTrigger class="layer-picker" aria-label="预览图层"><SelectValue/></SelectTrigger><SelectContent><SelectItem v-for="option in doc.files.map(file=>({label:file.name,value:file.name}))" :key="option.value" :value="option.value || '__bounds__'" :disabled="'disabled' in option && Boolean(option.disabled)">{{ option.label }}</SelectItem></SelectContent></Select>
           <p v-if="store.activeLayer?.diagnostic" class="field-help layer-diagnostic">{{ store.activeLayer.diagnostic.line ? `第 ${store.activeLayer.diagnostic.line} 行：` : '' }}{{ store.activeLayer.diagnostic.message }}</p>
         </template>
         <label v-if="doc.demo" class="field-label">锡膏面</label>
-        <NSelect v-if="doc.demo" :value="doc.params.side" :options="sides" size="small" @update:value="store.update('side', $event)"/>
+        <Select v-if="doc.demo" :model-value="doc.params.side" @update:model-value="store.update('side', $event as 'top'|'bottom')"><SelectTrigger class="parameter-select" aria-label="锡膏面"><SelectValue/></SelectTrigger><SelectContent><SelectItem v-for="option in sides" :key="option.value" :value="option.value || '__bounds__'" :disabled="'disabled' in option && Boolean(option.disabled)">{{ option.label }}</SelectItem></SelectContent></Select>
         <div class="source-file">{{ doc.demo ? doc.files.find(f => f.role === `${doc!.params.side}-paste`)?.name : store.activeLayer?.name }}</div>
-        <div class="switch-row"><span>水平镜像</span><NSwitch size="small" :value="doc.params.mirror" @update:value="store.update('mirror', $event)"/></div>
+        <div class="switch-row"><span>水平镜像</span><Switch aria-label="水平镜像" :model-value="doc.params.mirror" @update:model-value="store.update('mirror', $event)"/></div>
       </section>
       <section v-if="doc.mode === '2d'" class="parameter-section">
         <h3><SlidersHorizontal :size="14"/>显示设置<span>02</span></h3>
-        <div class="switch-row"><span>显示板框</span><NSwitch size="small" :value="doc.params.outline" @update:value="store.update('outline', $event)"/></div>
-        <div class="switch-row"><span>显示网格</span><NSwitch size="small" :value="doc.params.grid" @update:value="store.update('grid', $event)"/></div>
+        <div class="switch-row"><span>显示板框</span><Switch aria-label="显示板框" :model-value="doc.params.outline" @update:model-value="store.update('outline', $event)"/></div>
+        <div class="switch-row"><span>显示网格</span><Switch aria-label="显示网格" :model-value="doc.params.grid" @update:model-value="store.update('grid', $event)"/></div>
         <div class="field-label spread"><span>图层不透明度</span><b>{{ doc.params.opacity }}%</b></div>
-        <NSlider :value="doc.params.opacity" :min="10" :max="100" @update:value="store.update('opacity', $event)"/>
+        <Slider aria-label="图层不透明度" :model-value="[doc.params.opacity]" :min="10" :max="100" @update:model-value="store.update('opacity', $event?.[0] ?? doc.params.opacity)"/>
         <div class="layer-legend"><span><i class="swatch paste"/>锡膏开孔</span><span><i class="swatch outline"/>PCB 板框</span></div>
       </section>
       <section v-else class="parameter-section">
         <h3><Box :size="14"/>模板尺寸<HelpTip v-if="!doc.demo" label="模板尺寸说明">矩形模板：按当前图层的图形范围加外扩边距生成。</HelpTip><span>02</span></h3>
-        <label class="field-label">模板厚度 <span>mm</span></label>
-        <NInputNumber :input-props="{ 'aria-label': '模板厚度' }" :value="doc.params.thickness" :min="0.05" :max="3" :step="0.05" size="small" @update:value="v => v !== null && store.update('thickness', v)"/>
-        <label class="field-label">外扩边距 <span>mm</span></label>
-        <NInputNumber :input-props="{ 'aria-label': '外扩边距' }" :value="doc.params.margin" :min="1" :max="30" :step="1" size="small" @update:value="v => v !== null && store.update('margin', v)"/>
-        <label class="field-label"><span>开孔补偿 <HelpTip label="开孔补偿说明">正值扩大开孔，负值缩小开孔。</HelpTip></span><span>mm / 单边</span></label>
-        <NInputNumber :input-props="{ 'aria-label': '开孔补偿' }" :value="doc.params.compensation" :min="-0.3" :max="0.5" :step="0.01" size="small" @update:value="v => v !== null && store.update('compensation', v)"/>
+        <NumberField label="模板厚度" :value="doc.params.thickness" :min="0.05" :max="3" :step="0.05" @change="store.update('thickness',$event)"/>
+        <NumberField label="外扩边距" :value="doc.params.margin" :min="1" :max="30" :step="1" @change="store.update('margin',$event)"/>
+        <NumberField label="开孔补偿" :value="doc.params.compensation" :min="-.3" :max=".5" :step=".01" unit="mm / 单边" @change="store.update('compensation',$event)"><template #help><HelpTip label="开孔补偿说明">正值扩大开孔，负值缩小开孔。</HelpTip></template></NumberField>
       </section>
       <section class="parameter-section board-info">
         <h3>文件信息<span>03</span></h3>

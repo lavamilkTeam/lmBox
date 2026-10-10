@@ -2,7 +2,16 @@ use lmbox::{
     app::{self, PreviewTasks},
     contracts::PreviewRequest,
 };
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    path::PathBuf,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+};
+
+#[derive(Default)]
+struct ShutdownStarted(AtomicBool);
 use tauri::Manager;
 
 #[tauri::command]
@@ -18,6 +27,8 @@ fn preview_cancel(project_id: String, job_id: String, tasks: tauri::State<'_, Ar
     tasks.cancel(&project_id, &job_id);
 }
 #[tauri::command]
+// 桌面建模命令：登记任务已由 prepare 完成，此处启动任务并定位打包的引擎。
+// Desktop modeling command: start the prepared task and locate the packaged engine.
 async fn preview_run(
     request: PreviewRequest,
     app: tauri::AppHandle,
@@ -54,6 +65,8 @@ async fn preview_run(
     result
 }
 #[tauri::command]
+// 文件保存边界：让用户选择位置并写入已有内容；取消保存返回 false。
+// File save boundary: write existing content to the user-selected destination; cancellation is false.
 async fn save_artifact(name: String, content: String) -> Result<bool, String> {
     if content.len() > 32 * 1024 * 1024 || content.is_empty() {
         return Err("导出文件大小无效。".into());
@@ -86,28 +99,44 @@ async fn save_artifact(name: String, content: String) -> Result<bool, String> {
 pub fn run() {
     tauri::Builder::default()
         .manage(Arc::new(PreviewTasks::default()))
+        .manage(ShutdownStarted::default())
+        .setup(|app| {
+            app.manage(crate::cfd::backend(app).map_err(std::io::Error::other)?);
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             preview_prepare,
             preview_run,
             preview_cancel,
-            save_artifact
+            save_artifact,
+            crate::propulsion::propulsion_run,
+            crate::cfd::cfd_request,
+            crate::cfd::choose_cfd_path,
+            crate::cfd::save_cfd_document
         ])
         .build(tauri::generate_context!())
         .expect("Unable to initialize lmBox")
         .run(|app, event| {
             if let tauri::RunEvent::ExitRequested { api, .. } = event {
-                let tasks = Arc::clone(app.state::<Arc<PreviewTasks>>().inner());
-                tasks.cancel_all();
-                if !tasks.is_idle() {
-                    api.prevent_exit();
-                    let handle = app.clone();
-                    std::thread::spawn(move || {
-                        while !tasks.is_idle() {
-                            std::thread::sleep(std::time::Duration::from_millis(20));
-                        }
-                        handle.exit(0);
-                    });
+                api.prevent_exit();
+                if app
+                    .state::<ShutdownStarted>()
+                    .0
+                    .swap(true, Ordering::AcqRel)
+                {
+                    return;
                 }
+                let tasks = Arc::clone(app.state::<Arc<PreviewTasks>>().inner());
+                let cfd = Arc::clone(app.state::<Arc<lmbox::modules::cfd::CfdBackend>>().inner());
+                tasks.cancel_all();
+                let handle = app.clone();
+                std::thread::spawn(move || {
+                    cfd.close_all();
+                    while !tasks.is_idle() {
+                        std::thread::sleep(std::time::Duration::from_millis(20));
+                    }
+                    handle.exit(0);
+                });
             }
         });
 }

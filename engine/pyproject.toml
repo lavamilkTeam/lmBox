@@ -43,6 +43,23 @@ forbidden_modules = ["lmbox_geometry.modules.stencil.features.modeling._pipeline
 allow_indirect_imports = true
 
 [[tool.importlinter.contracts]]
+name = "CFD process uses the public module facade"
+type = "forbidden"
+source_modules = ["lmbox_geometry.cfd_worker", "lmbox_geometry.runner", "lmbox_geometry.contracts"]
+forbidden_modules = ["lmbox_geometry.modules.cfd.application", "lmbox_geometry.modules.cfd.runtime"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "CFD application owns external adaptation"
+type = "layers"
+layers = ["lmbox_geometry.modules.cfd.application", "lmbox_geometry.modules.cfd.runtime"]
+
+[[tool.importlinter.contracts]]
+name = "CFD and stencil implementations stay independent"
+type = "independence"
+modules = ["lmbox_geometry.modules.cfd", "lmbox_geometry.modules.stencil"]
+
+[[tool.importlinter.contracts]]
 name = "3D export internals stay private"
 type = "forbidden"
 source_modules = ["lmbox_geometry.modules.stencil.application", "lmbox_geometry.modules.stencil.runtime", "lmbox_geometry.modules.stencil.features.modeling", "lmbox_geometry.modules.stencil.features.inspection", "lmbox_geometry.modules.stencil.features.export_2d"]

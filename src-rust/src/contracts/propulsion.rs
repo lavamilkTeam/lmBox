@@ -24,6 +24,8 @@ pub struct NozzleRequest {
     /// Number of intervals in EACH contour segment.
     pub segments: u32,
     pub contour: NozzleContour,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chamber: Option<ChamberRequest>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -45,6 +47,54 @@ pub enum NozzleContour {
         exit_angle_deg: f64,
         throat_arc_radius_ratio: f64,
     },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ChamberRequest {
+    pub inner_diameter_m: f64,
+    pub cylinder_length_m: f64,
+    pub convergence: ConvergentProfile,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(
+    tag = "type",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+pub enum ConvergentProfile {
+    FilletedCone {
+        half_angle_deg: f64,
+        inlet_radius_m: f64,
+        throat_radius_m: f64,
+    },
+    TangentArcs {
+        join_angle_deg: f64,
+        throat_radius_fraction: f64,
+    },
+    CubicBezier {
+        length_m: f64,
+        start_handle_fraction: f64,
+        end_handle_fraction: f64,
+    },
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ChamberGeometry {
+    pub inlet_x_m: f64,
+    pub convergent_start_x_m: f64,
+    pub inner_radius_m: f64,
+    pub contraction_ratio: f64,
+    pub cylinder_length_m: f64,
+    pub convergent_length_m: f64,
+    pub total_length_m: f64,
+    pub inlet_arc_radius_m: f64,
+    pub throat_arc_radius_m: f64,
+    pub join_angle_deg: f64,
+    pub first_point: ContourPoint,
+    pub second_point: ContourPoint,
+    pub contour: Vec<ContourPoint>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -72,6 +122,8 @@ pub struct NozzleResult {
     /// Informational cone estimate; never applied to ideal CEA performance.
     pub conical_divergence_factor: Option<f64>,
     pub contour: Vec<ContourPoint>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chamber_geometry: Option<ChamberGeometry>,
     pub assumptions: Vec<String>,
     pub warnings: Vec<String>,
 }

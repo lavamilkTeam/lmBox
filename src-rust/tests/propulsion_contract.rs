@@ -10,6 +10,7 @@ fn design_fixtures_round_trip_and_unknown_fields_are_rejected() {
     let validator = jsonschema::validator_for(&schema).unwrap();
     for source in [
         include_str!("../../contracts/fixtures/v1/propulsion-nozzle-request.json"),
+        include_str!("../../contracts/fixtures/v1/propulsion-chamber-request.json"),
         include_str!("../../contracts/fixtures/v1/propulsion-injector-request.json"),
     ] {
         let request: DesignRequest = serde_json::from_str(source).unwrap();

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { Layers, Check, X, AlertCircle, Upload } from '@lucide/vue'
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../../../../ui/shadcn'
+import { useNotification } from '../../../../ui/theme'
+import { Layers, AlertCircle, Upload } from '@lucide/vue'
 import { DocumentTabs } from '../features/project'
 import { BoardImport, useBoardImport } from '../features/import-board'
 import { useParameterExport } from '../features/export-parameters'
@@ -19,18 +21,17 @@ const modelExport=useModelExport(notify)
 const importer = ref<InstanceType<typeof BoardImport>>()
 const { busy, importFiles, cancelImport } = useBoardImport(notify)
 const { exportParams } = useParameterExport(notify)
-const toast = ref('')
+const notification = useNotification()
 const closeId = ref('')
 const dropDepth = ref(0)
-let toastTimeout: ReturnType<typeof setTimeout>
 const closingDoc = computed(() => store.documents.find(d=>d.id===closeId.value))
-function notify(message: string) { toast.value=message; clearTimeout(toastTimeout); toastTimeout=setTimeout(()=>toast.value='',5000) }
+function notify(message: string) { notification.info(message) }
 function requestClose(id: string) { const doc=store.documents.find(d=>d.id===id); if (doc?.dirty) closeId.value=id; else store.close(id) }
 function drop(event: DragEvent) { dropDepth.value=0; if (event.dataTransfer?.files.length) void importFiles(Array.from(event.dataTransfer.files)) }
 function keydown(event: KeyboardEvent) { if ((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='o') { event.preventDefault(); importer.value?.open() }; if ((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='s') { event.preventDefault(); exportParams() }; if(event.key==='Escape') closeId.value='' }
 function beforeUnload(event: BeforeUnloadEvent) { if(store.documents.some(d=>d.dirty)) { event.preventDefault(); event.returnValue='' } }
-onMounted(()=>{ store.openDemo(loadDemoGraphics()); window.addEventListener('keydown',keydown); window.addEventListener('beforeunload',beforeUnload) })
-onBeforeUnmount(()=>{ clearTimeout(toastTimeout); window.removeEventListener('keydown',keydown); window.removeEventListener('beforeunload',beforeUnload) })
+onMounted(()=>{ store.initialize(loadDemoGraphics()); window.addEventListener('keydown',keydown); window.addEventListener('beforeunload',beforeUnload) })
+onBeforeUnmount(()=>{ window.removeEventListener('keydown',keydown); window.removeEventListener('beforeunload',beforeUnload) })
 </script>
 <template>
   <div class="stencil-workspace">
@@ -42,16 +43,25 @@ onBeforeUnmount(()=>{ clearTimeout(toastTimeout); window.removeEventListener('ke
           <BoardImport ref="importer" :busy="busy" @files="importFiles"/>
           <ExportButton label="导出参数" :disabled="!store.active" aria-keyshortcuts="Control+S Meta+S" @click="exportParams"/>
         </div>
-        <button v-if="busy" class="cancel-import" @click="cancelImport">取消导入</button>
+        <Button v-if="busy" variant="ghost" size="sm" class="cancel-import" @click="cancelImport">取消导入</Button>
       </header>
       <DocumentTabs @import="importer?.open()" @close="requestClose"/>
-      <div class="work-area"><PreviewWorkspace @cancel-model="modelPreview.cancel" @import="importer?.open()" @demo="store.openDemo(loadDemoGraphics())"/><aside class="inspector" aria-label="参数面板"><SlicingPanel v-if="store.active?.mode==='gcode'"/><ParameterPanel v-else-if="store.active" :exporting="modelExport.exporting.value" @export="modelExport.exportModel"/><div v-else class="inspector-empty"><Layers :size="24"/></div></aside></div>
+      <div class="work-area" role="tabpanel" :id="`stencil-document-${store.activeId}`" :aria-labelledby="`stencil-document-tab-${store.activeId}`"><PreviewWorkspace @cancel-model="modelPreview.cancel" @import="importer?.open()" @demo="store.openDemo(loadDemoGraphics())"/><aside class="inspector" aria-label="参数面板"><SlicingPanel v-if="store.active?.mode==='gcode'"/><ParameterPanel v-else-if="store.active" :exporting="modelExport.exporting.value" @export="modelExport.exportModel"/><div v-else class="inspector-empty"><Layers :size="24"/></div></aside></div>
       <LogPanel/>
       <div v-if="dropDepth>0" class="drop-overlay"><Upload :size="38"/><h2>松开以导入文件</h2><p>支持 Gerber ZIP、独立 Gerber 图层</p></div>
-      <Transition name="toast"><div v-if="toast" class="toast-message" role="status"><Check :size="16"/>{{ toast }}<button aria-label="关闭提示" @click="toast=''"><X :size="14"/></button></div></Transition>
-      <div v-if="closingDoc" class="modal-backdrop" @click.self="closeId=''" @keydown.esc="closeId=''">
-        <section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="close-title"><AlertCircle :size="25"/><h2 id="close-title">关闭文件？</h2><p>“{{ closingDoc.name }}”的参数尚未导出。关闭后，这些调整会丢失。</p><div><button class="outline-button" autofocus @click="closeId=''">继续编辑</button><button class="primary-button" @click="store.close(closeId);closeId=''">放弃调整并关闭</button></div></section>
-      </div>
+      <Dialog :open="Boolean(closingDoc)" @update:open="open => !open && (closeId='')">
+        <DialogContent class="stencil-close-dialog">
+          <DialogHeader>
+            <AlertCircle :size="25"/>
+            <DialogTitle>关闭文件？</DialogTitle>
+            <DialogDescription>“{{ closingDoc?.name }}”的参数尚未导出。关闭后，这些调整会丢失。</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose as-child><Button variant="outline">继续编辑</Button></DialogClose>
+            <Button @click="store.close(closeId);closeId=''">放弃调整并关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   </div>
 </template>

@@ -3,8 +3,10 @@ module propulsion_api
   use propulsion_types
   use propulsion_nozzle
   use propulsion_injector
+  use propulsion_chamber
   implicit none
   private
+  public :: lmbox_chamber_calculate_v1
   public :: lmbox_propulsion_version, lmbox_nozzle_validate, lmbox_nozzle_calculate, lmbox_injector_calculate
 contains
   integer(c_int) function lmbox_propulsion_version() bind(c)
@@ -54,5 +56,19 @@ contains
     character(255) :: error
     call calculate_injector(flow,ratio,oxidizer,fuel,ox_output,fuel_output,error)
     lmbox_injector_calculate = status(error,message)
+  end function
+  integer(c_int) function lmbox_chamber_calculate_v1(input, throat, divergent, output, &
+      capacity, written, x, radius, message) bind(c)
+    type(chamber_input), intent(in) :: input
+    real(c_double), value :: throat, divergent
+    type(chamber_output), intent(out) :: output
+    integer(c_int), value :: capacity
+    integer(c_int), intent(out) :: written
+    real(c_double), intent(out) :: x(*), radius(*)
+    character(c_char), intent(out) :: message(256)
+    character(255) :: error
+    call calculate_chamber(input,throat,divergent,output,x(:max(0,capacity)),radius(:max(0,capacity)), &
+                           max(0,capacity),written,error)
+    lmbox_chamber_calculate_v1 = status(error,message)
   end function
 end module

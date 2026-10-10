@@ -17,6 +17,10 @@ src-rust/
 │   ├── contracts/
 │   │   └── agent-rust-contracts.md
 │   ├── modules/
+│   │   ├── cfd/
+│   │   │   ├── app/
+│   │   │   ├── runtime/
+│   │   │   └── agent-rust-cfd.md
 │   │   ├── propulsion/
 │   │   │   ├── app/
 │   │   │   │   ├── agent-rust-propulsion.md

@@ -70,14 +70,33 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 ```text
 .
 ├── AGENTS.md
+├── installer.html
+├── vite.installer.config.ts
 ├── src/
 │   ├── AGENTS.md
 │   └── agent-frontend.md
 ├── frontend/
 │   ├── agent-frontend.md
 │   ├── main.ts
+│   ├── installer.ts
 │   ├── app/
 │   ├── modules/
+│   │   ├── cfd/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-cfd.md
+│   │   │   └── lib/
+│   │   │       ├── app/
+│   │   │       ├── features/
+│   │   │       ├── domain/
+│   │   │       └── ui/
+│   │   ├── propulsion/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-propulsion.md
+│   │   │   └── lib/
+│   │   │       ├── app/
+│   │   │       ├── features/
+│   │   │       ├── domain/
+│   │   │       └── ui/
 │   │   └── stencil/
 │   │       ├── index.ts
 │   │       ├── agent-frontend-stencil.md
@@ -89,6 +108,12 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── platform/
 │   ├── contracts/
 │   └── ui/
+│       ├── shadcn/
+│       │   ├── index.ts
+│       │   ├── agent-frontend-shadcn.md
+│       │   └── lib/
+│       ├── engineering-shell/
+│       └── installer-welcome/
 ├── src-fortran/
 │   ├── agent-fortran.md
 │   └── modules/
@@ -101,17 +126,26 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── agent-rust.md
 │   └── src/
 │       └── modules/
+│           ├── cfd/
 │           ├── stencil/
 │           └── propulsion/
 ├── desktop/tauri/
 │   ├── AGENTS.md
 │   ├── agent-rust.md
 │   └── src/
+├── desktop/installer/
+│   ├── agent-cpp.md
+│   ├── CMakeLists.txt
+│   ├── src/
+│   ├── tests/
+│   └── ui/
 ├── engine/
 │   ├── AGENTS.md
 │   ├── agent-python.md
 │   └── src/lmbox_geometry/
+│       ├── cfd_worker.py
 │       └── modules/
+│           ├── cfd/
 │           └── stencil/
 ├── contracts/
 │   ├── AGENTS.md

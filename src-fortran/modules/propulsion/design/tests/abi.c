@@ -30,5 +30,19 @@ int main(void) {
   CHECK(fabs(ox.mass_flow - 0.2) < 1e-14 && fabs(fuel.mass_flow - 0.1) < 1e-14);
   liquid.kind = 999;
   CHECK(lmbox_injector_calculate(0.3, 2, &liquid, &liquid, &ox, &fuel, message) != 0);
+  lmbox_chamber_input chamber = {0.08, 0.12, 30, 0.012, 0.018, 0, 0, 0, 0, 0, 4};
+  lmbox_chamber_output chamber_output;
+  struct { double before, values[14], after; } cx = {111, {0}, 222}, cr = {333, {0}, 444};
+  CHECK(lmbox_chamber_calculate_v1(&chamber, 0.01, 0.15, &chamber_output, 13, &written, cx.values, cr.values, message) != 0);
+  CHECK(written == 0 && cx.values[0] == 0 && message[0] != '\0');
+  CHECK(lmbox_chamber_calculate_v1(&chamber, 0.01, 0.15, &chamber_output, -1, &written, cx.values, cr.values, message) != 0);
+  CHECK(written == 0);
+  CHECK(lmbox_chamber_calculate_v1(&chamber, 0.01, 0.15, &chamber_output, 14, &written, cx.values, cr.values, message) == 0);
+  CHECK(written == 14 && cx.values[13] == 0 && cr.values[13] == 0.01);
+  CHECK(cx.before == 111 && cx.after == 222 && cr.before == 333 && cr.after == 444);
+  CHECK(fabs(chamber_output.contraction_ratio - 16) < 1e-12);
+  chamber.kind = 999;
+  CHECK(lmbox_chamber_calculate_v1(&chamber, 0.01, 0.15, &chamber_output, 14, &written, cx.values, cr.values, message) != 0);
+  CHECK(written == 0 && memchr(message, 0, 256) != NULL);
   return 0;
 }

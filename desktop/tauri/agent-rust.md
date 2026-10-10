@@ -7,6 +7,8 @@
 | 范围 | 必读说明 |
 | --- | --- |
 | `src/main.rs` | [宿主启动](src/agent-rust-host.md) |
+| `src/cfd.rs` | [CFD 会话与工程保存](src/agent-rust-cfd.md) |
+| `src/propulsion.rs` | [推进计算 IPC](src/agent-rust-propulsion.md) |
 | `src/commands.rs` | [IPC 与原生保存](src/agent-rust-commands.md) |
 | `配置、权限、资源与安装器` | [打包](agent-rust-packaging.md) |
 

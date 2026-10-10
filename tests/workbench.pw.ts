@@ -199,7 +199,7 @@ test('bad layers report a located error while valid layers remain selectable', a
   await expect(page.locator('.board-canvas')).toHaveCount(0)
   await expect(page.getByRole('log')).toContainText('bad.gbr 第 2 行')
   await page.locator('.layer-picker').click()
-  await page.locator('.n-base-select-option__content').filter({hasText:/^TopPaste\.GTP$/}).click()
+  await page.getByRole('option',{name:'TopPaste.GTP',exact:true}).click()
   await expect(page.locator('.board-canvas')).toBeVisible()
 })
 

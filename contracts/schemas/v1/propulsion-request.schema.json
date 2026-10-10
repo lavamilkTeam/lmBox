@@ -150,6 +150,110 @@
                   }
                 }
               ]
+            },
+            "chamber": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "innerDiameterM",
+                "cylinderLengthM",
+                "convergence"
+              ],
+              "properties": {
+                "innerDiameterM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "cylinderLengthM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "convergence": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "halfAngleDeg",
+                        "inletRadiusM",
+                        "throatRadiusM"
+                      ],
+                      "properties": {
+                        "type": {
+                          "const": "filletedCone"
+                        },
+                        "halfAngleDeg": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "exclusiveMaximum": 90
+                        },
+                        "inletRadiusM": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        },
+                        "throatRadiusM": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "joinAngleDeg",
+                        "throatRadiusFraction"
+                      ],
+                      "properties": {
+                        "type": {
+                          "const": "tangentArcs"
+                        },
+                        "joinAngleDeg": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "exclusiveMaximum": 90
+                        },
+                        "throatRadiusFraction": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "exclusiveMaximum": 1
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "lengthM",
+                        "startHandleFraction",
+                        "endHandleFraction"
+                      ],
+                      "properties": {
+                        "type": {
+                          "const": "cubicBezier"
+                        },
+                        "lengthM": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        },
+                        "startHandleFraction": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "exclusiveMaximum": 1
+                        },
+                        "endHandleFraction": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "exclusiveMaximum": 1
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
             }
           }
         }

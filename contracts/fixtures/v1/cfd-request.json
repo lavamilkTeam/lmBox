@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "projectId": "cfd-fixture",
+  "requestId": "initialize-fixture",
+  "expectedRevision": 0,
+  "operation": "initialize",
+  "payload": {}
+}

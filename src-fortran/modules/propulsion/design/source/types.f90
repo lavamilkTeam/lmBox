@@ -4,7 +4,7 @@ module propulsion_types
   implicit none
   private
   public :: nozzle_input, exit_conditions, nozzle_output, liquid_input, liquid_output
-  public :: positive, pi, radians
+  public :: positive, pi, radians, chamber_input, chamber_output
   real(c_double), parameter :: pi = acos(-1.0_c_double), radians = pi / 180.0_c_double
   type, bind(c) :: nozzle_input
     real(c_double) :: chamber_pressure, mass_flow, ambient_pressure, expansion_ratio
@@ -18,6 +18,16 @@ module propulsion_types
     real(c_double) :: throat_area, exit_area, throat_radius, exit_radius, length
     real(c_double) :: thrust, isp, cf, divergence_factor
     integer(c_int) :: overexpanded
+  end type
+  type, bind(c) :: chamber_input
+    real(c_double) :: inner_diameter, cylinder_length, angle, inlet_arc, throat_arc
+    real(c_double) :: throat_fraction, curve_length, start_handle, end_handle
+    integer(c_int) :: kind, segments
+  end type
+  type, bind(c) :: chamber_output
+    real(c_double) :: inlet_x, convergent_start_x, inner_radius, contraction_ratio
+    real(c_double) :: cylinder_length, convergent_length, total_length, inlet_arc, throat_arc, angle
+    real(c_double) :: first_x, first_r, second_x, second_r
   end type
   type, bind(c) :: liquid_input
     real(c_double) :: density, viscosity, pressure_drop, discharge_coefficient, inner_diameter

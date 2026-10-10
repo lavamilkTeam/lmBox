@@ -4,7 +4,7 @@
 
 ## 职责与边界
 
-映射 graphics v2、import v1、preview v1；后端 CEA v1 类型从 `contracts::thermochemistry` 公开，语义见 [CEA 协议](../../../contracts/schemas/v1/agent-contracts-cea.md)。`contracts::propulsion` 映射 [喷管/喷注器 v1](../../../contracts/schemas/v1/agent-contracts-propulsion.md)。`mod.rs` 为公开类型入口。
+映射 graphics v2、import v1、preview v1；后端 CEA v1 类型从 `contracts::thermochemistry` 公开，语义见 [CEA 协议](../../../contracts/schemas/v1/agent-contracts-cea.md)。`contracts::propulsion` 映射 [喷管/喷注器 v1](../../../contracts/schemas/v1/agent-contracts-propulsion.md)。`contracts::cfd` 定义原生 CFD 请求/响应、有限操作枚举与错误身份；状态为适配器的版本化 JSON 快照，工程版本由 Rust 持有。`mod.rs` 为公开类型入口。
 
 来源见 [共享协议](../../../contracts/agent-contracts.md)，不依赖 app/features/runtime/Tauri，不泄漏解析 AST 或业务状态。变更时同步 schema、样例及受影响语言映射。
 

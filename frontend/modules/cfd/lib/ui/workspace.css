@@ -1,0 +1,79 @@
+:where(.cfd-workspace){display:flex;flex-direction:column;min-width:0;min-height:0;height:100%;background:var(--background);color:var(--foreground);font-size:12px}
+:where(.cfd-workspace) .cfd-toolbar{display:flex;align-items:center;gap:3px;padding:6px 10px;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto}
+:where(.cfd-workspace) .cfd-toolbar>[data-slot=separator]{height:22px;margin:0 5px}
+:where(.cfd-workspace) .cfd-toolbar [data-slot=button]{flex-shrink:0}
+:where(.cfd-workspace) .cfd-body{display:flex;flex:1;min-height:0;min-width:0}
+:where(.cfd-workspace) .cfd-sidebar{width:365px;min-width:280px;flex-shrink:0;display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--border);padding:8px 0 0;gap:6px}
+:where(.cfd-workspace) .cfd-sidebar>[data-slot=tabs-list]{margin:0 9px}
+:where(.cfd-workspace) .cfd-sidebar-content{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+:where(.cfd-workspace) .cfd-sidebar-content[data-state=inactive]{display:none}
+:where(.cfd-workspace) .cfd-document{display:flex;flex-direction:column;flex:1;min-height:0}
+:where(.cfd-workspace) .cfd-model-tree{min-height:100px;flex:1;padding:5px 8px}
+:where(.cfd-workspace) .cfd-document-title{display:flex;align-items:center;gap:7px;padding:8px 5px;font-weight:600}
+:where(.cfd-workspace) .cfd-object-tree-row{display:flex;align-items:center;min-width:0}
+:where(.cfd-workspace) .cfd-object-tree-row>[data-slot=button]:first-child,:where(.cfd-workspace) .cfd-object-tree-row>[data-slot=dropdown-menu-trigger]{width:25px;height:27px;flex-shrink:0}
+:where(.cfd-workspace) .cfd-object-tree-row>[role=treeitem]{flex:1;min-width:0;justify-content:flex-start;overflow:hidden;text-overflow:ellipsis;font-size:12px;height:29px}
+:where(.cfd-workspace) [aria-selected=true]{background:var(--accent)}
+:where(.cfd-workspace) .cfd-tree-spacer{width:25px;flex-shrink:0}
+:where(.cfd-workspace) .cfd-property-scroll{border-top:1px solid var(--border);flex:1;min-height:100px}
+:where(.cfd-workspace) .cfd-properties h3{padding:7px 10px;font-size:11px;background:var(--muted);font-weight:600}
+:where(.cfd-workspace) .cfd-property{display:grid;grid-template-columns:minmax(95px,38%) minmax(0,1fr);gap:8px;padding:5px 9px;align-items:start;border-bottom:1px solid var(--border)}
+:where(.cfd-workspace) .cfd-property>label{padding-top:7px;overflow-wrap:anywhere;color:var(--muted-foreground)}
+:where(.cfd-workspace) .cfd-property [data-slot=input]{height:30px;font-size:11px;min-width:0}
+:where(.cfd-workspace) .cfd-task{display:flex;flex:1;flex-direction:column;min-height:0}
+:where(.cfd-workspace) .cfd-task>header{padding:8px 11px 12px;border-bottom:1px solid var(--border)}
+:where(.cfd-workspace) .cfd-task h2{font-size:13px;font-weight:600;margin:0 0 10px}
+:where(.cfd-workspace) .cfd-task-actions{display:flex;gap:7px}
+:where(.cfd-workspace) .cfd-task-scroll{flex:1;min-height:0;padding:12px}
+:where(.cfd-workspace) .cfd-qt-layout{display:flex;gap:8px;min-width:0}
+:where(.cfd-workspace) .cfd-layout-vertical,:where(.cfd-workspace) .cfd-layout-stack{flex-direction:column}
+:where(.cfd-workspace) .cfd-layout-horizontal{align-items:center}
+:where(.cfd-workspace) .cfd-layout-grid,:where(.cfd-workspace) .cfd-layout-form{display:grid;align-items:center}
+:where(.cfd-workspace) .cfd-node{min-width:0}
+:where(.cfd-workspace) .cfd-layout-horizontal>.cfd-node{flex:1}
+:where(.cfd-workspace) .cfd-node-label{align-self:center}
+:where(.cfd-workspace) .cfd-qt-label{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;margin:0}
+:where(.cfd-workspace) .cfd-node [data-slot=select-trigger]{width:100%;min-width:0;font-size:12px}
+:where(.cfd-workspace) .cfd-node [data-slot=select-value]{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:where(.cfd-workspace) .cfd-node [data-slot=input]{font-size:12px;min-width:0}
+:where(.cfd-workspace) .cfd-node [data-slot=textarea]{min-height:110px;font-size:11px}
+:where(.cfd-workspace) .cfd-node-button>[data-slot=button]{max-width:100%;white-space:normal;height:auto;min-height:30px}
+:where(.cfd-workspace) .cfd-fieldset{padding:10px;border:1px solid var(--border);border-radius:var(--radius);min-width:0}
+:where(.cfd-workspace) .cfd-fieldset legend{padding:0 5px;font-size:12px;font-weight:600}
+:where(.cfd-workspace) .cfd-check{display:flex;align-items:center;gap:7px;min-width:0;line-height:1.5}
+:where(.cfd-workspace) .cfd-check>span{min-width:0}
+:where(.cfd-workspace) .cfd-quantity{display:flex;align-items:center;gap:5px;min-width:0}
+:where(.cfd-workspace) .cfd-quantity>span{color:var(--muted-foreground);white-space:nowrap;font-size:11px}
+:where(.cfd-workspace) .cfd-list{border:1px solid var(--border);border-radius:var(--radius);min-height:80px;max-height:220px;overflow:auto;padding:4px}
+:where(.cfd-workspace) .cfd-list-row{display:flex;align-items:center;gap:5px;min-width:0}
+:where(.cfd-workspace) .cfd-list-row>[data-slot=button]{flex:1;justify-content:flex-start;min-width:0;overflow:hidden;text-overflow:ellipsis}
+:where(.cfd-workspace) .cfd-object-value,:where(.cfd-workspace) .cfd-value-list,:where(.cfd-workspace) .cfd-link-value{display:flex;flex-direction:column;gap:5px;min-width:0}
+:where(.cfd-workspace) .cfd-object-row,:where(.cfd-workspace) .cfd-value-list-row{display:flex;align-items:center;gap:4px;min-width:0}
+:where(.cfd-workspace) .cfd-object-row>label{min-width:14px;color:var(--muted-foreground)}
+:where(.cfd-workspace) .cfd-value-list-row>:first-child,:where(.cfd-workspace) .cfd-object-row>:nth-child(2){flex:1;min-width:0}
+:where(.cfd-workspace) .cfd-value-list-row>[data-slot=button],:where(.cfd-workspace) .cfd-object-row>[data-slot=button]{width:25px;height:27px;flex-shrink:0}
+:where(.cfd-workspace) .cfd-main-view{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;gap:0}
+:where(.cfd-workspace) .cfd-main-view>[data-slot=tabs-list]{align-self:flex-start;margin:6px}
+:where(.cfd-workspace) .cfd-geometry-content{flex:1;min-height:0;position:relative}
+:where(.cfd-workspace) .cfd-geometry-viewport{position:absolute;inset:0;min-width:0;min-height:0}
+:where(.cfd-workspace) .cfd-geometry{position:absolute;inset:0;overflow:hidden;background:#17191d;touch-action:none}
+:where(.cfd-workspace) .cfd-geometry canvas{display:block;width:100%;height:100%}
+:where(.cfd-workspace) .cfd-view-status,:where(.cfd-workspace) .cfd-view-error{position:absolute;inset:20px auto auto 20px;color:#ddd;font-size:12px}
+:where(.cfd-workspace) .cfd-plot-content{flex:1;min-height:0;overflow:auto}
+:where(.cfd-workspace) .cfd-plot{padding:24px;min-width:0}
+:where(.cfd-workspace) .cfd-plot h3{font-size:14px;margin-bottom:12px}
+:where(.cfd-workspace) .cfd-plot svg{display:block;width:100%;max-height:70vh;color:var(--muted-foreground)}
+:where(.cfd-workspace) .cfd-plot text{fill:currentColor;font-size:10px}
+:where(.cfd-workspace) .cfd-plot-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:11px}
+:where(.cfd-workspace) .cfd-plot-legend span{display:flex;gap:5px;align-items:center}
+:where(.cfd-workspace) .cfd-plot-legend i{width:14px;height:3px}
+:where(.cfd-workspace) .cfd-report{height:135px;flex-shrink:0;border-top:1px solid var(--border);display:flex;flex-direction:column}
+:where(.cfd-workspace) .cfd-report>header{font-size:11px;padding:6px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+:where(.cfd-workspace) .cfd-report-scroll{flex:1;min-height:0;padding:5px 12px}
+:where(.cfd-workspace) .cfd-report p{font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;line-height:1.7}
+:where(.cfd-workspace) .cfd-report [data-level=error],:where(.cfd-workspace) .cfd-error,:where(.cfd-workspace) .cfd-unsupported{color:var(--destructive)}
+:where(.cfd-workspace) .cfd-error{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px}
+:where(.cfd-workspace) .cfd-unsupported{font-size:12px}
+.cfd-native-dialog{max-height:85vh;overflow:auto}.cfd-dialog-text{white-space:pre-wrap}.cfd-dialog-controls{height:auto;display:block}.cfd-subelement-popover{max-height:300px;overflow:auto}
+@media(max-width:900px){:where(.cfd-workspace) .cfd-sidebar{width:310px;min-width:250px}}
+@media(max-width:600px){:where(.cfd-workspace) .cfd-body{flex-direction:column-reverse}:where(.cfd-workspace) .cfd-main-view{min-height:200px}:where(.cfd-workspace) .cfd-sidebar{height:320px;width:100%;min-width:0;border-right:0;border-top:1px solid var(--border)}:where(.cfd-workspace) .cfd-report{height:100px}}

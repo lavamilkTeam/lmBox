@@ -77,6 +77,20 @@ impl PropulsionBackend {
                 },
             )
             .map_err(DesignError::Calculation)?;
+        let chamber_geometry = request
+            .chamber
+            .as_ref()
+            .map(|chamber| {
+                self.engine
+                    .chamber(
+                        chamber,
+                        calculated.throat_radius,
+                        calculated.length,
+                        request.segments,
+                    )
+                    .map_err(DesignError::InvalidRequest)
+            })
+            .transpose()?;
         let mut warnings = Vec::new();
         if calculated.overexpanded != 0 {
             warnings.push("overexpanded: ideal attached-flow thrust only; separation and side loads are not modeled".into());
@@ -88,11 +102,12 @@ impl PropulsionBackend {
             divergent_length_m: calculated.length, mass_flow_kg_s: request.mass_flow_kg_s,
             ideal_thrust_n: calculated.thrust, ideal_specific_impulse_s: calculated.isp,
             ideal_thrust_coefficient: calculated.cf, conical_divergence_factor: (calculated.divergence_factor >= 0.0).then_some(calculated.divergence_factor),
-            contour: points,
+            contour: points, chamber_geometry,
             assumptions: vec![
                 "ideal steady one-dimensional CEA IAC performance; throat discharge coefficient equals one".into(),
-                "divergent inner contour only; no convergent section, wall thickness, cooling or stress design".into(),
+                "inner flow contour only; wall thickness, cooling, connections and stress design are not defined".into(),
                 "quadratic bell is a prescribed-angle geometric approximation, not a maximum-thrust/Rao/MOC solution".into(),
+                "optional chamber geometry does not change the infinite-area ideal CEA performance model".into(),
                 "contour losses are not applied to ideal thrust; cone divergence factor is informational only".into(),
             ], warnings,
         })

@@ -6,7 +6,7 @@
 
 管理文件标签激活、关闭请求及新增标签事件，数据经 domain 公开入口获取。
 
-不依赖其他 feature。未保存关闭确认由 app 协调。标签外观、文件图标及 CSS 应由 `ui` 承担；当前 `DocumentTabs.vue` 内有待迁移样式，涉及其外观变更时同步迁到 `ui`，不再向 feature 添加样式。
+不依赖其他 feature。未保存关闭确认由 app 协调。标签使用共享 `ui/shadcn` 的 Tabs 与 Button，工作台布局样式归模块 `ui/workspace.css`；feature 不添加样式。
 
 ## 验证
 

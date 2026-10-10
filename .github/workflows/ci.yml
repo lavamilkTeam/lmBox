@@ -53,6 +53,11 @@ jobs:
         run: npm run setup:wasm
       - name: Install Chromium and Linux browser dependencies
         run: npx playwright install --with-deps chromium
+      - name: Build native solvers for real propulsion browser tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran cmake ninja-build
+          npm run build:backend
       - name: Check boundaries, unit tests, types, build and browser behavior
         run: npm run check
       - name: Upload browser diagnostics

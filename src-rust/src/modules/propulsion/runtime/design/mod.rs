@@ -1,5 +1,6 @@
 use crate::contracts::propulsion::{
-    ContourPoint, LiquidCircuit, LiquidCircuitResult, LiquidPassage, NozzleContour, NozzleRequest,
+    ChamberGeometry, ChamberRequest, ContourPoint, ConvergentProfile, LiquidCircuit,
+    LiquidCircuitResult, LiquidPassage, NozzleContour, NozzleRequest,
 };
 use libloading::Library;
 use std::{ffi::c_char, path::Path};
@@ -69,6 +70,50 @@ struct LiquidOutput {
     reynolds: f64,
 }
 
+#[repr(C)]
+struct ChamberInput {
+    inner_diameter: f64,
+    cylinder_length: f64,
+    angle: f64,
+    inlet_arc: f64,
+    throat_arc: f64,
+    throat_fraction: f64,
+    curve_length: f64,
+    start_handle: f64,
+    end_handle: f64,
+    kind: i32,
+    segments: i32,
+}
+#[repr(C)]
+#[derive(Default)]
+struct ChamberOutput {
+    inlet_x: f64,
+    convergent_start_x: f64,
+    inner_radius: f64,
+    contraction_ratio: f64,
+    cylinder_length: f64,
+    convergent_length: f64,
+    total_length: f64,
+    inlet_arc: f64,
+    throat_arc: f64,
+    angle: f64,
+    first_x: f64,
+    first_r: f64,
+    second_x: f64,
+    second_r: f64,
+}
+type Chamber = unsafe extern "C" fn(
+    *const ChamberInput,
+    f64,
+    f64,
+    *mut ChamberOutput,
+    i32,
+    *mut i32,
+    *mut f64,
+    *mut f64,
+    *mut c_char,
+) -> i32;
+
 type Validate = unsafe extern "C" fn(*const NozzleInput, *mut c_char) -> i32;
 type Nozzle = unsafe extern "C" fn(
     *const NozzleInput,
@@ -94,6 +139,7 @@ pub(crate) struct Engine {
     validate: Validate,
     nozzle: Nozzle,
     injector: Injector,
+    chamber: Option<Chamber>,
     _library: Library,
 }
 impl Engine {
@@ -117,10 +163,15 @@ impl Engine {
             let injector = *library
                 .get::<Injector>(b"lmbox_injector_calculate\0")
                 .map_err(|e| e.to_string())?;
+            let chamber = library
+                .get::<Chamber>(b"lmbox_chamber_calculate_v1\0")
+                .ok()
+                .map(|symbol| *symbol);
             Ok(Self {
                 validate,
                 nozzle,
                 injector,
+                chamber,
                 _library: library,
             })
         }
@@ -168,6 +219,110 @@ impl Engine {
             .map(|(x_m, radius_m)| ContourPoint { x_m, radius_m })
             .collect();
         Ok((output, points))
+    }
+    pub(crate) fn chamber(
+        &self,
+        request: &ChamberRequest,
+        throat: f64,
+        divergent: f64,
+        segments: u32,
+    ) -> Result<ChamberGeometry, String> {
+        let call = self
+            .chamber
+            .ok_or("chamber geometry API is unavailable; rebuild the propulsion runtime")?;
+        let mut input = ChamberInput {
+            inner_diameter: request.inner_diameter_m,
+            cylinder_length: request.cylinder_length_m,
+            angle: 0.0,
+            inlet_arc: 0.0,
+            throat_arc: 0.0,
+            throat_fraction: 0.0,
+            curve_length: 0.0,
+            start_handle: 0.0,
+            end_handle: 0.0,
+            kind: 0,
+            segments: segments
+                .try_into()
+                .map_err(|_| "segment count exceeds ABI integer range")?,
+        };
+        match request.convergence {
+            ConvergentProfile::FilletedCone {
+                half_angle_deg,
+                inlet_radius_m,
+                throat_radius_m,
+            } => {
+                input.angle = half_angle_deg;
+                input.inlet_arc = inlet_radius_m;
+                input.throat_arc = throat_radius_m;
+            }
+            ConvergentProfile::TangentArcs {
+                join_angle_deg,
+                throat_radius_fraction,
+            } => {
+                input.kind = 1;
+                input.angle = join_angle_deg;
+                input.throat_fraction = throat_radius_fraction;
+            }
+            ConvergentProfile::CubicBezier {
+                length_m,
+                start_handle_fraction,
+                end_handle_fraction,
+            } => {
+                input.kind = 2;
+                input.curve_length = length_m;
+                input.start_handle = start_handle_fraction;
+                input.end_handle = end_handle_fraction;
+            }
+        }
+        let mut output = ChamberOutput::default();
+        let mut x = vec![0.0; 6146];
+        let mut radius = vec![0.0; 6146];
+        let mut written = 0;
+        let mut message = [0; 256];
+        // SAFETY: additive ABI v1 symbol with matching repr(C) records and caller-owned bounded arrays.
+        let status = unsafe {
+            call(
+                &input,
+                throat,
+                divergent,
+                &mut output,
+                6146,
+                &mut written,
+                x.as_mut_ptr(),
+                radius.as_mut_ptr(),
+                message.as_mut_ptr(),
+            )
+        };
+        check(status, &message)?;
+        if !(6..=6146).contains(&written) {
+            return Err("Fortran returned an invalid chamber count".into());
+        }
+        Ok(ChamberGeometry {
+            inlet_x_m: output.inlet_x,
+            convergent_start_x_m: output.convergent_start_x,
+            inner_radius_m: output.inner_radius,
+            contraction_ratio: output.contraction_ratio,
+            cylinder_length_m: output.cylinder_length,
+            convergent_length_m: output.convergent_length,
+            total_length_m: output.total_length,
+            inlet_arc_radius_m: output.inlet_arc,
+            throat_arc_radius_m: output.throat_arc,
+            join_angle_deg: output.angle,
+            first_point: ContourPoint {
+                x_m: output.first_x,
+                radius_m: output.first_r,
+            },
+            second_point: ContourPoint {
+                x_m: output.second_x,
+                radius_m: output.second_r,
+            },
+            contour: x
+                .into_iter()
+                .zip(radius)
+                .take(written as usize)
+                .map(|(x_m, radius_m)| ContourPoint { x_m, radius_m })
+                .collect(),
+        })
     }
     pub(crate) fn injector(
         &self,

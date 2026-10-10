@@ -17,6 +17,7 @@ desktop/tauri/
 ├── gen/
 ├── icons/
 ├── src/
+│   ├── agent-rust-propulsion.md
 │   ├── agent-rust-commands.md
 │   └── agent-rust-host.md
 └── tests/

@@ -126,6 +126,123 @@
               "items": {
                 "type": "string"
               }
+            },
+            "chamberGeometry": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "innerRadiusM",
+                "contractionRatio",
+                "cylinderLengthM",
+                "convergentLengthM",
+                "totalLengthM",
+                "inletXM",
+                "convergentStartXM",
+                "inletArcRadiusM",
+                "throatArcRadiusM",
+                "joinAngleDeg",
+                "firstPoint",
+                "secondPoint",
+                "contour"
+              ],
+              "properties": {
+                "innerRadiusM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "contractionRatio": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "cylinderLengthM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "convergentLengthM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "totalLengthM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "inletXM": {
+                  "type": "number",
+                  "exclusiveMaximum": 0
+                },
+                "convergentStartXM": {
+                  "type": "number",
+                  "exclusiveMaximum": 0
+                },
+                "inletArcRadiusM": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "throatArcRadiusM": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "joinAngleDeg": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "firstPoint": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "xM",
+                    "radiusM"
+                  ],
+                  "properties": {
+                    "xM": {
+                      "type": "number"
+                    },
+                    "radiusM": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  }
+                },
+                "secondPoint": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "xM",
+                    "radiusM"
+                  ],
+                  "properties": {
+                    "xM": {
+                      "type": "number"
+                    },
+                    "radiusM": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  }
+                },
+                "contour": {
+                  "type": "array",
+                  "minItems": 6,
+                  "maxItems": 6146,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "xM",
+                      "radiusM"
+                    ],
+                    "properties": {
+                      "xM": {
+                        "type": "number"
+                      },
+                      "radiusM": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }

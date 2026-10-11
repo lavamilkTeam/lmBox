@@ -207,7 +207,7 @@ test('inverse taper shrinks only the selected contact opening and focuses its re
   await expect(page.getByText(/上口 120%，贴板下口 100%/)).toBeVisible()
 })
 
-test('three XY modes change selected real geometry and remain independent of thickness taper',async({page})=>{
+test('three XY modes change only the selected real geometry',async({page})=>{
   await open(page)
   const target=page.locator('[data-object-id="0:0:2"] path')
   const other=page.locator('[data-object-id="0:0:0"] path')
@@ -238,6 +238,18 @@ test('three XY modes change selected real geometry and remain independent of thi
       await page.screenshot({path:test.info().outputPath('xy-opposed-2d.png')})
     }
   }
+})
+
+test('XY ratio drafts remain unapplied and undo restores their geometry',async({page})=>{
+  await open(page)
+  const target=page.locator('[data-object-id="0:0:2"] path')
+  const before=await geometryBox(target)
+  await target.click()
+  await page.getByRole('tab',{name:'打印优化',exact:true}).click()
+  const mode=page.getByLabel('XY 缩放方式',{exact:true})
+  const apply=page.getByRole('button',{name:'优化所选图形'})
+  await mode.click();await page.getByText('上下半部反向变化',{exact:true}).click()
+  await apply.click();await ready(page)
   // Custom ratios are stored independently; drafts do not mutate the applied geometry.
   const opposed=await geometryBox(target)
   await page.getByLabel('XY 横向比例',{exact:true}).fill('70')
@@ -248,6 +260,17 @@ test('three XY modes change selected real geometry and remain independent of thi
   await page.getByRole('button',{name:'撤销编辑'}).click();await ready(page)
   expect(await geometryBox(target)).toEqual(opposed)
   await expect(page.getByLabel('XY 横向比例',{exact:true})).toHaveValue('80')
+})
+
+test('XY mode and thickness taper can be applied and disabled independently',async({page})=>{
+  await open(page)
+  const target=page.locator('[data-object-id="0:0:2"] path')
+  const before=await geometryBox(target)
+  await target.click()
+  await page.getByRole('tab',{name:'打印优化',exact:true}).click()
+  const mode=page.getByLabel('XY 缩放方式',{exact:true})
+  const apply=page.getByRole('button',{name:'优化所选图形'})
+  await mode.click();await page.getByText('上下半部反向变化',{exact:true}).click()
   await page.getByLabel('喇叭口比例',{exact:true}).fill('120')
   await page.getByLabel('喇叭口比例',{exact:true}).press('Tab')
   await page.getByRole('switch',{name:'反比缩放',exact:true}).click()

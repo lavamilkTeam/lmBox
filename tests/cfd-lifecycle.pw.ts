@@ -65,6 +65,8 @@ test('closing waits for initialization and uses its confirmed revision', async (
   await expect(page.getByRole('button', { name: '正在关闭…', exact: true })).toBeDisabled()
   expect(closes).toHaveLength(0)
   release()
+  // Modal dialogs hide background tabs from role queries until disposal completes.
+  await expect(page.getByRole('alertdialog')).toHaveCount(0)
   await expect(page.getByRole('tab', { name: '流体力学', exact: true })).toHaveCount(0)
   expect(closes).toHaveLength(1)
   expect(closes[0]!.expectedRevision).toBe(1)

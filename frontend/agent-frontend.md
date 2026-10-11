@@ -9,6 +9,7 @@
 ## 依赖
 
 - 平台 `app → modules/<name>/index.ts、ui`；当前钢网模块通过动态 import 加载。
+- 平台页签功能位于 `app/features/workspace-tabs`，通过公开入口供 App 组装；跨模块关闭操作由 App 注入，feature 不导入领域模块、平台适配或 UI。
 - 领域模块互不导入，也不反向依赖平台 app；模块外禁止访问 `lib/` 和测试目录。
 - 模块内部 `app → features/domain/ui`，也可使用共享 platform/ui/contracts；feature 之间不直接依赖。
 - 模块 `domain → contracts` 及必要状态库，不依赖外部适配、UI、feature 或 app。Pinia store 使用领域前缀；钢网使用 `stencil-project`。
@@ -21,6 +22,7 @@
 | 范围 | 必读说明 |
 | --- | --- |
 | `frontend/app` | [平台组装](app/agent-frontend-app.md) |
+| `frontend/app/features/workspace-tabs` | [工作区页签功能](app/features/workspace-tabs/agent-frontend-workspace-tabs.md) |
 | `frontend/ui/installer-welcome` | [安装欢迎页](ui/installer-welcome/agent-frontend-installer-welcome.md) |
 | `frontend/modules/guide` | [引导模块](modules/guide/agent-frontend-guide.md) |
 | `frontend/modules/video` | [视频工作流](modules/video/agent-frontend-video.md) |

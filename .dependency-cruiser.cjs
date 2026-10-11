@@ -19,6 +19,9 @@ module.exports = {
     rule('modules-cannot-import-shell', { path: '^frontend/modules/' }, { path: '^frontend/app/' }),
     rule('platform-independent', { path: '^frontend/platform/' }, { path: '^frontend/(app|modules|ui)/' }),
     rule('ui-independent', { path: '^frontend/ui/' }, { path: '^frontend/(app|modules|platform|contracts)/' }),
+    ...publicEntries('frontend/app/features', 'app-features'),
+    rule('app-features-independent', { path: '^frontend/app/features/([^/]+)/' }, { path: '^frontend/app/features/', pathNot: '^frontend/app/features/$1/' }),
+    rule('app-features-injected-boundaries', { path: '^frontend/app/features/' }, { path: '^frontend/(modules|ui|platform)/|^frontend/app/(?!features/)' }),
     ...['platform', 'ui'].flatMap(root => publicEntries(`frontend/${root}`, root)),
     ...moduleRoots.flatMap(({ name, root }) => [
       ...['features', 'domain'].flatMap(layer => publicEntries(`${root}/${layer}`, `${name}-${layer}`)),

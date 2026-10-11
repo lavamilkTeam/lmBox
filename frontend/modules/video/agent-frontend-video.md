@@ -9,6 +9,8 @@
 - `lib/ui/index.ts` 提供模块内部的 props/emits 界面及视图类型。节点库、画布和参数控件复用 [shadcn-vue](../../ui/shadcn/agent-frontend-shadcn.md)，布局与样式仅在 UI 层。
 - 通信使用 [AI 协议映射](../../contracts/agent-frontend-contracts.md)，沿平台适配、Rust 任务协调、Python 执行方向；前端不拥有第三方推理执行器。
 
+工作流导入、保存和 API 导出位于节点库的文件菜单；连接详情与刷新位于设置浮层。画布内的悬浮操作区承载生成、取消、状态恢复及任务错误，不增加模块顶栏或常驻连接报错栏。
+
 ## 工作流与任务约束
 
 节点目录来自实际后端；不附带伪造的视频工作流或输出。支持导入 ComfyUI API prompt（含 `prompt` 包装）及版本 1 的 `lmbox-video-workflow` 文档；ComfyUI 界面专用的节点文档需先导出 API 格式。API 导出保留执行图，lmBox 文档同时保存节点位置。

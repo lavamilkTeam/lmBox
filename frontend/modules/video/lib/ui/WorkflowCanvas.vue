@@ -73,6 +73,7 @@ function setZoom(value: number) { zoom.value = Math.min(1.5, Math.max(0.5, Math.
         </div>
       </div>
     </div>
+    <slot />
     <div class="video-zoom">
       <Button v-if="source" variant="outline" size="sm" @click="source = null">取消连线</Button>
       <Button variant="outline" size="sm" aria-label="缩小视频画布" :disabled="zoom <= 0.5" @click="setZoom(zoom - 0.1)">−</Button>

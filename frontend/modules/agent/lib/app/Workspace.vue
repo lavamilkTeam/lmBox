@@ -16,7 +16,6 @@ const turns = computed<AgentTurnView[]>(() => session.turns.map(turn => ({
   events: turn.job?.events.map(event => event.message) ?? [], answer: turn.job?.result?.text ?? '',
   error: turn.error, artifacts: turn.job?.result?.artifacts ?? [],
 })))
-const status = computed(() => session.pending ? '启动中' : session.unconfirmed ? '启动状态待确认' : session.job ? ({ running: '运行中', succeeded: '已完成', failed: '失败', cancelled: '已取消' }[session.job.status]) : session.configured ? '就绪' : session.inspecting ? '连接中' : '未连接')
 watch(() => session.job?.status, () => schedule())
 function schedule() {
   if (!active || timer || polling || session.job?.status !== 'running') return
@@ -70,6 +69,6 @@ onMounted(() => { active = true; void runRequest('inspect'); schedule() })
 onUnmounted(() => { active = false; if (timer) clearTimeout(timer) })
 </script>
 <template>
-  <AgentWorkspaceView :prompt="session.prompt" :max-steps="session.maxSteps" :files="session.files.map(file => ({ name: file.name, size: file.content.length }))" :configured="session.configured" :inspecting="session.inspecting" :model="session.model" :tools="session.tools" :locked="session.locked" :pending="session.pending" :unconfirmed="session.unconfirmed" :status="status" :error="session.error" :connection-error="session.connectionError" :turns="turns" :artifact-busy="artifactBusy"
+  <AgentWorkspaceView :prompt="session.prompt" :max-steps="session.maxSteps" :files="session.files.map(file => ({ name: file.name, size: file.content.length }))" :configured="session.configured" :inspecting="session.inspecting" :model="session.model" :tools="session.tools" :locked="session.locked" :pending="session.pending" :unconfirmed="session.unconfirmed" :error="session.error" :connection-error="session.connectionError" :turns="turns" :artifact-busy="artifactBusy"
     :attaching="attaching" @prompt="session.setPrompt" @max-steps="session.setMaxSteps" @files="attach" @remove-file="session.removeFile" @inspect="runRequest('inspect')" @run="start" @recover="session.unconfirmed && runRequest('start')" @cancel="cancel" @new-conversation="newConversation" @download="download" @export-answer="exportAnswer" />
 </template>

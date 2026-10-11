@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Badge, Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '../../../../ui/shadcn'
+import { FolderOpen, Settings2 } from '@lucide/vue'
+import { Badge, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Input, Label, Popover, PopoverContent, PopoverTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '../../../../ui/shadcn'
 import WorkflowCanvas from './WorkflowCanvas.vue'
 import type { CatalogEntry, VideoArtifact, VideoField, VideoNode } from './types'
 const props = defineProps<{
@@ -18,6 +19,7 @@ const visibleCatalog = computed(() => {
   return props.catalog.filter(item => `${item.title} ${item.type} ${item.category}`.toLocaleLowerCase().includes(query))
 })
 const active = computed(() => props.nodes.find(node => node.id === selected.value))
+const taskStatus = computed(() => ['就绪', '连接中', '未连接'].includes(props.status) ? '' : props.status)
 watch(() => props.nodes.map(node => node.id).join(','), () => { if (!active.value) selected.value = props.nodes[0]?.id ?? '' })
 function add(type: string) { const point = canvas.value?.insertionPoint() ?? { x: 40, y: 40 }; emit('add', type, point.x, point.y) }
 function importFile(event: Event) { const input = event.target as HTMLInputElement; const selectedFile = input.files?.[0]; if (selectedFile) emit('import', selectedFile); input.value = '' }
@@ -30,31 +32,47 @@ function showValue(value: unknown): string | number { return typeof value === 's
 </script>
 <template>
   <main class="video-workspace" aria-label="AI 视频工作流">
-    <header class="video-toolbar">
-      <strong>视频工作流</strong>
-      <Badge variant="outline">{{ status }}</Badge>
-      <div class="video-toolbar-actions">
-        <Button variant="outline" size="sm" :disabled="locked" @click="file?.click()">导入工作流</Button>
-        <input ref="file" type="file" accept=".json,application/json" hidden aria-label="选择视频工作流文件" @change="importFile">
-        <Button variant="outline" size="sm" :disabled="!nodes.length" @click="emit('export', false)">保存工作流</Button>
-        <Button variant="outline" size="sm" :disabled="!nodes.length" @click="emit('export', true)">导出 API</Button>
-        <Button v-if="unconfirmed" variant="outline" size="sm" @click="emit('recover')">确认任务状态</Button>
-        <Button v-else-if="locked" variant="outline" size="sm" :disabled="pending" @click="emit('cancel')">取消任务</Button>
-        <Button v-else size="sm" :disabled="!configured || !nodes.length" @click="emit('run')">生成视频</Button>
-      </div>
-    </header>
-    <div v-if="connectionError" class="video-error" role="alert">{{ connectionError }}</div>
-    <div v-if="error" class="video-error" role="alert">{{ error }}</div>
     <div class="video-body">
       <aside class="video-library" aria-label="视频节点库">
-        <div class="video-panel-heading"><strong>节点库</strong><Button variant="ghost" size="sm" :disabled="inspecting" @click="emit('inspect')">{{ inspecting ? '连接中' : '刷新' }}</Button></div>
+        <div class="video-panel-heading">
+          <strong>节点库</strong>
+          <div class="video-library-actions">
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child><Button variant="ghost" size="icon-sm" aria-label="工作流文件" title="工作流文件"><FolderOpen aria-hidden="true" /></Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem :disabled="locked" @select="file?.click()">导入工作流</DropdownMenuItem>
+                <DropdownMenuItem :disabled="!nodes.length" @select="emit('export', false)">保存工作流</DropdownMenuItem>
+                <DropdownMenuItem :disabled="!nodes.length" @select="emit('export', true)">导出 API</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Popover>
+              <PopoverTrigger as-child><Button variant="ghost" size="icon-sm" aria-label="视频连接设置" title="连接设置"><Settings2 aria-hidden="true" /></Button></PopoverTrigger>
+              <PopoverContent class="video-connection-panel" align="start" aria-label="视频连接设置">
+                <div class="video-panel-heading"><strong>ComfyUI</strong><span role="status">{{ inspecting ? '连接中' : configured ? '已连接' : '未连接' }}</span></div>
+                <p v-if="connectionError" class="video-connection-error" role="alert">{{ connectionError }}</p>
+                <Button variant="outline" size="sm" :disabled="inspecting" @click="emit('inspect')">刷新连接</Button>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+        <input ref="file" type="file" accept=".json,application/json" hidden aria-label="选择视频工作流文件" @change="importFile">
         <Input v-model="search" aria-label="搜索视频节点" placeholder="搜索节点" />
         <div class="video-catalog">
           <Button v-for="entry in visibleCatalog" :key="entry.type" variant="ghost" class="video-catalog-item" :disabled="locked" :title="`${entry.category} / ${entry.type}`" @click="add(entry.type)">{{ entry.title }}</Button>
           <span v-if="configured && !visibleCatalog.length" role="status">没有匹配节点</span>
         </div>
       </aside>
-      <WorkflowCanvas ref="canvas" :nodes="nodes" :selected="selected" :locked="locked" @select="selected = $event" @move="(id, x, y) => emit('move', id, x, y)" @remove="emit('remove', $event)" @connect="(source, output, target, input) => emit('connect', source, output, target, input)" @disconnect="(id, name) => emit('input', id, name, undefined)" />
+      <WorkflowCanvas ref="canvas" :nodes="nodes" :selected="selected" :locked="locked" @select="selected = $event" @move="(id, x, y) => emit('move', id, x, y)" @remove="emit('remove', $event)" @connect="(source, output, target, input) => emit('connect', source, output, target, input)" @disconnect="(id, name) => emit('input', id, name, undefined)">
+        <div class="video-run-panel">
+          <div v-if="error" class="video-operation-error" role="alert">{{ error }}</div>
+          <div class="video-run-actions">
+            <span v-if="taskStatus" class="video-task-status" role="status">{{ taskStatus }}</span>
+            <Button v-if="unconfirmed" variant="outline" size="sm" @click="emit('recover')">确认任务状态</Button>
+            <Button v-else-if="locked" variant="outline" size="sm" :disabled="pending" @click="emit('cancel')">取消任务</Button>
+            <Button v-else size="sm" :disabled="!configured || !nodes.length" @click="emit('run')">生成视频</Button>
+          </div>
+        </div>
+      </WorkflowCanvas>
       <aside class="video-properties" aria-label="视频节点参数">
         <template v-if="active">
           <div class="video-panel-heading"><strong>{{ active.title }}</strong><Badge variant="outline">{{ active.id }}</Badge></div>

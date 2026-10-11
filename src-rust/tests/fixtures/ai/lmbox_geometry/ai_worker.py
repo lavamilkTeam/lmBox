@@ -48,6 +48,9 @@ else:
         (artifacts / name).write_bytes(b"")
     else:
         (artifacts / name).write_text("Fixture output for " + request["projectId"], encoding="utf8")
-    emit({"type": "result", "data": {"text": "Identifiable protocol fixture", "artifacts": [
+    answer = json.dumps(envelope.get("context", [])) if mode == "echo-context" else "Identifiable protocol fixture"
+    if mode == "missing-answer":
+        answer = None
+    emit({"type": "result", "data": {"text": answer, "artifacts": [
         {"id": name, "name": "fixture.txt", "mimeType": "video/mp4" if mode == "empty-video" else "text/plain"}
     ]}})

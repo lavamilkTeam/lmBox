@@ -1,4 +1,4 @@
-use super::runtime::Worker;
+use super::runtime::{ContextMessage, ContextRole, Worker};
 use crate::contracts::ai::{
     AiArtifact, AiCapability, AiError, AiEvent, AiJob, AiOperation, AiRequest, AiResponse,
     AiResult, AiStatus,
@@ -22,6 +22,7 @@ const RETAINED_JOBS: usize = 32;
 struct Entry {
     project_id: String,
     start_request: AiRequest,
+    context: Vec<ContextMessage>,
     job: AiJob,
     workspace: tempfile::TempDir,
     cancelled: Arc<AtomicBool>,
@@ -140,6 +141,7 @@ impl AiBackend {
                 "此工程的同类 AI 任务仍在运行，请先完成或取消它。",
             ));
         }
+        let context = conversation_context(&state, request)?;
         while state.jobs.len() >= RETAINED_JOBS {
             let index = state
                 .jobs
@@ -172,6 +174,7 @@ impl AiBackend {
         state.jobs.push_back(Entry {
             project_id: request.project_id.clone(),
             start_request: request.clone(),
+            context: context.clone(),
             job: job.clone(),
             workspace,
             cancelled: Arc::clone(&cancelled),
@@ -184,7 +187,7 @@ impl AiBackend {
             .name("lmbox-ai".into())
             .spawn(move || {
                 let outcome = worker
-                    .run(&request, &path, &cancelled, |message| {
+                    .run(&request, &path, &context, &cancelled, |message| {
                         let mut state = shared.state.lock().unwrap();
                         if let Some(entry) = state
                             .jobs
@@ -259,7 +262,7 @@ impl AiBackend {
         }
         let outcome = self
             .worker
-            .run(request, workspace.path(), &cancelled, |_| {})
+            .run(request, workspace.path(), &[], &cancelled, |_| {})
             .and_then(|value| {
                 let valid = value["configured"].is_boolean()
                     && match request.capability {
@@ -447,7 +450,16 @@ fn validate_request(request: &AiRequest) -> Result<(), AiError> {
             }
             match request.capability {
                 AiCapability::Video => &["workflow"],
-                AiCapability::Agent => &["prompt", "maxSteps", "files"],
+                AiCapability::Agent => {
+                    if request
+                        .payload
+                        .get("parentJobId")
+                        .is_some_and(|id| !id.as_str().is_some_and(identity))
+                    {
+                        return Err(invalid());
+                    }
+                    &["prompt", "maxSteps", "files", "parentJobId"]
+                }
             }
         }
         AiOperation::Inspect => {
@@ -508,6 +520,68 @@ fn append_event(job: &mut AiJob, message: String) {
         job.events.remove(0);
     }
     job.events.push(AiEvent { message });
+}
+
+fn conversation_context(
+    state: &State,
+    request: &AiRequest,
+) -> Result<Vec<ContextMessage>, AiError> {
+    let Some(parent_id) = request.payload.get("parentJobId").and_then(Value::as_str) else {
+        return Ok(Vec::new());
+    };
+    let unavailable = || {
+        AiError::new(
+            "context_unavailable",
+            "无法继续此对话：上一轮任务不属于当前工程、尚未成功完成，或上下文已释放。请新建对话。",
+        )
+    };
+    let parent = state
+        .jobs
+        .iter()
+        .find(|entry| {
+            entry.job.job_id == parent_id
+                && entry.project_id == request.project_id
+                && entry.job.capability == AiCapability::Agent
+                && entry.job.status == AiStatus::Succeeded
+        })
+        .ok_or_else(unavailable)?;
+    let prompt = parent
+        .start_request
+        .payload
+        .get("prompt")
+        .and_then(Value::as_str)
+        .ok_or_else(unavailable)?;
+    let answer = parent
+        .job
+        .result
+        .as_ref()
+        .and_then(|result| result.text.as_ref())
+        .ok_or_else(unavailable)?;
+    if parent.context.len() + 2 > 40
+        || parent
+            .context
+            .iter()
+            .map(|message| message.content.len())
+            .sum::<usize>()
+            + prompt.len()
+            + answer.len()
+            > 128 * 1024
+    {
+        return Err(AiError::new(
+            "context_limit",
+            "对话已达到 20 轮历史或 128 KiB 文字上限，请新建对话。",
+        ));
+    }
+    let mut context = parent.context.clone();
+    context.push(ContextMessage {
+        role: ContextRole::User,
+        content: prompt.into(),
+    });
+    context.push(ContextMessage {
+        role: ContextRole::Assistant,
+        content: answer.clone(),
+    });
+    Ok(context)
 }
 
 fn safe_basename(name: &str) -> bool {

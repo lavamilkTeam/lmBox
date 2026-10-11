@@ -10,7 +10,9 @@ from pathlib import Path
 from lmbox_geometry.contracts.ai import AiError, validate_ai_request
 from lmbox_geometry.modules import agent, video
 
-MAX_REQUEST_BYTES = 4 * 1024 * 1024 + 64 * 1024
+# Request and history have independent semantic limits. Allow JSON escaping of
+# the 128 KiB transcript plus the host workspace and envelope around the request.
+MAX_REQUEST_BYTES = 5 * 1024 * 1024
 
 
 def main():
@@ -58,14 +60,17 @@ def main():
         if not isinstance(workspace, str) or not Path(workspace).is_absolute():
             raise AiError("invalid_request", "A host-owned absolute workspace is required.")
         threading.Thread(target=read_cancel, args=(pending,), daemon=True).start()
-        module = video if request["capability"] == "video" else agent
+
+        def progress(message):
+            emit({"type": "progress", "message": message})
+
         with contextlib.redirect_stdout(sys.stderr):
-            data = module.execute(
-                request,
-                Path(workspace),
-                cancel,
-                lambda message: emit({"type": "progress", "message": message}),
-            )
+            if request["capability"] == "video":
+                data = video.execute(request, Path(workspace), cancel, progress)
+            else:
+                data = agent.execute(
+                    request, Path(workspace), cancel, progress, context=envelope.get("context")
+                )
         emit({"type": "result", "data": data})
     except AiError as error:
         emit({"type": "error", "code": error.code, "message": str(error)})

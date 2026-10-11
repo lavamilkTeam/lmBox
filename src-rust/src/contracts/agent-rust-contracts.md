@@ -10,6 +10,8 @@
 
 `contracts::ai` 映射 AI v1 的工程、请求、输入版本、能力、任务及产物描述；执行依赖和私有工作区不进入公共协议。错误响应保留请求身份，任务状态与结果由 [AI 模块](../modules/ai/agent-rust-ai.md) 管理。
 
+Agent payload 的可选 `parentJobId` 语义由 [AI 协议](../../../contracts/schemas/v1/agent-contracts-ai.md) 维护；worker 历史上下文属于模块私有进程协议，不作为客户端请求类型公开。
+
 ## 验证
 
 统一检查见 [语言说明](../../agent-rust.md#验证与维护)。经共享 schema/fixtures 验证序列化、未知版本、枚举、有限数值与兼容默认值。

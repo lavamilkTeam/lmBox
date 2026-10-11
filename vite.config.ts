@@ -14,6 +14,10 @@ export default defineConfig({
         this.emitFile({ type: 'asset', fileName: `licenses/shadcn-vue-${name}.txt`,
           source: readFileSync(new URL(`./frontend/ui/shadcn/${name}`, import.meta.url), 'utf8') })
       }
+      for (const name of ['LICENSE', 'UPSTREAM-LICENSE', 'NOTICE']) {
+        this.emitFile({ type: 'asset', fileName: `licenses/ai-elements-vue-${name}.txt`,
+          source: readFileSync(new URL(`./frontend/modules/agent/lib/ui/elements/${name}`, import.meta.url), 'utf8') })
+      }
     },
   }],
   server: { port: 6522, strictPort: true,

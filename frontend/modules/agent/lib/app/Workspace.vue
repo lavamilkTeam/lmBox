@@ -4,52 +4,72 @@ import type { AiRequest } from '../../../../contracts'
 import { AiRequestNotSentError, aiRequest, getAiProjectId, getAiRequestId, readAiTextFiles, saveAiArtifact, saveTextFile } from '../../../../platform/desktop'
 import { useAgentSession } from '../domain/session'
 import { AgentWorkspaceView } from '../ui'
+import type { AgentTurnView } from '../ui'
 import '../ui/workspace.css'
 const session = useAgentSession()
 session.initialize(getAiProjectId('agent'), getAiRequestId())
-const artifactBusy = ref(false)
-let active = false, timer: ReturnType<typeof setTimeout> | undefined, polling = false
+const artifactBusy = ref(false), attaching = ref(false)
+let active = false, timer: ReturnType<typeof setTimeout> | undefined, polling = false, conversationGeneration = 0
+const turns = computed<AgentTurnView[]>(() => session.turns.map(turn => ({
+  id: turn.id, prompt: turn.prompt, files: turn.files,
+  status: turn.submission === 'sent' ? turn.job!.status : turn.submission,
+  events: turn.job?.events.map(event => event.message) ?? [], answer: turn.job?.result?.text ?? '',
+  error: turn.error, artifacts: turn.job?.result?.artifacts ?? [],
+})))
 const status = computed(() => session.pending ? '启动中' : session.unconfirmed ? '启动状态待确认' : session.job ? ({ running: '运行中', succeeded: '已完成', failed: '失败', cancelled: '已取消' }[session.job.status]) : session.configured ? '就绪' : session.inspecting ? '连接中' : '未连接')
 watch(() => session.job?.status, () => schedule())
 function schedule() {
   if (!active || timer || polling || session.job?.status !== 'running') return
-  timer = setTimeout(async () => { timer = undefined; polling = true; await runRequest('status'); polling = false; schedule() }, 1200)
+  timer = setTimeout(async () => {
+    timer = undefined
+    if (!active || session.job?.status !== 'running') return
+    polling = true; await runRequest('status'); polling = false; schedule()
+  }, 1200)
 }
-async function runRequest(operation: AiRequest['operation']) {
+async function runRequest(operation: Exclude<AiRequest['operation'], 'artifact'>) {
   const request = session.request(operation)
   try { session.accept(request, await aiRequest(request)) }
   catch (cause) { session.fail(request, cause instanceof Error ? cause.message : '请求失败', cause instanceof AiRequestNotSentError) }
   finally { schedule() }
 }
 async function start() {
-  if (session.locked) return
+  if (session.locked || attaching.value) return
   const error = session.validate()
   if (error) { session.error = error; return }
   await runRequest('start')
 }
 async function cancel() { if (session.job?.status === 'running') await runRequest('cancel') }
 async function attach(files: File[]) {
-  try { const incoming = await readAiTextFiles(files); session.error = session.addFiles(incoming) }
-  catch (cause) { session.error = cause instanceof Error ? cause.message : '附件读取失败' }
+  if (session.locked || attaching.value) return
+  attaching.value = true
+  const generation = conversationGeneration
+  try { const incoming = await readAiTextFiles(files); if (active && generation === conversationGeneration) session.error = session.addFiles(incoming) }
+  catch (cause) { if (active && generation === conversationGeneration) session.error = cause instanceof Error ? cause.message : '附件读取失败' }
+  finally { attaching.value = false }
 }
-async function download(id: string) {
-  if (artifactBusy.value || !session.job?.result?.artifacts.some(item => item.id === id)) return
-  const request = session.request('artifact'); request.payload = { artifactId: id }
+function newConversation() {
+  if (session.locked) return
+  conversationGeneration++; session.newConversation()
+}
+async function download(turnId: string, id: string) {
+  if (artifactBusy.value) return
+  const request = session.artifactRequest(turnId, id)
+  if (!request) return
   artifactBusy.value = true
   try { await saveAiArtifact(request) }
-  catch (cause) { if (session.job?.jobId === request.jobId) session.error = cause instanceof Error ? cause.message : '结果文件保存失败' }
+  catch (cause) { if (session.turns.some(turn => turn.id === turnId)) session.error = cause instanceof Error ? cause.message : '结果文件保存失败' }
   finally { artifactBusy.value = false }
 }
-async function exportAnswer() {
-  const text = session.job?.result?.text
+async function exportAnswer(turnId: string) {
+  const text = session.answer(turnId)
   if (!text) return
   try { await saveTextFile('agent-result.md', text, 'text/markdown') }
-  catch (cause) { session.error = cause instanceof Error ? cause.message : '结果保存失败' }
+  catch (cause) { if (session.turns.some(turn => turn.id === turnId)) session.error = cause instanceof Error ? cause.message : '结果保存失败' }
 }
 onMounted(() => { active = true; void runRequest('inspect'); schedule() })
 onUnmounted(() => { active = false; if (timer) clearTimeout(timer) })
 </script>
 <template>
-  <AgentWorkspaceView :prompt="session.prompt" :max-steps="session.maxSteps" :files="session.files.map(file => ({ name: file.name, size: file.content.length }))" :configured="session.configured" :inspecting="session.inspecting" :model="session.model" :tools="session.tools" :locked="session.locked" :pending="session.pending" :unconfirmed="session.unconfirmed" :status="status" :error="session.error" :connection-error="session.connectionError" :events="session.job?.events.map(event => event.message) ?? []" :answer="session.job?.result?.text ?? ''" :artifacts="session.job?.result?.artifacts ?? []" :artifact-busy="artifactBusy"
-    @prompt="session.setPrompt" @max-steps="session.setMaxSteps" @files="attach" @remove-file="session.removeFile" @inspect="runRequest('inspect')" @run="start" @recover="session.unconfirmed && runRequest('start')" @cancel="cancel" @download="download" @export-answer="exportAnswer" />
+  <AgentWorkspaceView :prompt="session.prompt" :max-steps="session.maxSteps" :files="session.files.map(file => ({ name: file.name, size: file.content.length }))" :configured="session.configured" :inspecting="session.inspecting" :model="session.model" :tools="session.tools" :locked="session.locked" :pending="session.pending" :unconfirmed="session.unconfirmed" :status="status" :error="session.error" :connection-error="session.connectionError" :turns="turns" :artifact-busy="artifactBusy"
+    :attaching="attaching" @prompt="session.setPrompt" @max-steps="session.setMaxSteps" @files="attach" @remove-file="session.removeFile" @inspect="runRequest('inspect')" @run="start" @recover="session.unconfirmed && runRequest('start')" @cancel="cancel" @new-conversation="newConversation" @download="download" @export-answer="exportAnswer" />
 </template>

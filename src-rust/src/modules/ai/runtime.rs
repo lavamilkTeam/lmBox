@@ -1,5 +1,6 @@
 //! The only Python process boundary for AI jobs; all paths originate at the host.
 use crate::contracts::ai::{AiCapability, AiError, AiOperation, AiRequest};
+use serde::Serialize;
 use serde_json::{json, Value};
 use std::{
     io::{BufRead, BufReader, Read, Write},
@@ -15,6 +16,20 @@ use std::{
 const FRAME_LIMIT: usize = 12 * 1024 * 1024;
 const OUTPUT_LIMIT: usize = 64 * 1024 * 1024;
 const CANCEL_GRACE: Duration = Duration::from_secs(3);
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub(super) enum ContextRole {
+    User,
+    Assistant,
+}
+
+/// Trusted host-only conversation data, distinct from the frontend request payload.
+#[derive(Clone, Serialize)]
+pub(super) struct ContextMessage {
+    pub(super) role: ContextRole,
+    pub(super) content: String,
+}
 
 #[derive(Clone)]
 pub(super) enum Worker {
@@ -40,6 +55,7 @@ impl Worker {
         &self,
         request: &AiRequest,
         workspace: &Path,
+        context: &[ContextMessage],
         cancelled: &Arc<AtomicBool>,
         mut progress: impl FnMut(String),
     ) -> Result<Value, AiError> {
@@ -62,7 +78,11 @@ impl Worker {
         let mut stdin = child.stdin.take().expect("piped stdin");
         let stdout = child.stdout.take().expect("piped stdout");
         let mut stderr = child.stderr.take().expect("piped stderr");
-        let envelope = json!({"request":request,"workspace":workspace});
+        let envelope = if context.is_empty() {
+            json!({"request":request,"workspace":workspace})
+        } else {
+            json!({"request":request,"workspace":workspace,"context":context})
+        };
         let (control, controls) = mpsc::sync_channel::<()>(1);
         let writer = std::thread::spawn(move || {
             if serde_json::to_writer(&mut stdin, &envelope).is_err()

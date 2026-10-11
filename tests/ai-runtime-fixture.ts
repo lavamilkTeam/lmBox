@@ -44,6 +44,14 @@ export async function aiRuntimeFixture(page: Page) {
       else if (url.pathname === '/v1/models') data = { data: [{ id: 'fixture-agent-model' }] }
       else if (url.pathname === '/v1/chat/completions') {
         assert.equal(body.model, 'fixture-agent-model'); completions++
+        const currentPrompt = body.messages.findLast((message: { role: string }) => message.role === 'user')?.content ?? ''
+        if (currentPrompt.includes('Fixture follow-up')) {
+          assert.ok(body.messages.some((message: { role: string; content: string }) => message.role === 'assistant' && message.content === 'Fixture task complete: answer.txt contains 42.'))
+          assert.ok(body.messages.some((message: { role: string; content: string }) => message.role === 'user' && message.content.includes('Fixture: write 42')))
+          data = { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'Fixture follow-up: the previous answer was 42.' } }] }
+          res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(data)); return
+        }
+        if (currentPrompt.includes('Fixture new conversation')) assert.equal(body.messages.filter((message: { role: string }) => message.role === 'user').length, 1)
         const used = body.messages.some((message: { role: string }) => message.role === 'tool')
         const message = used ? { role: 'assistant', content: 'Fixture task complete: answer.txt contains 42.' } : { role: 'assistant', content: null, tool_calls: [{ id: 'fixture-write', type: 'function', function: { name: 'write_file', arguments: JSON.stringify({ name: 'answer.txt', content: '42' }) } }] }
         data = { choices: [{ finish_reason: used ? 'stop' : 'tool_calls', message }] }

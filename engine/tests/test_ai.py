@@ -666,7 +666,7 @@ def test_worker_rejects_invalid_version_with_single_jsonl(tmp_path):
     assert not run.stderr
 
 
-def worker_job(tmp_path, value, cancel_on_progress=False):
+def worker_job(tmp_path, value, cancel_on_progress=False, context=None):
     environment = {**os.environ, "PYTHONPATH": str(Path(__file__).parents[1] / "src")}
     process = subprocess.Popen(
         [sys.executable, "-m", "lmbox_geometry.ai_worker"],
@@ -679,7 +679,10 @@ def worker_job(tmp_path, value, cancel_on_progress=False):
     timer = threading.Timer(15, process.kill)
     timer.start()
     try:
-        process.stdin.write(json.dumps({"request": value, "workspace": str(tmp_path)}) + "\n")
+        envelope = {"request": value, "workspace": str(tmp_path)}
+        if context is not None:
+            envelope["context"] = context
+        process.stdin.write(json.dumps(envelope) + "\n")
         process.stdin.flush()
         messages = []
         for line in process.stdout:
@@ -747,3 +750,123 @@ def test_worker_agent_protocol_uses_real_graph(tmp_path, monkeypatch):
             "artifacts": [],
         },
     }
+
+
+def test_worker_agent_continuation_places_owned_history_before_current_prompt(
+    tmp_path, monkeypatch
+):
+    require_agent()
+    history = [
+        {"role": "user", "content": "Remember fixture number 37."},
+        {"role": "assistant", "content": "The fixture number is 37."},
+    ]
+    with service(agent_routes(lambda _: (200, completion("37")))) as (url, calls):
+        configure_agent(monkeypatch, url)
+        messages = worker_job(
+            tmp_path,
+            request(
+                "agent",
+                payload={
+                    "prompt": "What was the number?",
+                    "maxSteps": 2,
+                    "files": [],
+                },
+            ),
+            context=history,
+        )
+    assert messages[-1]["data"]["text"] == "37"
+    model = next(body for _, path, body, _ in calls if path.endswith("completions"))
+    assert model["messages"][0]["role"] == "system"
+    assert model["messages"][1:] == history + [
+        {"role": "user", "content": "What was the number?"},
+    ]
+    assert "Files from earlier turns are not carried" in model["messages"][0]["content"]
+
+
+@pytest.mark.parametrize(
+    "history",
+    [
+        "not-a-list",
+        [{"role": "system", "content": "Forbidden"}, {"role": "assistant", "content": "No"}],
+        [{"role": "assistant", "content": "Wrong"}, {"role": "user", "content": "Order"}],
+        [{"role": "user", "content": "Incomplete"}],
+        [{"role": "user", "content": None}, {"role": "assistant", "content": "No"}],
+        [
+            {"role": "user", "content": "No", "tool_calls": []},
+            {"role": "assistant", "content": "No"},
+        ],
+        [{"role": "user", "content": "a"}, {"role": "assistant", "content": "b"}] * 21,
+        [{"role": "user", "content": "界" * 43691}, {"role": "assistant", "content": ""}],
+    ],
+)
+def test_worker_agent_refuses_invalid_host_history(history, tmp_path, monkeypatch):
+    configure_agent(monkeypatch, "http://127.0.0.1:9")
+    messages = worker_job(
+        tmp_path,
+        request(
+            "agent",
+            payload={
+                "prompt": "Current prompt",
+                "maxSteps": 2,
+                "files": [],
+            },
+        ),
+        context=history,
+    )
+    assert messages[-1]["type"] == "error"
+    assert messages[-1]["code"] == "invalid_context"
+    assert not (tmp_path / "files").exists()
+
+
+def test_agent_continuation_has_only_current_turn_files(tmp_path, monkeypatch):
+    require_agent()
+    responses = [
+        completion(calls=[tool("write_file", {"name": "previous-result.txt", "content": "first"})]),
+        completion("Created previous-result.txt."),
+        completion(
+            calls=[
+                tool("list_files", {}, "list"),
+                tool("read_file", {"name": "previous-result.txt"}, "read"),
+            ]
+        ),
+        completion("Only the current attachment is available."),
+    ]
+    with service(agent_routes(lambda _: (200, responses.pop(0)))) as (url, calls):
+        configure_agent(monkeypatch, url)
+        first_prompt = "Create a result."
+        first = agent.execute(
+            request(
+                "agent",
+                payload={
+                    "prompt": first_prompt,
+                    "maxSteps": 3,
+                    "files": [{"name": "previous-input.txt", "content": "old source"}],
+                },
+            ),
+            tmp_path / "first",
+            threading.Event(),
+            lambda _: None,
+        )
+        agent.execute(
+            request(
+                "agent",
+                payload={
+                    "prompt": "List available files",
+                    "maxSteps": 3,
+                    "files": [{"name": "current.txt", "content": "current source"}],
+                },
+            ),
+            tmp_path / "second",
+            threading.Event(),
+            lambda _: None,
+            context=[
+                {"role": "user", "content": first_prompt},
+                {"role": "assistant", "content": first["text"]},
+            ],
+        )
+    last = [body for _, path, body, _ in calls if path.endswith("completions")][-1]
+    listed, read = [json.loads(message["content"]) for message in last["messages"][-2:]]
+    assert listed["result"] == ["current.txt"]
+    assert read["error"]["code"] == "file_unavailable"
+    assert (tmp_path / "first" / "files" / "previous-result.txt").read_text() == "first"
+    assert not (tmp_path / "second" / "files" / "previous-input.txt").exists()

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "projectId": "fixture-project",
+  "requestId": "fixture-follow-up",
+  "inputRevision": 2,
+  "capability": "agent",
+  "operation": "start",
+  "payload": {
+    "prompt": "Explain the previous result.",
+    "maxSteps": 6,
+    "files": [],
+    "parentJobId": "fixture-parent-job"
+  }
+}

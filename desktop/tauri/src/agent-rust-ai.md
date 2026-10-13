@@ -7,3 +7,5 @@
 开发解释器使用 `LMBOX_AI_PYTHON`，默认 `.tools/ai/venv`，源码入口固定为 `engine/src`；生产使用资源目录或可执行文件相邻 `ai/lmbox-ai`（Windows 为 `.exe`）的独立打包 worker。任务目录和空去重标记位于应用缓存下，重启保留标记但不恢复任务结果；退出时调用 `close_all()` 等待回收。模型与服务凭据由运行环境提供，不经 IPC 返回。
 
 检查遵循 [打包说明](../agent-rust-packaging.md)。核心公共入口测试覆盖任务与二进制权限；编译检查不代表真实桌面文件选择、模型服务或三平台运行已验证。
+
+模块版使用安装快照中的 ai-runtime，Video/Agent 各自检查安装状态；缺少 AI 包不阻止基础程序启动。

@@ -7,6 +7,7 @@ use std::{
     path::PathBuf,
     sync::atomic::{AtomicUsize, Ordering},
 };
+#[cfg(not(feature = "modular"))]
 use tauri::Manager;
 
 static RUNNING: AtomicUsize = AtomicUsize::new(0);
@@ -17,9 +18,15 @@ impl Drop for Permit {
     }
 }
 fn runtime_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    #[cfg(feature = "modular")]
+    {
+        crate::modules::runtime(app, "propulsion-runtime", "solvers")
+    }
+    #[cfg(not(feature = "modular"))]
     if cfg!(debug_assertions) {
         return Ok(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../.tools"));
     }
+    #[cfg(not(feature = "modular"))]
     app.path()
         .resource_dir()
         .map(|root| root.join("solvers"))
@@ -31,6 +38,13 @@ pub async fn propulsion_run(
     request: DesignRequest,
     app: tauri::AppHandle,
 ) -> Result<DesignResult, String> {
+    crate::modules::require(
+        &app,
+        match &request {
+            DesignRequest::Nozzle(_) => "nozzle",
+            DesignRequest::Injector(_) => "injector",
+        },
+    )?;
     if serde_json::to_vec(&request)
         .map_err(|e| e.to_string())?
         .len()

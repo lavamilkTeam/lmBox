@@ -3,6 +3,7 @@
 mod ai;
 mod cfd;
 mod commands;
+mod modules;
 mod propulsion;
 
 fn main() {

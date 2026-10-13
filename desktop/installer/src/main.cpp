@@ -1,3 +1,4 @@
+#include "InstallController.h"
 #include <QCommandLineParser>
 #include <QGuiApplication>
 #include <QIcon>
@@ -20,10 +21,15 @@ int main(int argc, char *argv[])
     const QCommandLineOption reducedMotion(QStringLiteral("reduce-motion"),
         QStringLiteral("Display the welcome screen without animations."));
     parser.addOption(reducedMotion);
+    const QCommandLineOption catalog(QStringLiteral("catalog"), QStringLiteral("Signed module catalog URL."), QStringLiteral("url"));
+    parser.addOption(catalog);
     parser.process(app);
+    InstallController installer(parser.value(catalog));
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &installer, &InstallController::cancel);
 
     QQmlApplicationEngine engine;
-    engine.setInitialProperties({{QStringLiteral("reducedMotion"), parser.isSet(reducedMotion)}});
+    engine.setInitialProperties({{QStringLiteral("reducedMotion"), parser.isSet(reducedMotion)},
+        {QStringLiteral("installController"), QVariant::fromValue(&installer)}});
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
         &app, [] { QCoreApplication::exit(1); }, Qt::QueuedConnection);
     engine.loadFromModule(QStringLiteral("LmBox.Installer"), QStringLiteral("Welcome"));

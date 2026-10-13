@@ -42,7 +42,7 @@ Item {
         function test_groupSelectionAndPartialState() {
             click("fluid-propulsion")
             compare(selection.selectedModuleIds.length, 3)
-            for (const id of ["rocket-performance", "nozzle", "injector"])
+            for (const id of ["cfd", "nozzle", "injector"])
                 compare(control(id).checked, true)
             click("nozzle")
             compare(selection.selectedModuleIds.length, 2)
@@ -56,24 +56,24 @@ Item {
         function test_independentGroupsAndReopen() {
             click("stencil")
             compare(control("electronics").checkState, Qt.Checked)
-            click("thermochemistry")
+            click("ai")
             click("fluid-propulsion")
-            compare(selection.selectedModuleIds.length, 5)
+            compare(selection.selectedModuleIds.length, 6)
             click("fluid-propulsion")
-            compare(selection.selectedModuleIds.length, 2)
+            compare(selection.selectedModuleIds.length, 3)
             click("back")
             tryCompare(selection, "visible", false)
             selection.open()
             tryCompare(selection, "opened", true)
             compare(control("stencil").checked, true)
-            compare(control("chemical-equilibrium").checked, true)
+            compare(control("video").checked, true)
             compare(control("fluid-propulsion").checkState, Qt.Unchecked)
         }
         function test_keyboardAndEscape() {
             const group = control("fluid-propulsion")
             group.forceActiveFocus()
             keyClick(Qt.Key_Space)
-            tryCompare(selection, "selectedModuleIds", ["rocket-performance", "nozzle", "injector"])
+            tryCompare(selection, "selectedModuleIds", ["cfd", "nozzle", "injector"])
             keyClick(Qt.Key_Escape)
             tryCompare(selection, "visible", false)
         }

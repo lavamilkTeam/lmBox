@@ -11,6 +11,7 @@ ApplicationWindow {
     title: "安装 lmbox"
     color: "white"
 
+    property var installController: null
     property bool reducedMotion: false
     property bool landed: false
     property bool started: false
@@ -118,7 +119,7 @@ ApplicationWindow {
                 enabled: opacity > 0.99
                 hoverEnabled: true
                 Accessible.name: text
-                onClicked: moduleSelection.open()
+                onClicked: { moduleSelection.open(); if (window.installController) window.installController.refresh() }
 
                 background: Rectangle {
                     radius: 14
@@ -153,6 +154,7 @@ ApplicationWindow {
 
     ModuleSelection {
         id: moduleSelection
+        installer: window.installController
         fontFamily: welcomeFont.name
         reducedMotion: window.reducedMotion
         onClosed: action.forceActiveFocus()

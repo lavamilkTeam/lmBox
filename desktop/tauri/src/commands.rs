@@ -40,9 +40,11 @@ async fn preview_run(
     let result = tauri::async_runtime::spawn_blocking(move || {
         // Unbundled CI archives keep resources beside the executable; OS bundles
         // use Tauri's platform-specific resource directory. Neither comes from IPC.
+        #[cfg(not(feature = "modular"))]
         let adjacent = std::env::current_exe()
             .map_err(|e| e.to_string())?
             .with_file_name("geometry");
+        #[cfg(not(feature = "modular"))]
         let resources = if adjacent.is_dir() {
             adjacent
         } else {
@@ -51,6 +53,8 @@ async fn preview_run(
                 .map_err(|e| e.to_string())?
                 .join("geometry")
         };
+        #[cfg(feature = "modular")]
+        let resources = crate::modules::runtime(&app, "stencil", "geometry")?;
         let worker = resources.join(if cfg!(windows) {
             "lmbox-geometry.exe"
         } else {
@@ -97,7 +101,10 @@ async fn save_artifact(name: String, content: String) -> Result<bool, String> {
 }
 
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(feature = "modular")]
+    let builder = crate::modules::configure(builder);
+    builder
         .manage(Arc::new(PreviewTasks::default()))
         .manage(ShutdownStarted::default())
         .setup(|app| {
@@ -106,6 +113,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            crate::modules::module_status,
             preview_prepare,
             preview_run,
             preview_cancel,

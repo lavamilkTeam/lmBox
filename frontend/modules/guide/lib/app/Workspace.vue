@@ -4,11 +4,13 @@ import { guideTools, useGuideFlow } from '../domain/flow'
 import { GuideLibrary, FlowCanvas } from '../ui'
 import { useNotification } from '../../../../ui/theme'
 import '../ui/workspace.css'
+const props = defineProps<{ installedIds?: string[] | null }>()
+const tools = computed(() => guideTools.map(tool => ({ ...tool, available: tool.available && (!props.installedIds || props.installedIds.includes(tool.id)) })))
 const emit = defineEmits<{ open: [id: string] }>()
 const flow = useGuideFlow()
 const canvas = ref<InstanceType<typeof FlowCanvas>>()
 const notification = useNotification()
-const nodes = computed(() => flow.nodes.map(node => ({ ...guideTools.find(tool => tool.id === node.toolId)!, ...node })))
+const nodes = computed(() => flow.nodes.map(node => ({ ...tools.value.find(tool => tool.id === node.toolId)!, ...node })))
 function add(id: string, x?: number, y?: number) {
   const origin = canvas.value?.insertionPoint() ?? { x: 64, y: 64 }
   flow.add(id, x ?? origin.x, y ?? origin.y)
@@ -19,12 +21,12 @@ function connect(source: string, target: string) {
 }
 function open(id: string) {
   const node = flow.nodes.find(node => node.id === id)
-  if (node && guideTools.some(tool => tool.id === node.toolId && tool.available)) emit('open', node.toolId)
+  if (node && tools.value.some(tool => tool.id === node.toolId && tool.available)) emit('open', node.toolId)
 }
 </script>
 <template>
   <main class="guide-workspace">
-    <GuideLibrary :tools="guideTools" @add="add" />
+    <GuideLibrary :tools="tools" @add="add" />
     <FlowCanvas ref="canvas" :nodes="nodes" :edges="flow.edges" @add="add" @move="flow.move"
       @connect="connect" @remove-node="flow.removeNode" @remove-edge="flow.removeEdge" @open="open" />
   </main>

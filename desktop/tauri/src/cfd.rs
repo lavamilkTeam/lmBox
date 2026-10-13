@@ -3,10 +3,20 @@ use lmbox::{
     contracts::cfd::{CfdOperation, CfdRequest, CfdResponse},
     modules::cfd::CfdBackend,
 };
-use std::{path::PathBuf, sync::Arc};
+#[cfg(not(feature = "modular"))]
+use std::path::PathBuf;
+use std::sync::Arc;
 use tauri::Manager;
 
 pub fn backend(app: &tauri::App) -> Result<Arc<CfdBackend>, String> {
+    #[cfg(feature = "modular")]
+    {
+        let root = crate::modules::runtime(app.handle(), "cfd", "")
+            .unwrap_or_else(|_| app.path().app_cache_dir().unwrap().join("unavailable-cfd"));
+        let config = lmbox_modules::default_root()?.join("cfd-runtime.json");
+        Ok(Arc::new(CfdBackend::new(config, root.join("engine/src"))))
+    }
+    #[cfg(not(feature = "modular"))]
     let root = if cfg!(debug_assertions) {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
     } else {
@@ -14,19 +24,23 @@ pub fn backend(app: &tauri::App) -> Result<Arc<CfdBackend>, String> {
             .resource_dir()
             .map_err(|error| error.to_string())?
     };
+    #[cfg(not(feature = "modular"))]
     let config = if cfg!(debug_assertions) {
         root.join(".tools/cfd/runtime.json")
     } else {
         root.join("solvers/cfd/runtime.json")
     };
+    #[cfg(not(feature = "modular"))]
     Ok(Arc::new(CfdBackend::new(config, root.join("engine/src"))))
 }
 
 #[tauri::command]
 pub async fn cfd_request(
     request: CfdRequest,
+    app: tauri::AppHandle,
     backend: tauri::State<'_, Arc<CfdBackend>>,
 ) -> Result<CfdResponse, String> {
+    crate::modules::require(&app, "cfd")?;
     let backend = Arc::clone(backend.inner());
     tauri::async_runtime::spawn_blocking(move || backend.request(request))
         .await
@@ -37,8 +51,10 @@ pub async fn cfd_request(
 #[tauri::command]
 pub async fn choose_cfd_path(
     request: CfdRequest,
+    app: tauri::AppHandle,
     backend: tauri::State<'_, Arc<CfdBackend>>,
 ) -> Result<CfdResponse, String> {
+    crate::modules::require(&app, "cfd")?;
     if request.operation != CfdOperation::DialogResponse || request.payload.len() != 1 {
         return Err("文件选择请求无效。".into());
     }

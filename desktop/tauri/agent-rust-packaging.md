@@ -33,3 +33,5 @@
 全部矩阵与质量门禁须成功；本地检查不代表实际发布完成。
 
 AI 使用独立 `resources/lmbox-ai → ai` 目录。先运行 `npm run setup:ai`、`npm run build:ai-worker`、`npm run check:ai-worker`；资源搬移后以明确的本地模型夹具验证 LangGraph、工具和文本产物。AI 凭据从宿主环境读取，不打入安装器。视频预览只允许应用自身与 Blob 媒体来源。
+
+模块 ZIP 分发使用独立 `modular` 构建和 `tauri.modules.conf.json`，基础包只包含宿主与基础 UI，资源从安装快照读取；原有整包配置保持独立。构建、发布配置及平台运行库约束见[模块构建](../../scripts/agent-javascript-modules.md)，加载边界见[模块适配](src/agent-rust-modules.md)。

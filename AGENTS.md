@@ -80,6 +80,7 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── main.ts
 │   ├── installer.ts
 │   ├── app/
+│   │   ├── module-entries/
 │   │   └── features/
 │   │       └── workspace-tabs/
 │   │           ├── index.ts
@@ -155,6 +156,11 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── AGENTS.md
 │   ├── agent-rust.md
 │   └── src/
+├── desktop/modules/
+│   ├── agent-rust.md
+│   ├── Cargo.toml
+│   ├── src/
+│   └── tests/
 ├── desktop/installer/
 │   ├── agent-cpp.md
 │   ├── CMakeLists.txt

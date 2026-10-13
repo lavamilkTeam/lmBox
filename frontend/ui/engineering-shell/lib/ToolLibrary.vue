@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { Search } from '@lucide/vue'
 import { Button, Input } from '../../shadcn'
-const props = defineProps<{ tools: { id: string; label: string; category: string; available: boolean }[] }>()
+const props = defineProps<{ tools: { id: string; label: string; category: string; available: boolean; status?: string }[] }>()
 const emit = defineEmits<{ open: [id: string] }>()
 const query = ref('')
 const filtered = computed(() => props.tools.filter(tool => `${tool.label}${tool.category}`.includes(query.value.trim())))
@@ -13,7 +13,7 @@ const filtered = computed(() => props.tools.filter(tool => `${tool.label}${tool.
     <nav aria-label="可用功能">
       <section v-for="category in [...new Set(filtered.map(tool => tool.category))]" :key="category">
         <h2>{{ category }}</h2>
-        <Button v-for="tool in filtered.filter(tool => tool.category === category)" :key="tool.id" variant="ghost" :disabled="!tool.available" @click="emit('open', tool.id)">{{ tool.label }}<span v-if="!tool.available">未接入</span></Button>
+        <Button v-for="tool in filtered.filter(tool => tool.category === category)" :key="tool.id" variant="ghost" :disabled="!tool.available" @click="emit('open', tool.id)">{{ tool.label }}<span v-if="!tool.available">{{ tool.status || '未接入' }}</span></Button>
       </section>
       <p v-if="!filtered.length" role="status">没有匹配的功能</p>
     </nav>

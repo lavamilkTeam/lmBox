@@ -43,3 +43,5 @@
 `cfdRequest` 经同源 `/api/cfd` 或 `cfd_request` 传输持续 CFD 会话，校验身份及有界原生状态/几何；`readCfdFile` 读取用户选择的有界 CAD 文件，`saveCfdFile` 保存后端返回的 FCStd。控件和单位语义由原生 CfdOF 控制器处理，轮询断开不代表求解取消。`getCfdSessionId` 在当前标签页保留会话标识，以幂等初始化恢复热更新前的原生会话。工作区选择由平台 app 管理，启动默认进入引导界面。`chooseCfdPath` 仅在原生宿主处理当前原生文件对话框，用户选择的路径由宿主直接交给 Rust，不经过前端。
 
 AI 的 `aiRequest` 经同源 `/api/ai` 或原生 `ai_request` 传输[版本化 AI 协议](../../../contracts/schemas/v1/agent-contracts-ai.md)。适配校验请求/任务身份、输入版本、节点目录和产物大小；工作流读取、文本附件、会话标识、Blob 预览及保存均留在本边界。原生保存以注册产物请求调用 `save_ai_artifact`，不接受前端路径。
+
+`installedModules` 公开入口读取原生 `module_status`：模块版返回已安装 ID，浏览器和整包版返回 null。平台不选择工作区或改变功能目录；调用错误交给应用层显示。

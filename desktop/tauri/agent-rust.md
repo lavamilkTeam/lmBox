@@ -6,6 +6,7 @@
 
 | 范围 | 必读说明 |
 | --- | --- |
+| `src/modules.rs` | [已安装模块适配](src/agent-rust-modules.md) |
 | `src/main.rs` | [宿主启动](src/agent-rust-host.md) |
 | `src/cfd.rs` | [CFD 会话与工程保存](src/agent-rust-cfd.md) |
 | `src/ai.rs` | [AI 任务 IPC 与产物保存](src/agent-rust-ai.md) |

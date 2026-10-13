@@ -4,7 +4,11 @@ project(LmBoxInstaller VERSION 0.1.1 LANGUAGES CXX)
 find_package(Qt6 6.8 REQUIRED COMPONENTS Quick QuickControls2)
 qt_standard_project_setup(REQUIRES 6.8)
 
-qt_add_executable(lmbox-installer MACOSX_BUNDLE WIN32 src/main.cpp)
+qt_add_executable(lmbox-installer MACOSX_BUNDLE WIN32 src/main.cpp src/InstallController.cpp src/InstallController.h)
+if(NOT DEFINED LMBOX_MODULE_MANAGER OR NOT EXISTS "${LMBOX_MODULE_MANAGER}")
+    message(FATAL_ERROR "Build the module manager using npm run modules:prepare first")
+endif()
+target_compile_definitions(lmbox-installer PRIVATE LMBOX_MODULE_MANAGER="${LMBOX_MODULE_MANAGER}")
 target_compile_features(lmbox-installer PRIVATE cxx_std_17)
 target_link_libraries(lmbox-installer PRIVATE Qt6::Quick Qt6::QuickControls2)
 set_target_properties(lmbox-installer PROPERTIES
@@ -35,6 +39,11 @@ qt_add_resources(lmbox-installer welcome_assets
 )
 
 include(GNUInstallDirs)
+if(APPLE)
+    install(PROGRAMS "${LMBOX_MODULE_MANAGER}" DESTINATION "lmbox-installer.app/Contents/MacOS")
+else()
+    install(PROGRAMS "${LMBOX_MODULE_MANAGER}" DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 install(TARGETS lmbox-installer BUNDLE DESTINATION . RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES "${welcome_assets}/FONT-LICENSE.txt" "${welcome_assets}/NOTICE.txt" DESTINATION licenses)
 qt_generate_deploy_qml_app_script(

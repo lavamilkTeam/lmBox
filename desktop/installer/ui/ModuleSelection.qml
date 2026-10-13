@@ -10,32 +10,41 @@ Popup {
     padding: 0
     modal: true
     focus: true
-    closePolicy: Popup.CloseOnEscape
+    closePolicy: installer && installer.busy ? Popup.NoAutoClose : Popup.CloseOnEscape
 
+    property var installer: null
     property string fontFamily: ""
     property bool reducedMotion: false
     property var selectedModuleIds: []
+    onSelectedModuleIdsChanged: if (installer) installer.resetSelection()
     readonly property var groups: [
         { id: "electronics", title: "电子电气", modules: [
             { id: "stencil", title: "钢网设计与制造" }
         ] },
-        { id: "thermochemistry", title: "热化学", modules: [
-            { id: "chemical-equilibrium", title: "化学平衡分析" }
-        ] },
         { id: "fluid-propulsion", title: "流体与动力", modules: [
-            { id: "rocket-performance", title: "火箭发动机性能分析" },
+            { id: "cfd", title: "流体力学" },
             { id: "nozzle", title: "喷管初步设计" },
             { id: "injector", title: "喷注器水力设计" }
+        ] },
+        { id: "ai", title: "AI", modules: [
+            { id: "video", title: "视频工作流" },
+            { id: "agent", title: "AI 工作助手" }
         ] }
     ]
+    function available(modules) {
+        return modules.filter(module => !installer || installer.availableModuleIds.includes(module.id))
+    }
+
 
     function groupState(modules) {
+        modules = available(modules)
+        if (modules.length === 0) return Qt.Unchecked
         const count = modules.filter(module => selectedModuleIds.includes(module.id)).length
         return count === 0 ? Qt.Unchecked : count === modules.length ? Qt.Checked : Qt.PartiallyChecked
     }
 
     function selectModules(modules, checked) {
-        const ids = modules.map(module => module.id)
+        const ids = available(modules).map(module => module.id)
         const remaining = selectedModuleIds.filter(id => !ids.includes(id))
         selectedModuleIds = checked ? remaining.concat(ids) : remaining
     }
@@ -86,7 +95,7 @@ Popup {
                 id: scroll
                 anchors.fill: parent
                 anchors.margins: 22
-                anchors.bottomMargin: 74
+                anchors.bottomMargin: 132
                 clip: true
                 contentWidth: availableWidth
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
@@ -105,6 +114,7 @@ Popup {
                             ModuleCheckBox {
                                 objectName: group.modelData.id
                                 width: parent.width
+                                enabled: !selection.installer || (selection.installer.ready && !selection.installer.busy && selection.available(group.modelData.modules).length > 0)
                                 text: group.modelData.title
                                 groupHeading: true
                                 tristate: true
@@ -123,6 +133,7 @@ Popup {
                                     x: 32
                                     width: group.width - 32
                                     text: modelData.title
+                                    enabled: !selection.installer || (selection.installer.ready && !selection.installer.busy && selection.installer.availableModuleIds.includes(modelData.id))
                                     checked: selection.selectedModuleIds.includes(modelData.id)
                                     onToggleRequested: selection.selectModules([modelData],
                                         !selection.selectedModuleIds.includes(modelData.id))
@@ -135,15 +146,18 @@ Popup {
 
             Rectangle {
                 x: 24
-                y: parent.height - 66
+                y: parent.height - 120
                 width: parent.width - 48
                 height: 1
                 color: "#e9e9e9"
             }
             Text {
                 x: 30
-                y: parent.height - 46
-                text: "已选择 " + selection.selectedModuleIds.length + " 个模块"
+                y: parent.height - 110
+                text: selection.installer && selection.installer.message ? selection.installer.message : "已选择 " + selection.selectedModuleIds.length + " 个模块"
+                width: parent.width - 60
+                elide: Text.ElideRight
+                wrapMode: Text.NoWrap
                 font.family: selection.fontFamily
                 font.pixelSize: 15
                 color: "#777777"
@@ -155,7 +169,8 @@ Popup {
                 width: 88
                 height: 38
                 anchors.right: parent.right
-                anchors.rightMargin: 24
+                anchors.rightMargin: 140
+                enabled: !selection.installer || !selection.installer.busy
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 14
                 onClicked: selection.close()
@@ -174,6 +189,32 @@ Popup {
                     verticalAlignment: Text.AlignVCenter
                 }
             }
+            ProgressBar {
+                visible: selection.installer && selection.installer.busy
+                x: 30; y: parent.height - 76; width: parent.width - 60
+                value: selection.installer ? selection.installer.progress : 0
+            }
+            Button {
+                objectName: "install"
+                text: selection.installer && selection.installer.busy ? "取消" : selection.installer && selection.installer.complete ? "启动" : "安装"
+                width: 100; height: 38
+                anchors.right: parent.right; anchors.rightMargin: 24
+                anchors.bottom: parent.bottom; anchors.bottomMargin: 14
+                enabled: selection.installer && (selection.installer.ready || selection.installer.busy)
+                onClicked: {
+                    if (selection.installer.busy) selection.installer.cancel()
+                    else if (selection.installer.complete) selection.installer.launch()
+                    else selection.installer.install(selection.selectedModuleIds)
+                }
+            }
+            Button {
+                visible: selection.installer && !selection.installer.ready && !selection.installer.busy
+                text: "重试"
+                anchors.left: parent.left; anchors.leftMargin: 24
+                anchors.bottom: parent.bottom; anchors.bottomMargin: 14
+                onClicked: selection.installer.refresh()
+            }
+
         }
     }
 

@@ -30,3 +30,7 @@ engine/src/*.egg-info/
 desktop/tauri/binaries/
 desktop/tauri/gen/
 desktop/tauri/resources/
+
+# Optional module distribution artifacts
+dist-modules/
+desktop/modules/target/

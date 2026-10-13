@@ -25,9 +25,11 @@ pub fn backend(app: &tauri::App) -> Result<Arc<AiBackend>, String> {
             });
         AiBackend::new(python, repository.join("engine/src"), tasks)
     } else {
+        #[cfg(not(feature = "modular"))]
         let adjacent = std::env::current_exe()
             .map_err(|_| "无法定位 AI 执行程序。")?
             .with_file_name("ai");
+        #[cfg(not(feature = "modular"))]
         let resource = if adjacent.is_dir() {
             adjacent
         } else {
@@ -36,6 +38,9 @@ pub fn backend(app: &tauri::App) -> Result<Arc<AiBackend>, String> {
                 .map_err(|_| "无法定位 AI 运行资源。")?
                 .join("ai")
         };
+        #[cfg(feature = "modular")]
+        let resource = crate::modules::runtime(app.handle(), "ai-runtime", "ai")
+            .unwrap_or_else(|_| tasks.join("unavailable-runtime"));
         AiBackend::bundled(
             resource.join(if cfg!(windows) {
                 "lmbox-ai.exe"
@@ -51,8 +56,16 @@ pub fn backend(app: &tauri::App) -> Result<Arc<AiBackend>, String> {
 #[tauri::command]
 pub async fn ai_request(
     request: AiRequest,
+    app: tauri::AppHandle,
     backend: tauri::State<'_, Arc<AiBackend>>,
 ) -> Result<AiResponse, String> {
+    crate::modules::require(
+        &app,
+        match request.capability {
+            lmbox::contracts::ai::AiCapability::Video => "video",
+            lmbox::contracts::ai::AiCapability::Agent => "agent",
+        },
+    )?;
     let backend = Arc::clone(backend.inner());
     tauri::async_runtime::spawn_blocking(move || backend.request(request))
         .await
@@ -62,8 +75,16 @@ pub async fn ai_request(
 #[tauri::command]
 pub async fn save_ai_artifact(
     request: AiRequest,
+    app: tauri::AppHandle,
     backend: tauri::State<'_, Arc<AiBackend>>,
 ) -> Result<bool, String> {
+    crate::modules::require(
+        &app,
+        match request.capability {
+            lmbox::contracts::ai::AiCapability::Video => "video",
+            lmbox::contracts::ai::AiCapability::Agent => "agent",
+        },
+    )?;
     let backend = Arc::clone(backend.inner());
     let (artifact, bytes) =
         tauri::async_runtime::spawn_blocking(move || backend.artifact_bytes(&request))

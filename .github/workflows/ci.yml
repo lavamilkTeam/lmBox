@@ -213,6 +213,13 @@ jobs:
           npm run check:worker
           npm run build:ai-worker
           npm run check:ai-worker
+      - name: Validate signed module installation and desktop loading
+        shell: bash
+        run: |
+          cargo fmt --manifest-path desktop/modules/Cargo.toml --check
+          cargo clippy --manifest-path desktop/modules/Cargo.toml --locked --all-targets -- -D warnings
+          cargo test --manifest-path desktop/modules/Cargo.toml --locked
+          cargo clippy --manifest-path desktop/tauri/Cargo.toml --locked --all-targets --features modular -- -D warnings
       - name: Reject desktop Rust warnings and test native integration
         run: |
           cargo fmt --manifest-path desktop/tauri/Cargo.toml --check

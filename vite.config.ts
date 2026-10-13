@@ -20,6 +20,7 @@ export default defineConfig({
       }
     },
   }],
+  build: { manifest: true },
   server: { port: 6522, strictPort: true,
     // Solver/build artifacts must not reload an in-progress engineering session.
     watch: { ignored: ['**/dist*/**', '**/.tools/**', '**/target/**', '**/test-results/**', '**/playwright-report/**', '**/output/**', '**/desktop/tauri/resources/**'] },

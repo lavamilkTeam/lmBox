@@ -30,7 +30,7 @@ InstallController::InstallController(QString catalog, QObject *parent)
         else if (exitCode != 0 || exitStatus != QProcess::NormalExit) {
             if (!m_error) m_message = QStringLiteral("安装失败，请检查下载源后重试。");
             m_error = true;
-        } else if (m_operation == QStringLiteral("install")) {
+        } else if (!m_error && m_operation == QStringLiteral("install")) {
             m_complete = true; m_progress = 1; m_message = QStringLiteral("安装完成");
         }
         emit changed();
@@ -88,8 +88,10 @@ void InstallController::record(const QByteArray &line) {
         m_modules.clear();
         for (const auto &item : object.value(QStringLiteral("packages")).toArray()) {
             const auto package = item.toObject();
-            if (package.value(QStringLiteral("kind")).toString() == QStringLiteral("module"))
-                m_modules.append(package.value(QStringLiteral("id")).toString());
+            const auto id = package.value(QStringLiteral("id")).toString();
+            if (package.value(QStringLiteral("kind")).toString() == QStringLiteral("module")
+                && id != QStringLiteral("injector"))
+                m_modules.append(id);
         }
         m_ready = true; m_message.clear();
     } else if (phase == QStringLiteral("download") || phase == QStringLiteral("extract")) {

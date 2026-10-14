@@ -20,7 +20,7 @@ macro_rules! api {
                 // SAFETY: the host selects a trusted, locally compiled CEA library.
                 // Signatures match the pinned header, symbols stay valid until drop.
                 unsafe {
-                    let library = Library::new(path).map_err(|e| e.to_string())?;
+                    let library = super::super::load_library(path).map_err(|e| e.to_string())?;
                     Ok(Self {
                         $($name: *library.get(concat!(stringify!($name), "\0").as_bytes())
                             .map_err(|e| e.to_string())?,)*

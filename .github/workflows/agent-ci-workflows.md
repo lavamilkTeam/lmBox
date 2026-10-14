@@ -10,4 +10,4 @@
 
 Python 门禁安装 AI extra 验证 LangGraph 工具循环；桌面矩阵另打包并搬移检查独立 AI worker。AI 检查使用本机可辨识模型服务替身，不接收云端凭据，不声称验证实际云端推理。
 
-桌面矩阵另执行独立模块分发 crate 的 fmt/Clippy/tests，以及宿主 modular 特性的 Clippy。模块 ZIP 发布构建与签名配置见[模块构建](../../scripts/agent-javascript-modules.md)；既有 Release 工作流仍发布整包安装器，尚未自动上传模块发布集。
+桌面矩阵另执行独立模块分发 crate 的 fmt/Clippy/tests，以及宿主 modular 特性的 Clippy；构建五个可选模块 ZIP、基础与共享运行库包及 Qt 下载安装器。实际 ZIP 解压搬移后执行 geometry/AI/Fortran 检查和安装器 QML 启动测试。模块 ZIP 发布构建与签名配置见[模块构建](../../scripts/agent-javascript-modules.md)。Release 下载本次运行的整包和模块产物，校验完整性、公钥与来源后，仅在发布任务读取私钥签名 catalog，再一起上传；缺少固定签名配置时拒绝发布。

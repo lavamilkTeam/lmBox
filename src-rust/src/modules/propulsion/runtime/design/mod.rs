@@ -147,7 +147,7 @@ impl Engine {
         // SAFETY: only load a trusted host path. Version and symbols are checked;
         // function pointers cannot outlive the owning Library in Engine.
         unsafe {
-            let library = Library::new(root.join(LIBRARY)).map_err(|e| e.to_string())?;
+            let library = super::load_library(&root.join(LIBRARY)).map_err(|e| e.to_string())?;
             let version = library
                 .get::<unsafe extern "C" fn() -> i32>(b"lmbox_propulsion_version\0")
                 .map_err(|e| e.to_string())?;

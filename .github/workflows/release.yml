@@ -28,9 +28,12 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.ref_name }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          LMBOX_MODULE_PUBLIC_KEY: ${{ vars.LMBOX_MODULE_PUBLIC_KEY }}
+          MODULE_SIGNING_KEY_CONFIGURED: ${{ secrets.LMBOX_MODULE_SIGNING_KEY != '' }}
         run: |
           node scripts/release-assets.mjs validate-tag "$RELEASE_TAG"
           git merge-base --is-ancestor HEAD "origin/$DEFAULT_BRANCH"
+          node -e "if (!/^[a-f0-9]{64}$/.test(process.env.LMBOX_MODULE_PUBLIC_KEY || '') || process.env.MODULE_SIGNING_KEY_CONFIGURED !== 'true') throw new Error('Configure the module signing public key variable and private key secret before releasing')"
 
   checks:
     name: Release checks
@@ -56,6 +59,10 @@ jobs:
         with:
           pattern: installers-*
           path: .tools/downloaded-installers
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: modules-*
+          path: .tools/downloaded-modules
       - name: Verify every platform, source commit and checksum
         env:
           RELEASE_TAG: ${{ github.ref_name }}
@@ -63,6 +70,18 @@ jobs:
           node scripts/release-assets.mjs validate-tag "$RELEASE_TAG"
           test "$(git rev-parse "$RELEASE_TAG^{commit}")" = "$GITHUB_SHA"
           node scripts/release-assets.mjs assemble .tools/downloaded-installers .tools/publish
+      - name: Sign the complete module catalogs against the installer trust anchor
+        env:
+          MODULE_SIGNING_KEY: ${{ secrets.LMBOX_MODULE_SIGNING_KEY }}
+          LMBOX_MODULE_PUBLIC_KEY: ${{ vars.LMBOX_MODULE_PUBLIC_KEY }}
+        run: |
+          umask 077
+          module_key_file="$(mktemp "$RUNNER_TEMP/lmbox-signing.XXXXXX")"
+          trap 'rm -f "$module_key_file"' EXIT
+          printf '%s' "$MODULE_SIGNING_KEY" > "$module_key_file"
+          unset MODULE_SIGNING_KEY
+          export LMBOX_MODULE_SIGNING_KEY="$module_key_file"
+          node scripts/release-assets.mjs assemble-modules .tools/downloaded-modules .tools/publish
       - name: Upload all assets before making the release public
         env:
           GH_TOKEN: ${{ github.token }}

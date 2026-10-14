@@ -39,9 +39,8 @@ test('real nozzle solver renders cone and bell, invalidates edits and exports ma
   await page.getByLabel('起始角', { exact: true }).fill('30')
   await compute(page, 'nozzle-results')
 })
-test('liquid sizing uses both passage types and keeps inputs across navigation', async ({ page }) => {
-  await page.goto('/')
-  await open(page, '喷注器水力设计')
+test('unreleased injector public module computes both passage types and retains its draft', async ({ page }) => {
+  await page.goto('/tests/fixtures/propulsion-harness.html')
   await compute(page, 'injector-results')
   const table = page.getByRole('table', { name: '喷注器水力结果' })
   await expect(table.getByRole('row').filter({ hasText: '该路质量流量' })).toContainText('0.2')
@@ -50,17 +49,16 @@ test('liquid sizing uses both passage types and keeps inputs across navigation',
   await page.getByLabel('总质量流量', { exact: true }).fill('0.6')
   await compute(page, 'injector-results')
   await expect(table.getByRole('row').filter({ hasText: '该路质量流量' })).toContainText('0.4')
-  await open(page, '喷管初步设计')
-  await open(page, '喷注器水力设计')
+  await page.getByRole('button', { name: '切换喷管' }).click()
+  await page.getByRole('button', { name: '切换喷注器' }).click()
   await expect(page.getByLabel('总质量流量', { exact: true })).toHaveValue('0.6')
   await expect(page.getByTestId('injector-results')).toBeVisible()
   await page.setViewportSize({ width: 390, height: 844 })
   await expect(page.getByRole('button', { name: '开始计算', exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })
-test('a changed input rejects a delayed response and service errors remain actionable', async ({ page }) => {
-  await page.goto('/')
-  await open(page, '喷注器水力设计')
+test('unreleased injector public module rejects stale responses and reports service errors', async ({ page }) => {
+  await page.goto('/tests/fixtures/propulsion-harness.html')
   let release!: () => void
   const gate = new Promise<void>(resolve => { release = resolve })
   let received!: () => void

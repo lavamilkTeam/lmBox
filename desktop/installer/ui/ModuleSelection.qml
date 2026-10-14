@@ -24,7 +24,7 @@ Popup {
         { id: "fluid-propulsion", title: "流体与动力", modules: [
             { id: "cfd", title: "流体力学" },
             { id: "nozzle", title: "喷管初步设计" },
-            { id: "injector", title: "喷注器水力设计" }
+            { id: "injector", title: "喷注器设计（暂未开放）", available: false }
         ] },
         { id: "ai", title: "AI", modules: [
             { id: "video", title: "视频工作流" },
@@ -32,7 +32,8 @@ Popup {
         ] }
     ]
     function available(modules) {
-        return modules.filter(module => !installer || installer.availableModuleIds.includes(module.id))
+        return modules.filter(module => module.available !== false
+            && (!installer || installer.availableModuleIds.includes(module.id)))
     }
 
 
@@ -133,7 +134,8 @@ Popup {
                                     x: 32
                                     width: group.width - 32
                                     text: modelData.title
-                                    enabled: !selection.installer || (selection.installer.ready && !selection.installer.busy && selection.installer.availableModuleIds.includes(modelData.id))
+                                    enabled: selection.available([modelData]).length > 0
+                                        && (!selection.installer || (selection.installer.ready && !selection.installer.busy))
                                     checked: selection.selectedModuleIds.includes(modelData.id)
                                     onToggleRequested: selection.selectModules([modelData],
                                         !selection.selectedModuleIds.includes(modelData.id))
@@ -227,8 +229,8 @@ Popup {
         hoverEnabled: true
         activeFocusOnTab: true
         Accessible.name: text
-        Accessible.onPressAction: toggleRequested()
-        Accessible.onToggleAction: toggleRequested()
+        Accessible.onPressAction: if (enabled) toggleRequested()
+        Accessible.onToggleAction: if (enabled) toggleRequested()
         indicator: Rectangle {
             x: 8
             y: (control.height - height) / 2
@@ -261,7 +263,7 @@ Popup {
             font.family: selection.fontFamily
             font.weight: Font.Medium
             font.pixelSize: control.groupHeading ? 19 : 17
-            color: control.groupHeading ? "#242424" : "#626262"
+            color: !control.enabled ? "#999999" : control.groupHeading ? "#242424" : "#626262"
             verticalAlignment: Text.AlignVCenter
             renderType: Text.NativeRendering
         }

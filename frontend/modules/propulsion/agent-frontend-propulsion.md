@@ -1,6 +1,6 @@
 # 前端：推进设计模块
 
-先读 [前端结构](../../agent-frontend.md)。`index.ts` 仅公开 `PropulsionWorkspace`，通过 `tool: nozzle | injector` 选择已实现工具；外部不得访问 `lib` 或状态。工程工具箱将两项归入“流体与动力”，不据此把通用热化学分析限定于推进业务。
+先读 [前端结构](../../agent-frontend.md)。`index.ts` 仅公开 `PropulsionWorkspace`，通过 `tool: nozzle | injector` 选择已实现工具；外部不得访问 `lib` 或状态。喷注器暂不向用户开放，保留公开模块入口供回归验证；工程工具箱当前只提供喷管入口，不据此把通用热化学分析限定于推进业务。
 
 | 内部范围 | 说明 |
 | --- | --- |

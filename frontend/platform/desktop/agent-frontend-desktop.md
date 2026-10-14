@@ -45,3 +45,5 @@
 AI 的 `aiRequest` 经同源 `/api/ai` 或原生 `ai_request` 传输[版本化 AI 协议](../../../contracts/schemas/v1/agent-contracts-ai.md)。适配校验请求/任务身份、输入版本、节点目录和产物大小；工作流读取、文本附件、会话标识、Blob 预览及保存均留在本边界。原生保存以注册产物请求调用 `save_ai_artifact`，不接受前端路径。
 
 `installedModules` 公开入口读取原生 `module_status`：模块版返回已安装 ID，浏览器和整包版返回 null。平台不选择工作区或改变功能目录；调用错误交给应用层显示。
+
+CFD 可选流场投影在适配边界验证有限数值、场数组与顶点对应关系、三角/流线索引及矢量数量；错误或未就绪状态不能携带可显示数据。进度必须使用有限非负当前量与正总量或 null。

@@ -61,7 +61,21 @@ export interface CfdPlot {
   logarithmic?: boolean
   series: { name: string; points: [number, number][] }[]
 }
+export interface CfdFieldMesh {
+  vertices: number[]; triangles: number[]; fields: Record<string, number[]>; truncated: boolean
+}
+export interface CfdFlowData {
+  id: string; time: number; coordinateUnit: 'm'
+  fields: { id: string; label: string; unit: string; range: [number, number] }[]
+  surface: CfdFieldMesh; slice: CfdFieldMesh
+  streamlines: { vertices: number[]; segments: number[]; fields: Record<string, number[]>; truncated: boolean }
+  vectors: { positions: number[]; values: number[]; fields: Record<string, number[]> }
+}
+export interface CfdFlowResults { status: 'unavailable' | 'loading' | 'ready' | 'error'; error?: string; data?: CfdFlowData }
+export interface CfdProgress { stage: 'idle' | 'ready' | 'meshing' | 'checking' | 'solving' | 'finished' | 'stopped'; current: number; total: number | null }
 export interface CfdState {
+  results?: CfdFlowResults
+  progress?: CfdProgress
   revision: number
   runtime: { freecadVersion: string; upstreamCommit?: string }
   capabilities: Record<string, CfdValue>

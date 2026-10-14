@@ -465,7 +465,15 @@ class Document:
                     self.geometry_cache.clear()
                 item["edges"] = []
                 for index, edge in enumerate(shape.Edges[:4096]):
-                    points = edge.discretize(Number=16)
+                    try:
+                        points = edge.discretize(Number=16)
+                    except Exception as error:
+                        item["truncated"] = True
+                        self.r.log(
+                            "warning",
+                            f"Preview omitted {obj.Name}.Edge{index + 1}: {error}",
+                        )
+                        continue
                     item["edges"].append(
                         {
                             "id": f"Edge{index + 1}",

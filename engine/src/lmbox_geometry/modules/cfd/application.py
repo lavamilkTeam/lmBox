@@ -8,7 +8,7 @@ import threading
 import traceback
 from collections import deque
 
-from .runtime import COMMANDS, Document, Runtime, Widgets, encode
+from .runtime import COMMANDS, Document, Results, Runtime, Widgets, encode
 
 READS = {"initialize", "inspect", "poll"}
 MUTATIONS = {
@@ -39,6 +39,7 @@ class Session:
         self.logs = logs
         self.document = Document(runtime)
         self.widgets = Widgets(runtime)
+        self.results = Results(runtime)
         self.revision = 0
         self.pending = None
         self.last_action = None
@@ -68,6 +69,7 @@ class Session:
             {"objectId": item.ObjectName, "subelements": list(item.SubElementNames)}
             for item in self.r.gui.Selection.getSelectionEx()
         ]
+        results, progress = self.results.snapshot()
         state = {
             "revision": self.revision,
             "runtime": {"freecadVersion": ".".join(self.r.app.Version()[:3])},
@@ -85,6 +87,8 @@ class Session:
             "dialogs": dialogs,
             "geometry": self.document.geometry(),
             "plots": self.plots(),
+            "results": results,
+            "progress": progress,
             "logs": list(self.logs),
             "busy": self.pending is not None,
             "pendingAction": self.pending,
@@ -314,5 +318,6 @@ def run_worker(
         timer.stop()
         for name, original in console_methods.items():
             setattr(runtime.app.Console, name, original)
+        coordinator.results.close()
         runtime.close()
         protocol.close()

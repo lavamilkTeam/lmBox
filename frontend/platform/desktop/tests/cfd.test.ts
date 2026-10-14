@@ -43,3 +43,24 @@ describe('CFD transport boundary', () => {
     await expect(saveCfdFile('part.py', 'UEsDBA==')).rejects.toThrow('无效')
   })
 })
+
+it('validates native field associations, units, topology and progress through transport', async () => {
+  const mesh = { vertices: [0,0,0,1,0,0,0,1,0], triangles: [0,1,2], fields: {p:[10,20,30]}, truncated:false }
+  const value = { ...response(), state: { ...state(), results: { status:'ready', data: {id:'fixture',time:25,coordinateUnit:'m',
+    fields:[{id:'p',label:'压力',unit:'Pa',range:[10,30]}], surface:mesh,slice:mesh,
+    streamlines:{vertices:[0,0,0,1,0,0],segments:[0,1],fields:{p:[10,20]},truncated:false},
+    vectors:{positions:[0,0,0],values:[1,0,0],fields:{p:[10]}} } }, progress:{stage:'solving',current:25,total:500} } }
+  fetchResponse(value)
+  await expect(cfdRequest(request)).resolves.toEqual(value)
+  for (const corrupt of [
+    (v:typeof value)=>{v.state.results.data.surface.fields.p=[10]},
+    (v:typeof value)=>{v.state.results.data.streamlines.segments=[0,5]},
+    (v:typeof value)=>{v.state.results.data.vectors.values=[1,0]},
+    (v:typeof value)=>{v.state.progress.total=0},
+    (v:typeof value)=>{v.state.results.data.fields[0]!.range=[30,10]},
+    (v:typeof value)=>{v.state.results.status='loading'},
+  ]) {
+    const bad=structuredClone(value);corrupt(bad);fetchResponse(bad)
+    await expect(cfdRequest(request)).rejects.toThrow('无效')
+  }
+})

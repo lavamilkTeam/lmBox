@@ -20,11 +20,39 @@ function node(value: unknown, depth = 0): value is CfdUiNode {
     && (value.options === undefined || array(value.options, 100000) && value.options.every(text))
     && (value.children === undefined || array(value.children, 10000) && value.children.every(child => node(child, depth + 1)))
 }
+function fieldValues(value: unknown, count: number): boolean {
+  return record(value) && Object.keys(value).length <= 16
+    && Object.values(value).every(values => array(values, 360000) && values.length === count && values.every(finite))
+}
+function fieldMesh(value: unknown, segments = false): boolean {
+  if (!record(value) || !coordinates(value.vertices) || value.vertices.length > 1080000 || typeof value.truncated !== 'boolean') return false
+  const indices = segments ? value.segments : value.triangles
+  return array(indices, 360000) && indices.length % (segments ? 2 : 3) === 0
+    && indices.every(index => integer(index) && index < (value.vertices as number[]).length / 3)
+    && fieldValues(value.fields, value.vertices.length / 3)
+}
+function flowResults(value: unknown): boolean {
+  if (!record(value) || !['unavailable', 'loading', 'ready', 'error'].includes(String(value.status)) || (value.error !== undefined && !text(value.error))) return false
+  if (value.status !== 'ready') return value.data === undefined
+  const data = value.data
+  return record(data) && text(data.id) && finite(data.time) && data.time > 0 && data.coordinateUnit === 'm'
+    && array(data.fields, 16) && data.fields.length > 0 && data.fields.every(field => record(field) && text(field.id) && text(field.label) && text(field.unit)
+      && array(field.range, 2) && field.range.length === 2 && field.range.every(finite) && field.range[0]! <= field.range[1]!)
+    && fieldMesh(data.surface) && fieldMesh(data.slice) && fieldMesh(data.streamlines, true)
+    && record(data.vectors) && coordinates(data.vectors.positions) && data.vectors.positions.length <= 7500
+    && coordinates(data.vectors.values) && data.vectors.values.length === data.vectors.positions.length
+    && fieldValues(data.vectors.fields, data.vectors.positions.length / 3)
+}
+function progress(value: unknown): boolean {
+  return record(value) && ['idle', 'ready', 'meshing', 'checking', 'solving', 'finished', 'stopped'].includes(String(value.stage))
+    && finite(value.current) && value.current >= 0 && (value.total === null || finite(value.total) && value.total > 0)
+}
 function state(value: unknown): value is CfdState {
   if (!record(value) || !Number.isSafeInteger(value.revision) || (value.revision as number) < 0
     || !record(value.runtime) || !text(value.runtime.freecadVersion) || !record(value.capabilities) || !validValue(value.capabilities)
     || !array(value.commands, 1000) || !record(value.document) || !text(value.document.name) || !text(value.document.label) || !array(value.document.objects, 10000)
     || !array(value.selection, 10000) || !array(value.dialogs, 100) || !array(value.geometry, 10000)
+    || (value.results !== undefined && !flowResults(value.results)) || (value.progress !== undefined && !progress(value.progress))
     || !array(value.plots, 1000) || !array(value.logs, 20000) || typeof value.busy !== 'boolean') return false
   return value.commands.every(command => record(command) && text(command.id) && text(command.label) && text(command.tooltip) && typeof command.enabled === 'boolean'
       && (command.commands === undefined || array(command.commands, 1000) && command.commands.every(text)))

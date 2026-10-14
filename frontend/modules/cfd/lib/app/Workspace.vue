@@ -1,18 +1,36 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import type { CfdOperation, CfdRequest, CfdValue } from '../../../../contracts'
+import type { CfdOperation, CfdRequest, CfdValue, CfdFlowData } from '../../../../contracts'
 import { cfdRequest, readCfdFile, saveCfdFile, chooseCfdPath, getCfdSessionId, observeViewportSize } from '../../../../platform/desktop'
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, Tooltip, TooltipProvider, TooltipTrigger, TooltipContent, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, ScrollArea, Separator } from '../../../../ui/shadcn'
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, Tooltip, TooltipProvider, TooltipTrigger, TooltipContent, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, ScrollArea, Separator, Progress } from '../../../../ui/shadcn'
 import { FolderOpen, Save, Undo2, Redo2, Maximize, Layers, Boxes, Grid2X2, Wind, FlaskConical, SquareDashed, Waves, Box, Gauge, ChartNoAxesCombined, SlidersHorizontal, Play, ChevronDown } from '@lucide/vue'
 import { useCfdSession } from '../domain/session'
 import { enqueueCfdOperation } from './session'
 import { TaskPanel } from '../features/tasks'
 import { DocumentPanel } from '../features/document'
-import { GeometryViewer, ResultPlot, QtNode, chinese } from '../ui'
+import { GeometryViewer, FlowControls, ResultPlot, QtNode, chinese } from '../ui'
 const session=useCfdSession()
 const state=computed(()=>session.state)
 const panel=ref('model')
 const view=ref('geometry')
+const flowActive=ref(false)
+const upAxis=ref<'x'|'y'|'z'>('z')
+const fieldId=ref('p')
+const showMesh=ref(true)
+const showSlice=ref(false)
+const showStreamlines=ref(true)
+const showVectors=ref(false)
+const flowData=computed<CfdFlowData|undefined>(previous=>{
+  const data=state.value?.results?.status==='ready'?state.value.results.data:undefined
+  return data?.id===previous?.id?previous:data
+})
+const progressValue=computed(()=>{const p=state.value?.progress;return p?.total?Math.min(100,Math.max(0,p.current/p.total*100)):null})
+const progressLabel=computed(()=>{
+  if(state.value?.busy)return '正在执行原生操作'
+  const p=state.value?.progress
+  const labels={idle:'就绪',ready:'待求解',meshing:'生成网格',checking:'检查网格',solving:'求解中',finished:'求解运行结束',stopped:'求解已停止'}
+  return p?`${labels[p.stage]}${p.total && ['solving','finished'].includes(p.stage)?` · ${p.current} / ${p.total}`:''}`:'连接计算引擎'
+})
 const fileInput=ref<HTMLInputElement>()
 const sending=ref(false)
 const reconnecting=ref(false)
@@ -131,11 +149,12 @@ onBeforeUnmount(()=>{disposed=true;stopObserving?.();clearTimeout(timer);window.
           <TabsContent value="tasks" class="cfd-sidebar-content"><TaskPanel v-if="state?.editor" :editor="state.editor" @field="field" @click="click" @accept="request('editorAccept')" @reject="request('editorReject')"/></TabsContent>
         </Tabs>
         <Tabs v-model="view" class="cfd-main-view"><TabsList v-if="state?.plots.length" aria-label="结果视图"><TabsTrigger value="geometry">三维视图</TabsTrigger><TabsTrigger v-for="plot in state.plots" :key="plot.id" :value="plot.id">{{ chinese(plot.title) }}</TabsTrigger></TabsList>
-          <TabsContent value="geometry" class="cfd-geometry-content"><div ref="viewport" class="cfd-geometry-viewport"><GeometryViewer :viewport-size="viewportSize" :pixel-ratio="pixelRatio" :geometry="state?.geometry ?? []" :selection="state?.selection ?? []" :fit-version="fitVersion" @select="(objectId,subelements,append)=>request('selectGeometry',{objectId,subelements,append})" @error="viewError=$event"/></div><span v-if="viewError" role="alert" class="cfd-view-error">{{ viewError }}</span><span v-if="!state && sending" role="status" class="cfd-view-status">正在启动…</span></TabsContent>
+          <TabsContent value="geometry" class="cfd-geometry-content"><FlowControls v-model:up-axis="upAxis" v-model:active="flowActive" v-model:field="fieldId" v-model:mesh="showMesh" v-model:slice="showSlice" v-model:streamlines="showStreamlines" v-model:vectors="showVectors" :data="flowData" :status="state?.results?.status" :error="state?.results?.error"/><div ref="viewport" class="cfd-geometry-viewport"><GeometryViewer :up-axis="upAxis" :result="flowActive ? flowData : undefined" :field="fieldId" :show-mesh="showMesh" :show-slice="showSlice" :show-streamlines="showStreamlines" :show-vectors="showVectors" :viewport-size="viewportSize" :pixel-ratio="pixelRatio" :geometry="state?.geometry ?? []" :selection="state?.selection ?? []" :fit-version="fitVersion" @select="(objectId,subelements,append)=>request('selectGeometry',{objectId,subelements,append})" @error="viewError=$event"/></div><span v-if="viewError" role="alert" class="cfd-view-error">{{ viewError }}</span><span v-if="!state && sending" role="status" class="cfd-view-status">正在启动…</span></TabsContent>
           <TabsContent v-for="plot in state?.plots ?? []" :key="plot.id" :value="plot.id" class="cfd-plot-content"><ResultPlot :plot="plot"/></TabsContent>
         </Tabs>
       </div>
       <section class="cfd-report"><header>报告视图<span v-if="state?.busy" role="status">正在执行…</span></header><ScrollArea class="cfd-report-scroll"><div role="log" aria-live="polite"><p v-for="(entry,index) in state?.logs ?? []" :key="index" :data-level="entry.level">{{ chinese(entry.text) }}</p></div></ScrollArea></section>
+      <footer class="cfd-progress"><span role="status">{{ progressLabel }}</span><Progress :model-value="state?.busy ? null : progressValue" aria-label="计算进度" :class="{'cfd-progress-indeterminate': state?.busy || progressValue===null && ['meshing','checking'].includes(state?.progress?.stage ?? '')}"/><span v-if="progressValue!==null && !state?.busy">{{ Math.round(progressValue) }}%</span></footer>
       <Dialog :open="Boolean(dialog)" @update:open="!$event && closeDialog()"><DialogContent class="cfd-native-dialog" :show-close-button="false" @escape-key-down.prevent="closeDialog" @pointer-down-outside.prevent><DialogHeader><DialogTitle>{{ chinese(dialog?.title) }}</DialogTitle><DialogDescription v-if="dialog?.text" class="cfd-dialog-text">{{ chinese(dialog.text) }}</DialogDescription></DialogHeader><div class="cfd-workspace cfd-dialog-controls"><QtNode v-for="root in dialog?.roots" :key="root.id" :node="root" @field="field" @click="click"/></div><DialogFooter><Button v-for="button in dialog?.buttons" :key="button.id" :disabled="button.enabled===false" :variant="['reject','cancel','no'].includes(button.role.toLowerCase())?'outline':'default'" @click="request('dialogResponse',{dialogId:dialog!.id,buttonId:button.id})">{{ chinese(button.label) }}</Button></DialogFooter></DialogContent></Dialog>
     </TooltipProvider>
   </main>

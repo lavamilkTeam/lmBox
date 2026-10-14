@@ -3,3 +3,5 @@ export { default as GeometryViewer } from './GeometryViewer.vue'
 export { default as ResultPlot } from './ResultPlot.vue'
 export { default as PropertyEditor } from './PropertyEditor.vue'
 export { chinese } from './chinese'
+
+export { default as FlowControls } from './FlowControls.vue'

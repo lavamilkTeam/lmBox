@@ -124,3 +124,29 @@ test('polls scheduled during native shutdown do not run after the session is rel
   await expect(page.getByRole('button', { name: '打开或导入几何', exact: true })).toBeEnabled()
   expect(operations).toEqual(['initialize', 'close', 'initialize'])
 })
+
+test('native field layers and factual progress remain visible across result revisions', async ({ page }) => {
+  const state: CfdState = structuredClone(fixture)
+  const mesh = {vertices:[0,0,0,1,0,0,0,1,0],triangles:[0,1,2],fields:{p:[10,20,30],U:[1,2,3]},truncated:false}
+  state.results={status:'ready',data:{id:'explicit-test-fixture',time:25,coordinateUnit:'m',fields:[{id:'p',label:'压力',unit:'Pa',range:[10,30]},{id:'U',label:'速度',unit:'m/s',range:[1,3]}],surface:mesh,slice:mesh,
+    streamlines:{vertices:[0,0,0,1,0,0],segments:[0,1],fields:{p:[10,20],U:[1,2]},truncated:false},vectors:{positions:[0,0,0],values:[1,0,0],fields:{p:[10],U:[1]}}}}
+  state.progress={stage:'solving',current:25,total:500}
+  await page.route('**/api/cfd',async route=>{
+    const input=route.request().postDataJSON() as CfdRequest
+    await route.fulfill({json:{schemaVersion:1,projectId:input.projectId,requestId:input.requestId,inputRevision:input.expectedRevision,revision:1,ok:true,state}})
+  })
+  await page.goto('/')
+  await selectWorkspace(page,'流体力学')
+  await page.getByRole('button',{name:'流场',exact:true}).click()
+  await expect(page.getByRole('img',{name:'流体计算三维结果'})).toBeVisible()
+  await expect(page.getByRole('progressbar',{name:'计算进度'})).toHaveAttribute('aria-valuenow','5')
+  await page.getByRole('checkbox',{name:'速度矢量',exact:true}).check()
+  await page.getByRole('combobox',{name:'显示物理量'}).click()
+  await page.getByRole('option',{name:'速度 (m/s)',exact:true}).click()
+  await expect(page.getByLabel('速度色标')).toBeVisible()
+  state.results={status:'loading'}
+  state.progress={stage:'checking',current:0,total:null}
+  await expect(page.getByText('读取流场…')).toBeVisible()
+  await expect(page.getByRole('button',{name:'流场',exact:true})).toBeDisabled()
+  await expect(page.getByRole('progressbar')).not.toHaveAttribute('aria-valuenow')
+})

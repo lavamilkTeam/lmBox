@@ -14,3 +14,12 @@ export interface UiGeometry { objectId: string; label: string; vertices: number[
 export interface UiPlot { id: string; title: string; xLabel: string; yLabel: string; xScale?: string; yScale?: string; series: { name: string; points: [number, number][] }[] }
 export interface UiProperty { name: string; type: string; group: string; readOnly: boolean; value: UiValue; options?: string[] }
 export type FieldPhase = 'input' | 'commit'
+
+export interface UiFieldMesh { vertices: number[]; triangles: number[]; fields: Record<string, number[]>; truncated: boolean }
+export interface UiFlowData {
+  id: string; time: number; coordinateUnit: 'm'
+  fields: { id: string; label: string; unit: string; range: [number, number] }[]
+  surface: UiFieldMesh; slice: UiFieldMesh
+  streamlines: { vertices: number[]; segments: number[]; fields: Record<string, number[]>; truncated: boolean }
+  vectors: { positions: number[]; values: number[]; fields: Record<string, number[]> }
+}

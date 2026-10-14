@@ -10,7 +10,7 @@
 
 ## 行为约束
 
-- `browser.rs` 是仅在 wasm32 启用的薄 ABI，通过 `features/board_import` 公开入口接收受控字节；不在 ABI 中实现解析、解包或业务策略。
+- `browser.rs` 是仅在 wasm32 启用的薄 ABI，通过 `modules::stencil` 公开入口接收受控字节；不在 ABI 中实现解析、解包或业务策略。
 
 - 浏览器 Worker 管理本次计算的超时和取消；原生任务调度、工程保存仍未实现。源文件不会发送到远程服务。
 

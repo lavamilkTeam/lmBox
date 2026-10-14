@@ -1,0 +1,25 @@
+AI Elements Vue
+Copyright 2025 cwandev
+Licensed under the Apache License, Version 2.0.
+
+Source: https://github.com/vuepont/ai-elements-vue
+Revision: ef595379fb6678c36dec9a453e8e3302a295a52b
+
+Adapted source paths under packages/elements/src/:
+- message/Message.vue, message/MessageContent.vue
+- conversation/Conversation.vue, conversation/ConversationContent.vue
+- prompt-input/PromptInput.vue, prompt-input/PromptInputTextarea.vue,
+  prompt-input/PromptInputSubmit.vue
+- tool/Tool.vue, tool/ToolHeader.vue, tool/ToolContent.vue (Execution.vue)
+
+lmBox modifications:
+- Existing shadcn-vue public imports, controlled props/slots/events and local styles.
+- Removed AI SDK types and transport assumptions, Markdown providers, external
+  scroll runtime, automatic input clearing and browser/file I/O from components.
+- Added native Vue follow-scroll behavior, real task status and plain-text output.
+- Execution.vue displays actual task progress; it does not infer tool results.
+
+UPSTREAM-LICENSE retains the original upstream copyright/license notice.
+LICENSE contains the complete Apache License, Version 2.0.
+These third-party components retain their Apache-2.0 terms; the repository's
+application license does not replace their license.

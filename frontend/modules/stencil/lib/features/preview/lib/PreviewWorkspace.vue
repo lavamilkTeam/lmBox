@@ -2,6 +2,7 @@
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Box, Scan, CodeXml, MousePointer2, Move, ZoomIn, ZoomOut, Maximize, Focus, Layers, FileBox, Upload, Grid2X2 } from '@lucide/vue'
 import { useProjectStore } from '../../../domain/project'
+import { Button, Checkbox } from '../../../../../../ui/shadcn'
 import { HelpTip } from '../../../../../../ui/help-tip'
 import SelectionLayer from './SelectionLayer.vue'
 import IrLayer from './IrLayer.vue'
@@ -141,15 +142,15 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
 <template>
   <div class="preview-layout">
     <nav class="mode-rail" aria-label="预览模式">
-      <button v-for="mode in modes" :key="mode.id" :class="{ selected:doc?.mode===mode.id }" :disabled="!doc || (!doc.demo && (mode.id==='gcode' || (mode.id==='3d' && !store.activeIr)))" :aria-label="mode.title" :aria-pressed="doc?.mode===mode.id" :title="mode.title" @click="store.setMode(mode.id)"><component :is="mode.icon" :size="21" :stroke-width="1.7"/><span>{{ mode.label }}</span></button>
+      <Button v-for="mode in modes" :key="mode.id" :class="{ selected:doc?.mode===mode.id }" :disabled="!doc || (!doc.demo && (mode.id==='gcode' || (mode.id==='3d' && !store.activeIr)))" :aria-label="mode.title" :aria-pressed="doc?.mode===mode.id" :title="mode.title" @click="store.setMode(mode.id)" variant="ghost" size="icon"><component :is="mode.icon" :size="21" :stroke-width="1.7"/><span>{{ mode.label }}</span></Button>
       <div class="rail-divider"/>
-      <button :disabled="!doc || doc.demo" :class="{selected:doc?.mode==='2d' && !panMode}" aria-label="选择工具" @click="store.setMode('2d');panMode=false"><MousePointer2 :size="19"/><span>选择</span></button>
-      <button :disabled="!doc || doc.mode==='3d'" :class="{ selected:panMode }" aria-label="平移工具" title="平移画布" @click="panMode=!panMode"><Move :size="19"/><span>平移</span></button>
-      <button :disabled="!doc" aria-label="适应画布" title="适应画布" @click="fit"><Focus :size="19"/><span>适应</span></button>
+      <Button :disabled="!doc || doc.demo" :class="{selected:doc?.mode==='2d' && !panMode}" aria-label="选择工具" @click="store.setMode('2d');panMode=false" variant="ghost" size="icon"><MousePointer2 :size="19"/><span>选择</span></Button>
+      <Button :disabled="!doc || doc.mode==='3d'" :class="{ selected:panMode }" aria-label="平移工具" title="平移画布" @click="panMode=!panMode" variant="ghost" size="icon"><Move :size="19"/><span>平移</span></Button>
+      <Button :disabled="!doc" aria-label="适应画布" title="适应画布" @click="fit" variant="ghost" size="icon"><Focus :size="19"/><span>适应</span></Button>
       <span class="rail-bottom"><HelpTip label="预览操作说明">{{ doc?.mode==='3d' ? '拖动旋转 · 滚轮缩放 · 右键平移' : '单击选择 · 拖动框选 · Shift 多选 · 中键平移' }}</HelpTip></span>
     </nav>
     <section class="preview-main">
-      <div class="viewport-toolbar"><div><span class="view-icon"><component :is="doc?.mode==='3d' ? Box : doc?.mode==='gcode' ? CodeXml : Layers" :size="15"/></span><strong>{{ modeTitle }}</strong></div><div><button v-if="doc && !doc.demo && doc.editing.selected.length && doc.editing.design.kind==='stencil'" class="text-button" :disabled="doc.model.status!=='ready'" @click="focusKey++;store.setMode('3d')">查看所选孔壁</button><span v-if="doc?.demo" class="demo-badge">示例数据</span><button class="icon-button" title="重置视图" aria-label="重置视图" @click="fit"><Maximize :size="15"/></button></div></div>
+      <div class="viewport-toolbar"><div><span class="view-icon"><component :is="doc?.mode==='3d' ? Box : doc?.mode==='gcode' ? CodeXml : Layers" :size="15"/></span><strong>{{ modeTitle }}</strong></div><div><Button v-if="doc && !doc.demo && doc.editing.selected.length && doc.editing.design.kind==='stencil'" class="text-button" :disabled="doc.model.status!=='ready'" @click="focusKey++;store.setMode('3d')" variant="ghost" size="sm">查看所选孔壁</Button><span v-if="doc?.demo" class="demo-badge">示例数据</span><Button variant="ghost" size="icon" class="icon-button" title="重置视图" aria-label="重置视图" @click="fit"><Maximize :size="15"/></Button></div></div>
       <div ref="viewport" class="viewport">
         <div v-if="canPreview && doc?.mode!=='3d'" class="ruler ruler-horizontal"><span v-for="tick in xTicks" :key="tick.value" :class="{ major:tick.major }" :style="{ left:`${tick.position}px` }"><b v-if="tick.major">{{ tick.value }}</b></span></div>
         <div v-if="canPreview && doc?.mode!=='3d'" class="ruler ruler-vertical"><span v-for="tick in yTicks" :key="tick.value" :class="{ major:tick.major }" :style="{ top:`${tick.position}px` }"><b v-if="tick.major">{{ tick.value }}</b></span></div>
@@ -159,8 +160,8 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
             <div v-else class="preview-empty" :role="doc.model.status==='error' ? 'alert' : 'status'">
               <Box :size="32"/><h2>{{ doc.model.status==='error' ? '模型生成失败' : doc.model.status==='cancelled' ? '已取消生成' : '正在生成三维模板' }}</h2>
               <p>{{ doc.model.error || '正在计算开孔与模板网格…' }}</p>
-              <button v-if="doc.model.status==='building'" class="outline-button" @click="emit('cancelModel')">取消生成</button>
-              <button v-if="doc.model.status==='error' || doc.model.status==='cancelled'" class="outline-button" @click="store.retryModel">重新生成</button>
+              <Button v-if="doc.model.status==='building'" class="outline-button" @click="emit('cancelModel')" variant="outline" size="sm">取消生成</Button>
+              <Button v-if="doc.model.status==='error' || doc.model.status==='cancelled'" class="outline-button" @click="store.retryModel" variant="outline" size="sm">重新生成</Button>
             </div>
           </template>
           <svg v-else ref="canvas" tabindex="0" aria-label="图形编辑画布" class="board-canvas" @keydown="keyboard" :class="{ panning:panMode, dragging }" :viewBox="viewBox" @wheel.prevent="changeZoom($event.deltaY<0 ? 0.1 : -0.1)" @pointerdown="pointerDown" @pointermove="pointerMove" @pointerup="pointerUp" @pointercancel="selectStart=undefined;marquee=undefined;dragging=false">
@@ -192,15 +193,15 @@ watch(() => [doc.value?.id,doc.value?.selectedLayer], () => {dragging.value=fals
             <rect v-if="marquee" v-bind="marquee" fill="#529af52b" stroke="#69aaff" stroke-width="1" vector-effect="non-scaling-stroke" pointer-events="none"/>
           </svg>
           <div v-if="doc.mode==='2d' && rendered.error" class="preview-empty" role="alert"><p>{{ rendered.error }}</p></div><div v-else-if="doc.mode==='2d' && doc.params.outline && outlines.some(o=>o.error)" class="preview-warning" role="alert">{{ outlines.filter(o=>o.error).map(o=>`${o.name}：${o.error}`).join('；') }}</div>
-          <div v-if="!doc.demo && doc.mode==='2d' && doc.model.status!=='ready'" class="edit-progress" :role="doc.model.status==='error'?'alert':'status'">{{ doc.model.status==='error' ? doc.model.error : doc.model.status==='cancelled' ? '已取消计算' : '正在计算编辑结果…' }}<button v-if="doc.model.status==='error' || doc.model.status==='cancelled'" @click="store.retryModel">重试</button></div>
+          <div v-if="!doc.demo && doc.mode==='2d' && doc.model.status!=='ready'" class="edit-progress" :role="doc.model.status==='error'?'alert':'status'">{{ doc.model.status==='error' ? doc.model.error : doc.model.status==='cancelled' ? '已取消计算' : '正在计算编辑结果…' }}<Button v-if="doc.model.status==='error' || doc.model.status==='cancelled'" @click="store.retryModel" variant="ghost" size="sm">重试</Button></div>
           <div class="viewport-top-info">{{ doc.mode==='gcode' ? `路径演示 · 第 ${doc.params.layer} 层` : doc.mode==='3d' ? (doc.demo ? '透视视图' : doc.editing.design.kind==='base' ? '定位底板 · 透视视图' : '钢网 · 透视视图') : doc.demo ? '顶视图 · TOP' : store.activeLayer?.name ?? doc.name }}<span class="info-divider"/>{{ doc.mode==='3d' ? `${(!doc.demo && doc.editing.design.kind==='base' ? doc.editing.design.floor+doc.editing.design.boardThickness : doc.params.thickness).toFixed(2)} mm 厚度` : '单位：mm' }}</div>
           <div class="axis-widget"><span class="axis-y">Y</span><span class="axis-x">X</span><i/></div>
-          <div v-if="doc.mode==='2d' && topOutline" class="mouth-legend"><label><input v-model="showTopOutline" type="checkbox"/>显示上口轮廓</label><HelpTip label="上口轮廓说明">橙色虚线：上口 · 填充图形：贴板下口</HelpTip></div>
+          <div v-if="doc.mode==='2d' && topOutline" class="mouth-legend"><label><Checkbox v-model="showTopOutline" aria-label="显示上口轮廓"/>显示上口轮廓</label><HelpTip label="上口轮廓说明">橙色虚线：上口 · 填充图形：贴板下口</HelpTip></div>
           <div v-if="doc.mode==='gcode'" class="toolpath-legend"><span><i style="background:#eca967"/>轮廓</span><span><i style="background:#649bb0"/>填充</span><span><i style="background:#bf84f2"/>空走</span></div>
-          <div v-if="doc.mode!=='3d'" class="zoom-controls"><button aria-label="缩小" @click="changeZoom(-0.1)"><ZoomOut :size="16"/></button><span>{{ Math.round(zoom*100) }}%</span><button aria-label="放大" @click="changeZoom(0.1)"><ZoomIn :size="16"/></button><i/><button aria-label="缩放适应画布" @click="fit"><Maximize :size="14"/></button></div>
+          <div v-if="doc.mode!=='3d'" class="zoom-controls"><Button aria-label="缩小" @click="changeZoom(-0.1)" variant="ghost" size="icon"><ZoomOut :size="16"/></Button><span>{{ Math.round(zoom*100) }}%</span><Button aria-label="放大" @click="changeZoom(0.1)" variant="ghost" size="icon"><ZoomIn :size="16"/></Button><i/><Button aria-label="缩放适应画布" @click="fit" variant="ghost" size="icon"><Maximize :size="14"/></Button></div>
         </template>
-        <div v-else-if="doc" class="preview-empty imported-empty"><div class="empty-icon"><FileBox :size="33" :stroke-width="1.3"/></div><h2>{{ store.activeLayer?.name ?? doc.name }}</h2><p v-if="store.activeLayer?.diagnostic" role="alert">{{ store.activeLayer.diagnostic.message }}</p><div class="file-summary"><span>{{ doc.files.length }} 个文件</span><span>{{ doc.files.filter(f=>f.role.includes('paste')).length }} 个锡膏层</span></div><div class="imported-layers"><div v-for="file in doc.files.filter(f=>f.role!=='other')" :key="file.name"><Layers :size="14"/><span>{{ file.name }}</span><b>{{ file.role==='outline' ? '板框' : file.role==='top-paste' ? '顶层锡膏' : '底层锡膏' }}</b></div></div><button class="outline-button" @click="emit('demo')">打开示例</button></div>
-        <div v-else class="preview-empty"><div class="empty-icon"><Layers :size="36" :stroke-width="1.3"/></div><h2>导入gerber</h2><button class="primary-button" @click="emit('import')"><Upload :size="15"/>导入文件</button><button class="text-button" @click="emit('demo')">打开示例</button></div>
+        <div v-else-if="doc" class="preview-empty imported-empty"><div class="empty-icon"><FileBox :size="33" :stroke-width="1.3"/></div><h2>{{ store.activeLayer?.name ?? doc.name }}</h2><p v-if="store.activeLayer?.diagnostic" role="alert">{{ store.activeLayer.diagnostic.message }}</p><div class="file-summary"><span>{{ doc.files.length }} 个文件</span><span>{{ doc.files.filter(f=>f.role.includes('paste')).length }} 个锡膏层</span></div><div class="imported-layers"><div v-for="file in doc.files.filter(f=>f.role!=='other')" :key="file.name"><Layers :size="14"/><span>{{ file.name }}</span><b>{{ file.role==='outline' ? '板框' : file.role==='top-paste' ? '顶层锡膏' : '底层锡膏' }}</b></div></div><Button class="outline-button" @click="emit('demo')" variant="outline" size="sm">打开示例</Button></div>
+        <div v-else class="preview-empty"><div class="empty-icon"><Layers :size="36" :stroke-width="1.3"/></div><h2>导入gerber</h2><Button class="primary-button" @click="emit('import')" size="sm"><Upload :size="15"/>导入文件</Button><Button class="text-button" @click="emit('demo')" variant="ghost" size="sm">打开示例</Button></div>
       </div>
       <div class="viewport-status"><span><MousePointer2 :size="12"/>{{ doc?.mode==='3d' ? '轨道控制' : panMode ? '平移模式' : `已选 ${doc?.editing.selected.length ?? 0} 个` }}</span><span v-if="doc?.demo">{{ doc.apertures.length }} 个开孔<span class="status-divider">|</span>{{ doc.width }} × {{ doc.height }} mm</span><span v-if="doc && !doc.demo && store.activeIr">{{ store.activeIr.objects.length }} 个图形对象</span><span class="status-right"><Grid2X2 :size="12"/>毫米</span></div>
     </section>

@@ -6,9 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 // NASA CEA v3.3.4, Apache-2.0. Compile the official Fortran kernel and C ABI.
 const root = fileURLToPath(new URL('../', import.meta.url));
-const source = path.join(root, 'src-fortran', 'cea');
+const source = path.join(root, 'src-fortran', 'modules', 'propulsion', 'cea');
 const upstream = JSON.parse(await readFile(path.join(source, 'upstream.json'), 'utf8'));
-const build = path.join(root, '.tools', 'cea', 'fortran-build');
+const build = path.join(root, '.tools', 'cea', 'modules-build');
 const output = path.join(root, '.tools', 'cea', 'runtime');
 const cmake = process.env.CMAKE || 'cmake';
 
@@ -60,6 +60,6 @@ for (const [from, to] of [[librarySource, library], [path.join(build, 'thermo.li
   await copyFile(from, path.join(output, to));
 }
 await writeFile(path.join(output, 'manifest.json'), JSON.stringify({ version: upstream.version,
-  upstreamCommit: upstream.commit, sourceDirectory: 'src-fortran/cea', sourceSha256,
+  upstreamCommit: upstream.commit, sourceDirectory: 'src-fortran/modules/propulsion/cea', sourceSha256,
   platform: process.platform, arch: process.arch, kernel: 'Fortran', interface: 'official C ABI' }, null, 2) + '\n');
 console.log(`CEA backend runtime: ${path.relative(root, output)}`);

@@ -9,10 +9,17 @@
 <!-- agent-directory:start -->
 ```text
 scripts/
+├── agent-javascript-ai.md
+├── agent-javascript-modules.md
+├── agent-javascript-installer.md
 ├── agent-javascript-build.md
+├── agent-javascript-cfd.md
+├── agent-javascript-cfd-api.md
 ├── agent-javascript-cea.md
 ├── agent-javascript-desktop.md
+├── agent-javascript-propulsion-api.md
 ├── agent-javascript-preview-api.md
+├── agent-javascript-propulsion.md
 ├── agent-javascript-release-assets.md
 └── agent-javascript.md
 ```

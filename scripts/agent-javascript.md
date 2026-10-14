@@ -4,8 +4,15 @@
 
 | 脚本范围 | 必读说明 |
 | --- | --- |
+| `module-package.mjs/module-archive.py` | [模块 ZIP 发布构建](agent-javascript-modules.md) |
+| `installer.mjs`、根 `vite.installer.config.ts` | [安装页面构建](agent-javascript-installer.md) |
+| `setup-cfd.mjs` | [CFD 环境准备](agent-javascript-cfd.md) |
+| `build-propulsion.mjs` | [推进设计构建](agent-javascript-propulsion.md) |
 | `build-cea.mjs` | [CEA 构建](agent-javascript-cea.md) |
 | `build-wasm/build-worker/check-worker/geometry-env` | [构建与引擎环境](agent-javascript-build.md) |
+| `ai-api.ts`、`ai-env.mjs`、`build-ai-worker.mjs` | [AI 传输与环境](agent-javascript-ai.md) |
+| `cfd-api.ts` | [CFD 开发传输](agent-javascript-cfd-api.md) |
+| `propulsion-api.ts` | [推进计算开发适配](agent-javascript-propulsion-api.md) |
 | `preview-api.ts` | [开发计算适配](agent-javascript-preview-api.md) |
 | `desktop.mjs/archive-desktop.mjs` | [桌面构建适配](agent-javascript-desktop.md) |
 | `release-assets.mjs/release-assets.check.mjs` | [发布产物校验](agent-javascript-release-assets.md) |

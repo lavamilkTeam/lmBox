@@ -11,8 +11,7 @@ from jsonschema import ValidationError
 from shapely.geometry import Polygon
 
 from lmbox_geometry.contracts import validate_request
-from lmbox_geometry.features.inspection import inspect_mesh
-from lmbox_geometry.features.stencil import build_preview
+from lmbox_geometry.modules.stencil import build_preview, inspect_mesh
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -158,7 +157,10 @@ def test_merging_holes_and_corrupt_mesh_are_rejected(request_data):
         inspect_mesh(mesh)
 
 
-def test_contract_and_jsonl_artifact_protocol(request_data, tmp_path):
+@pytest.mark.parametrize("export_format", [None, "stl", "svg", "dxf"])
+def test_contract_and_jsonl_artifact_protocol(request_data, tmp_path, export_format):
+    if export_format:
+        request_data["exportFormat"] = export_format
     invalid = copy.deepcopy(request_data)
     invalid["protocolVersion"] = "9"
     with pytest.raises(ValidationError):
@@ -179,7 +181,13 @@ def test_contract_and_jsonl_artifact_protocol(request_data, tmp_path):
     )
     reply = json.loads(result.stdout)
     assert reply == {**envelope, "artifact": "mesh.json"}
-    assert json.loads((tmp_path / reply["artifact"]).read_text())["summary"]["holeCount"] == 2
+    artifact = json.loads((tmp_path / reply["artifact"]).read_text())
+    assert artifact["summary"]["holeCount"] == 2
+    if export_format:
+        assert artifact["export"]["format"] == export_format
+        assert artifact["export"]["content"]
+    else:
+        assert "export" not in artifact
     envelope["jobId"] = "stale"
     result = subprocess.run(
         [sys.executable, "-m", "lmbox_geometry"],

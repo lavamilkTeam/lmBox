@@ -11,9 +11,7 @@ from shapely.geometry import Polygon
 from trimesh import load
 
 from lmbox_geometry.contracts import validate_request
-from lmbox_geometry.features.inspection import inspect_mesh
-from lmbox_geometry.features.stencil import build_preview
-from lmbox_geometry.runtime.artifacts import serialize
+from lmbox_geometry.modules.stencil import build_preview, export_contours, export_mesh, inspect_mesh
 
 
 @pytest.fixture
@@ -131,13 +129,14 @@ def test_closed_outline_base_slot_and_chamfer(data):
 
 def test_export_round_trip_and_invalid_settings(data):
     mesh, summary = build(data)
-    stl = serialize(mesh, summary, "stl")
+    stl = export_mesh(mesh, "stl")
     model = load(io.BytesIO(stl.encode()), file_type="stl")
     assert model.is_watertight
     assert model.volume == pytest.approx(summary["volume"])
-    svg = ElementTree.fromstring(serialize(mesh, summary, "svg"))
+    bounds = [point[:2] for point in summary["bounds"]]
+    svg = ElementTree.fromstring(export_contours(mesh.contours, bounds, "svg"))
     assert svg.attrib["width"].endswith("mm")
-    dxf = serialize(mesh, summary, "dxf")
+    dxf = export_contours(mesh.contours, bounds, "dxf")
     assert dxf.count("LWPOLYLINE") == len(mesh.contours)
     invalid = copy.deepcopy(data)
     invalid["settings"]["design"]["optimization"]["gridWeb"] = 0

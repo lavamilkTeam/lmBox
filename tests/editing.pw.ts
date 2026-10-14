@@ -1,3 +1,4 @@
+import { selectWorkspace } from './workspace-navigation'
 import { test, expect } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { zipSync, strToU8 } from 'fflate'
@@ -6,6 +7,7 @@ const outline=strToU8('%FSLAX34Y34*%\n%MOMM*%\n%ADD10C,0.1*%\nD10*\nX0Y0D02*\nX1
 async function ready(page:import('@playwright/test').Page) {await expect(page.getByRole('button',{name:'STL',exact:true})).toBeEnabled({timeout:20000})}
 async function open(page:import('@playwright/test').Page) {
   await page.goto('/')
+  await selectWorkspace(page, '钢网设计与制造')
   await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'editor.zip',mimeType:'application/zip',buffer:Buffer.from(zipSync({'TopPaste.GTP':paste,'Board.GKO':outline}))})
   await ready(page)
 }
@@ -55,9 +57,16 @@ test('single selection, additive marquee, edits, delete, undo and restore use re
   await expect(first).toHaveAttribute('data-selected','true')
   await expect(page.locator('.selection-count')).toHaveText('1 个图形')
   const before=await first.boundingBox()
-  await page.getByLabel('X 偏移',{exact:true}).fill('0.25')
-  await page.getByLabel('X 偏移',{exact:true}).press('Tab')
-  await page.getByRole('button',{name:'应用变换'}).click();await ready(page)
+  const offset = page.getByLabel('X 偏移',{exact:true})
+  const apply = page.getByRole('button',{name:'应用变换'})
+  await offset.fill('')
+  await expect(apply).toBeDisabled()
+  await offset.fill('0.25')
+  await expect(apply).toBeEnabled()
+  const editRequest = page.waitForRequest(r=>r.url().endsWith('/api/preview') && r.method()==='POST')
+  await apply.click()
+  expect((await editRequest).postDataJSON().edits[0]).toMatchObject({id:'0:0:0',dx:0.25})
+  await ready(page)
   expect((await first.boundingBox())!.x).toBeGreaterThan(before!.x)
   await page.getByRole('button',{name:'放大',exact:true}).click()
   const b=(await second.boundingBox())!
@@ -198,7 +207,7 @@ test('inverse taper shrinks only the selected contact opening and focuses its re
   await expect(page.getByText(/上口 120%，贴板下口 100%/)).toBeVisible()
 })
 
-test('three XY modes change selected real geometry and remain independent of thickness taper',async({page})=>{
+test('three XY modes change only the selected real geometry',async({page})=>{
   await open(page)
   const target=page.locator('[data-object-id="0:0:2"] path')
   const other=page.locator('[data-object-id="0:0:0"] path')
@@ -229,6 +238,18 @@ test('three XY modes change selected real geometry and remain independent of thi
       await page.screenshot({path:test.info().outputPath('xy-opposed-2d.png')})
     }
   }
+})
+
+test('XY ratio drafts remain unapplied and undo restores their geometry',async({page})=>{
+  await open(page)
+  const target=page.locator('[data-object-id="0:0:2"] path')
+  const before=await geometryBox(target)
+  await target.click()
+  await page.getByRole('tab',{name:'打印优化',exact:true}).click()
+  const mode=page.getByLabel('XY 缩放方式',{exact:true})
+  const apply=page.getByRole('button',{name:'优化所选图形'})
+  await mode.click();await page.getByText('上下半部反向变化',{exact:true}).click()
+  await apply.click();await ready(page)
   // Custom ratios are stored independently; drafts do not mutate the applied geometry.
   const opposed=await geometryBox(target)
   await page.getByLabel('XY 横向比例',{exact:true}).fill('70')
@@ -239,6 +260,17 @@ test('three XY modes change selected real geometry and remain independent of thi
   await page.getByRole('button',{name:'撤销编辑'}).click();await ready(page)
   expect(await geometryBox(target)).toEqual(opposed)
   await expect(page.getByLabel('XY 横向比例',{exact:true})).toHaveValue('80')
+})
+
+test('XY mode and thickness taper can be applied and disabled independently',async({page})=>{
+  await open(page)
+  const target=page.locator('[data-object-id="0:0:2"] path')
+  const before=await geometryBox(target)
+  await target.click()
+  await page.getByRole('tab',{name:'打印优化',exact:true}).click()
+  const mode=page.getByLabel('XY 缩放方式',{exact:true})
+  const apply=page.getByRole('button',{name:'优化所选图形'})
+  await mode.click();await page.getByText('上下半部反向变化',{exact:true}).click()
   await page.getByLabel('喇叭口比例',{exact:true}).fill('120')
   await page.getByLabel('喇叭口比例',{exact:true}).press('Tab')
   await page.getByRole('switch',{name:'反比缩放',exact:true}).click()
@@ -262,6 +294,7 @@ test('three XY modes change selected real geometry and remain independent of thi
 
 test('rounded pads have continuously sloping sides instead of a centre shoulder',async({page})=>{
   await page.goto('/')
+  await selectWorkspace(page, '钢网设计与制造')
   const pads='%FSLAX34Y34*%\n%MOMM*%\n%ADD10O,1X3*%\nD10*\n'+
     Array.from({length:7},(_,i)=>`X${i*18000}Y0D03*`).join('\n')+'\nM02*'
   await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'rounded-pads.GTP',mimeType:'text/plain',buffer:Buffer.from(pads)})

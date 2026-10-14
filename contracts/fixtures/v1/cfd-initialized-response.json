@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "projectId": "cfd-fixture",
+  "requestId": "initialize-fixture",
+  "inputRevision": 0,
+  "revision": 1,
+  "ok": true,
+  "state": {
+    "busy": false,
+    "capabilities": {
+      "dockerConfigured": true,
+      "geometrySelection": true,
+      "limitations": [],
+      "nativeControllers": true,
+      "nativeTaskPanels": true
+    },
+    "commands": [
+      {
+        "enabled": true,
+        "id": "CfdOF_Analysis",
+        "label": "Analysis container",
+        "tooltip": "Creates an analysis container with a CFD solver"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_MeshFromShape",
+        "label": "CFD mesh",
+        "tooltip": "Create a mesh using cfMesh, snappyHexMesh or gmsh"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_MeshRegion",
+        "label": "Mesh refinement",
+        "tooltip": "Creates a mesh refinement"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_DynamicMeshInterfaceRefinement",
+        "label": "Interface dynamic refinement",
+        "tooltip": "Activates adaptive mesh refinement at free-surface interfaces"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_DynamicMeshShockRefinement",
+        "label": "Shockwave dynamic refinement",
+        "tooltip": "Activates adaptive mesh refinement for shocks"
+      },
+      {
+        "commands": [
+          "CfdOF_DynamicMeshInterfaceRefinement",
+          "CfdOF_DynamicMeshShockRefinement"
+        ],
+        "enabled": false,
+        "id": "CfdOF_GroupDynamicMeshRefinement",
+        "label": "Dynamic mesh refinement",
+        "tooltip": "Allows adaptive refinement of the mesh"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_PhysicsModel",
+        "label": "Select models",
+        "tooltip": "Select the physics model"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_FluidMaterial",
+        "label": "Add fluid properties",
+        "tooltip": "Add fluid properties"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_FluidBoundary",
+        "label": "Fluid boundary",
+        "tooltip": "Creates a CFD fluid boundary"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_InitialiseInternal",
+        "label": "Initialise",
+        "tooltip": "Initialise internal flow variables based on the selected physics model"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_InitialisationZone",
+        "label": "Initialisation zone",
+        "tooltip": "Select and create an initialisation zone"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_PorousZone",
+        "label": "Porous zone",
+        "tooltip": "Select and create a porous zone"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_MeanVelocityForce",
+        "label": "Mean velocity force",
+        "tooltip": "Create a mean velocity force fvOption"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_ReportingFunctions",
+        "label": "Reporting function",
+        "tooltip": "Create a reporting function for the current case"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_ScalarTransportFunctions",
+        "label": "Cfd scalar transport function",
+        "tooltip": "Create a scalar transport function"
+      },
+      {
+        "enabled": false,
+        "id": "CfdOF_SolverControl",
+        "label": "Solver job control",
+        "tooltip": "Edit properties and run solver"
+      },
+      {
+        "enabled": true,
+        "id": "CfdOF_OpenPreferences",
+        "label": "Open preferences",
+        "tooltip": "Opens the CfdOF preferences page"
+      },
+      {
+        "enabled": true,
+        "id": "CfdOF_ReloadWorkbench",
+        "label": "Reload CfdOF workbench",
+        "tooltip": "Attempt to reload all CfdOF source files from disk. May break open documents!"
+      },
+      {
+        "enabled": true,
+        "id": "CfdOF_RunTests",
+        "label": "Run CfdOF tests",
+        "tooltip": "Run CfdOF tests"
+      },
+      {
+        "enabled": true,
+        "id": "CfdOF_UpdateTestData",
+        "label": "Update test reference data",
+        "tooltip": "Use latest test run as new reference data for tests"
+      },
+      {
+        "enabled": true,
+        "id": "CfdOF_CleanTests",
+        "label": "Clean CfdOF tests",
+        "tooltip": "Clean up temporary data created by CfdOF unit tests"
+      }
+    ],
+    "dialogs": [],
+    "document": {
+      "label": "CfdSession",
+      "name": "CfdSession",
+      "objects": [],
+      "truncated": false
+    },
+    "editor": null,
+    "geometry": [],
+    "lastAction": null,
+    "logs": [],
+    "pendingAction": null,
+    "plots": [],
+    "revision": 1,
+    "runtime": {
+      "freecadVersion": "1.1.3"
+    },
+    "selection": []
+  }
+}

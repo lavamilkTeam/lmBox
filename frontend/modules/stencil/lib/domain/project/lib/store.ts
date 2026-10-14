@@ -27,6 +27,7 @@ export const useProjectStore = defineStore('stencil-project', () => {
   const activeIr = computed(() => activeLayer.value?.ir ?? active.value?.ir)
   const activeEdits = computed(() => active.value?.editing.layers[active.value.selectedLayer] ?? [])
   let sequence = 0
+  let initialized = false
   function log(doc: BoardDocument, message: string, level: LogEntry['level'] = 'info') {
     doc.logs.push({ id: ++sequence, time: new Date().toLocaleTimeString('zh-CN', { hour12: false }), level, message })
     if (doc.logs.length > 300) doc.logs.shift()
@@ -40,6 +41,11 @@ export const useProjectStore = defineStore('stencil-project', () => {
     for (const file of files) if(file.diagnostic) log(doc, `${file.name}${file.diagnostic.line ? ` 第 ${file.diagnostic.line} 行` : ''}：${file.diagnostic.message}`, 'warning')
     documents.value.push(doc); activeId.value = doc.id
     return doc.id
+  }
+  function initialize(ir: GraphicsIr) {
+    if (initialized) return
+    initialized = true
+    if (!documents.value.length) openDemo(ir)
   }
   function openDemo(ir: GraphicsIr) {
     const existing = documents.value.find(d => d.demo)
@@ -153,5 +159,5 @@ export const useProjectStore = defineStore('stencil-project', () => {
     if(!doc || doc.demo || !ir || doc.model.status!=='ready')return
     return modelRequest(doc,ir,crypto.randomUUID())
   }
-  return { activeEdits, setSelection, allObjects, editSelection, updateDesign, applyOptimization, selectOutline, undo, exportRequest, beginModel, completeModel, failModel, retryModel, documents, activeId, active, activeLayer, activeIr, selectLayer, add, activate, close, openDemo, setMode, update, reset, log }
+  return { initialize, activeEdits, setSelection, allObjects, editSelection, updateDesign, applyOptimization, selectOutline, undo, exportRequest, beginModel, completeModel, failModel, retryModel, documents, activeId, active, activeLayer, activeIr, selectLayer, add, activate, close, openDemo, setMode, update, reset, log }
 })

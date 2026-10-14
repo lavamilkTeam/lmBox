@@ -1,0 +1,13 @@
+# 前端：工作区页签与功能库外观
+
+先读 [前端结构](../../agent-frontend.md)。`index.ts` 公开 `EngineeringShell` 与 `ToolLibrary`，只接收显示数据并发送事件，不导入业务模块、协议、状态或平台。
+
+`EngineeringShell` 通过 `tabs` 接收页签名称、ID 和固定标记，`active` 表示当前选中页；发送 `select` 与 `close` 事件，slot 容纳工作区。顶部使用共享 shadcn-vue 的 Tabs、TabsList、TabsTrigger、TabsContent，私有 `WorkspaceTab.vue` 与 `workspace-tabs.css` 实现标签轮廓和内容卡片：活动标签通过底部外弧与同色卡片衔接，非活动标签使用分隔线，悬停和关闭按钮独立反馈。固定页签始终可见且不可关闭，动态页签横向滚动；滚动容器为连接弧留出空间。关闭按钮位于标签按钮旁，避免嵌套交互控件；Delete 可关闭当前聚焦的动态页签，关闭后焦点回到活动页签。工作区内容与选中标签保持可访问性关联。容器的可用高度在壳层内调整，不改变领域布局逻辑。
+
+`ToolLibrary` 接收工具名称、分类与可用状态，提供搜索和分类列表；可用项发送 `open` 事件，未接入项禁用。工具目录和页面组装属于 app，页签生命周期属于 [workspace-tabs feature](../../app/features/workspace-tabs/agent-frontend-workspace-tabs.md)；UI 不推断业务路由、不持有工程状态，也不添加常驻说明文案。
+
+执行 `npm run check`，验证打开、去重、切换、关闭、键盘焦点和窄屏布局。
+
+`closeConfirmation` 接收应用提供的关闭确认状态、等待标记和错误；共享 AlertDialog 发出确认/取消事件，不直接释放业务资源。确认期间禁止重复提交或取消，退出确认框后焦点返回活动页签。
+
+页签默认宽度为 240 px，只有整排超出容器时才按可用空间缩小；最小宽度为 84 px，继续溢出时动态页签横向滚动。首标签与内容卡片贴齐窗口左边缘；首标签激活时不绘制越出窗口的左外弧。页签栏外框使用浅粉色，选中标签与内容卡片使用共享背景色，配色仅由本 UI 管理。选中或聚焦的标签自动滚入可见区域；宽度、圆弧、内容卡片边距均由本 UI 的样式变量管理。

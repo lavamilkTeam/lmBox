@@ -1,5 +1,5 @@
 import { invoke, isTauri } from '@tauri-apps/api/core'
-import type { PreviewRequest, PreviewResult } from '../../../contracts'
+import type { DesignRequest, DesignResult, PreviewRequest, PreviewResult } from '../../../contracts'
 
 export function isNativeDesktop(): boolean {
   return typeof window !== 'undefined' && isTauri()
@@ -36,4 +36,22 @@ export async function saveTextFile(name: string, content: string, mime: string):
   const link = document.createElement('a'); link.href = url; link.download = safeName; link.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
   return true
+}
+
+export async function nativePropulsion(request: DesignRequest): Promise<DesignResult> {
+  try { return await invoke<DesignResult>('propulsion_run', { request }) }
+  catch (error) { throw error instanceof Error ? error : new Error(String(error)) }
+}
+
+export async function nativeCfdRequest(request: import('../../../contracts').CfdRequest): Promise<unknown> {
+  try { return await invoke('cfd_request', { request }) }
+  catch (error) { throw error instanceof Error ? error : new Error(String(error)) }
+}
+export async function nativeChooseCfdPath(request: import('../../../contracts').CfdRequest): Promise<unknown> {
+  const { invoke } = await import('@tauri-apps/api/core')
+  return invoke('choose_cfd_path', { request })
+}
+export async function nativeSaveCfdFile(name: string, bytes: number[]): Promise<boolean> {
+  try { return await invoke<boolean>('save_cfd_document', { name, bytes }) }
+  catch (error) { throw error instanceof Error ? error : new Error(String(error)) }
 }

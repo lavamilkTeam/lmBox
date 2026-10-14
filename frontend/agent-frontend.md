@@ -4,11 +4,12 @@
 
 ## 结构与所有权
 
-前端源码位于 `frontend/`，按领域模块组织。`main.ts` 启动；平台 `app` 只加载模块与共享 UI；`modules/stencil` 封装现有工作台，包含私有的应用协调、features、domain 和 UI。共享 `ui` 提供主题和基础控件；`platform` 适配桌面/浏览器外部交互；`contracts` 定义通信类型。只建立实际能力，不预建仿真占位模块。
+前端源码位于 `frontend/`，按领域模块组织。`main.ts` 启动；平台 `app` 默认加载引导模块，并通过固定功能库与动态页签选择已实现模块；`modules/propulsion` 封装喷管和喷注器前端，数值仍由原生后端提供；`modules/stencil` 封装现有工作台，包含私有的应用协调、features、domain 和 UI。共享 `ui` 提供主题和基础控件；`platform` 适配桌面/浏览器外部交互；`contracts` 定义通信类型。只建立实际能力，不预建仿真占位模块。
 
 ## 依赖
 
 - 平台 `app → modules/<name>/index.ts、ui`；当前钢网模块通过动态 import 加载。
+- 平台页签功能位于 `app/features/workspace-tabs`，通过公开入口供 App 组装；跨模块关闭操作由 App 注入，feature 不导入领域模块、平台适配或 UI。
 - 领域模块互不导入，也不反向依赖平台 app；模块外禁止访问 `lib/` 和测试目录。
 - 模块内部 `app → features/domain/ui`，也可使用共享 platform/ui/contracts；feature 之间不直接依赖。
 - 模块 `domain → contracts` 及必要状态库，不依赖外部适配、UI、feature 或 app。Pinia store 使用领域前缀；钢网使用 `stencil-project`。
@@ -21,6 +22,14 @@
 | 范围 | 必读说明 |
 | --- | --- |
 | `frontend/app` | [平台组装](app/agent-frontend-app.md) |
+| `frontend/app/features/workspace-tabs` | [工作区页签功能](app/features/workspace-tabs/agent-frontend-workspace-tabs.md) |
+| `frontend/ui/installer-welcome` | [安装欢迎页](ui/installer-welcome/agent-frontend-installer-welcome.md) |
+| `frontend/modules/guide` | [引导模块](modules/guide/agent-frontend-guide.md) |
+| `frontend/modules/video` | [视频工作流](modules/video/agent-frontend-video.md) |
+| `frontend/modules/agent` | [AI 工作助手](modules/agent/agent-frontend-agent.md) |
+| `frontend/modules/cfd` | [流体分析模块](modules/cfd/agent-frontend-cfd.md) |
+| `frontend/modules/propulsion` | [推进设计模块](modules/propulsion/agent-frontend-propulsion.md) |
+| `frontend/ui/engineering-shell` | [工程工具箱](ui/engineering-shell/agent-frontend-engineering-shell.md) |
 | `frontend/modules/stencil` | [钢网模块](modules/stencil/agent-frontend-stencil.md) |
 | `frontend/modules/stencil/lib/app` | [工作台协调](modules/stencil/lib/app/agent-frontend-app.md) |
 | `frontend/modules/stencil/lib/domain/project` | [工程快照与状态](./modules/stencil/lib/domain/project/agent-frontend-project-state.md) |
@@ -33,6 +42,7 @@
 | `frontend/modules/stencil/lib/features/stencil` | [建模与编辑设置](./modules/stencil/lib/features/stencil/agent-frontend-stencil.md) |
 | `frontend/modules/stencil/lib/features/slicing` | [切片设置](./modules/stencil/lib/features/slicing/agent-frontend-slicing.md) |
 | `frontend/modules/stencil/lib/features/logs` | [日志](./modules/stencil/lib/features/logs/agent-frontend-logs.md) |
+| `frontend/ui/shadcn` | [shadcn-vue 基础组件](ui/shadcn/agent-frontend-shadcn.md) |
 | `frontend/ui/theme` | [主题](ui/theme/agent-frontend-theme.md) |
 | `frontend/modules/stencil/lib/ui` | [工作台样式](modules/stencil/lib/ui/agent-frontend-ui.md) |
 | `frontend/ui` | [外观与样式](./ui/agent-frontend-ui.md) |

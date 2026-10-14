@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "projectId": "fixture-project",
+  "requestId": "fixture-request",
+  "inputRevision": 1,
+  "capability": "agent",
+  "operation": "start",
+  "payload": {
+    "prompt": "Compute 6 * 7 and write the result to answer.txt.",
+    "maxSteps": 6,
+    "files": []
+  }
+}

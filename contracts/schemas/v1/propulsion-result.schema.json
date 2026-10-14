@@ -1,0 +1,381 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Preliminary propulsion design result v1",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "result"
+      ],
+      "properties": {
+        "type": {
+          "const": "nozzle"
+        },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "identity",
+            "modelVersion",
+            "cea",
+            "throatAreaM2",
+            "exitAreaM2",
+            "throatRadiusM",
+            "exitRadiusM",
+            "divergentLengthM",
+            "massFlowKgS",
+            "idealThrustN",
+            "idealSpecificImpulseS",
+            "idealThrustCoefficient",
+            "conicalDivergenceFactor",
+            "contour",
+            "assumptions",
+            "warnings"
+          ],
+          "properties": {
+            "identity": {
+              "$ref": "#/$defs/identity"
+            },
+            "modelVersion": {
+              "const": "nozzle-preliminary/1"
+            },
+            "cea": {
+              "$ref": "https://lmbox.invalid/schemas/v1/cea-result.schema.json"
+            },
+            "throatAreaM2": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "exitAreaM2": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "throatRadiusM": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "exitRadiusM": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "divergentLengthM": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "massFlowKgS": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "idealThrustN": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "idealSpecificImpulseS": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "idealThrustCoefficient": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "conicalDivergenceFactor": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              ]
+            },
+            "contour": {
+              "type": "array",
+              "minItems": 9,
+              "maxItems": 4097,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "xM",
+                  "radiusM"
+                ],
+                "properties": {
+                  "xM": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "radiusM": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                }
+              }
+            },
+            "assumptions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "warnings": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "chamberGeometry": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "innerRadiusM",
+                "contractionRatio",
+                "cylinderLengthM",
+                "convergentLengthM",
+                "totalLengthM",
+                "inletXM",
+                "convergentStartXM",
+                "inletArcRadiusM",
+                "throatArcRadiusM",
+                "joinAngleDeg",
+                "firstPoint",
+                "secondPoint",
+                "contour"
+              ],
+              "properties": {
+                "innerRadiusM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "contractionRatio": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "cylinderLengthM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "convergentLengthM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "totalLengthM": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "inletXM": {
+                  "type": "number",
+                  "exclusiveMaximum": 0
+                },
+                "convergentStartXM": {
+                  "type": "number",
+                  "exclusiveMaximum": 0
+                },
+                "inletArcRadiusM": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "throatArcRadiusM": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "joinAngleDeg": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "firstPoint": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "xM",
+                    "radiusM"
+                  ],
+                  "properties": {
+                    "xM": {
+                      "type": "number"
+                    },
+                    "radiusM": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  }
+                },
+                "secondPoint": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "xM",
+                    "radiusM"
+                  ],
+                  "properties": {
+                    "xM": {
+                      "type": "number"
+                    },
+                    "radiusM": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  }
+                },
+                "contour": {
+                  "type": "array",
+                  "minItems": 6,
+                  "maxItems": 6146,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "xM",
+                      "radiusM"
+                    ],
+                    "properties": {
+                      "xM": {
+                        "type": "number"
+                      },
+                      "radiusM": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "result"
+      ],
+      "properties": {
+        "type": {
+          "const": "injector"
+        },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "identity",
+            "modelVersion",
+            "oxidizer",
+            "fuel",
+            "assumptions"
+          ],
+          "properties": {
+            "identity": {
+              "$ref": "#/$defs/identity"
+            },
+            "modelVersion": {
+              "const": "injector-hydraulics/1"
+            },
+            "oxidizer": {
+              "$ref": "#/$defs/circuitResult"
+            },
+            "fuel": {
+              "$ref": "#/$defs/circuitResult"
+            },
+            "assumptions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "projectId",
+        "jobId",
+        "inputRevision"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "projectId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "jobId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "inputRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        }
+      }
+    },
+    "circuitResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "massFlowKgS",
+        "massFlowPerElementKgS",
+        "totalFlowAreaM2",
+        "areaPerElementM2",
+        "outerDiameterM",
+        "hydraulicDiameterM",
+        "meanVelocityMS",
+        "reynoldsNumber",
+        "innerDiameterM"
+      ],
+      "properties": {
+        "massFlowKgS": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "massFlowPerElementKgS": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "totalFlowAreaM2": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "areaPerElementM2": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "outerDiameterM": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "hydraulicDiameterM": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "meanVelocityMS": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "reynoldsNumber": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "innerDiameterM": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

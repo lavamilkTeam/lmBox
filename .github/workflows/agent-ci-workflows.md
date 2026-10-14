@@ -2,6 +2,12 @@
 
 先读 [CI 说明](../agent-ci.md) 和受影响语言说明；工作流改动应用 `$code-boundary-standards`。
 
-`ci.yml` 运行前端、Rust、Python、桌面矩阵、Fortran CEA 三平台矩阵和工作流检查，`Quality gate` 仅全部成功才放行；失败、取消或跳过不能通过。`release.yml` 使用完整门禁后校验并发布安装器。执行与发布细节见 [质量规范](../QUALITY.md)。
+`ci.yml` 运行前端、Rust、Python、桌面矩阵、Fortran CEA 与推进设计库三平台矩阵和工作流检查，`Quality gate` 仅全部成功才放行；失败、取消或跳过不能通过。`release.yml` 使用完整门禁后校验并发布安装器。执行与发布细节见 [质量规范](../QUALITY.md)。
 
 不得通过 path filter、跳过测试、弱化边界或忽略错误获得绿色状态。Actions、工具链和依赖版本按现有约定固定；凭证不进入构建/测试。远端 required checks 需核对实际绑定，配置文件不能证明设置生效。运行 actionlint 与受影响的本地检查；三平台与 Release 以实际 hosted run 为准。
+
+前端任务安装 GNU Fortran/CMake/Ninja 并构建本地后端，以真实推进计算运行浏览器集成测试。
+
+Python 门禁安装 AI extra 验证 LangGraph 工具循环；桌面矩阵另打包并搬移检查独立 AI worker。AI 检查使用本机可辨识模型服务替身，不接收云端凭据，不声称验证实际云端推理。
+
+桌面矩阵另执行独立模块分发 crate 的 fmt/Clippy/tests，以及宿主 modular 特性的 Clippy。模块 ZIP 发布构建与签名配置见[模块构建](../../scripts/agent-javascript-modules.md)；既有 Release 工作流仍发布整包安装器，尚未自动上传模块发布集。

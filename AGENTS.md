@@ -70,14 +70,55 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 ```text
 .
 ├── AGENTS.md
+├── installer.html
+├── vite.installer.config.ts
 ├── src/
 │   ├── AGENTS.md
 │   └── agent-frontend.md
 ├── frontend/
 │   ├── agent-frontend.md
 │   ├── main.ts
+│   ├── installer.ts
 │   ├── app/
+│   │   ├── module-entries/
+│   │   └── features/
+│   │       └── workspace-tabs/
+│   │           ├── index.ts
+│   │           ├── agent-frontend-workspace-tabs.md
+│   │           ├── lib/
+│   │           └── tests/
 │   ├── modules/
+│   │   ├── video/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-video.md
+│   │   │   └── lib/
+│   │   ├── agent/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-agent.md
+│   │   │   └── lib/
+│   │   ├── guide/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-guide.md
+│   │   │   └── lib/
+│   │   │       ├── app/
+│   │   │       ├── domain/
+│   │   │       └── ui/
+│   │   ├── cfd/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-cfd.md
+│   │   │   └── lib/
+│   │   │       ├── app/
+│   │   │       ├── features/
+│   │   │       ├── domain/
+│   │   │       └── ui/
+│   │   ├── propulsion/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-propulsion.md
+│   │   │   └── lib/
+│   │   │       ├── app/
+│   │   │       ├── features/
+│   │   │       ├── domain/
+│   │   │       └── ui/
 │   │   └── stencil/
 │   │       ├── index.ts
 │   │       ├── agent-frontend-stencil.md
@@ -89,26 +130,54 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── platform/
 │   ├── contracts/
 │   └── ui/
+│       ├── shadcn/
+│       │   ├── index.ts
+│       │   ├── agent-frontend-shadcn.md
+│       │   └── lib/
+│       ├── engineering-shell/
+│       └── installer-welcome/
 ├── src-fortran/
 │   ├── agent-fortran.md
-│   └── cea/
-│       ├── agent-fortran-cea.md
-│       ├── CMakeLists.txt
-│       ├── source/
-│       ├── data/
-│       └── extern/
+│   └── modules/
+│       └── propulsion/
+│           ├── agent-fortran-propulsion.md
+│           ├── cea/
+│           └── design/
 ├── src-rust/
 │   ├── AGENTS.md
 │   ├── agent-rust.md
 │   └── src/
+│       └── modules/
+│           ├── ai/
+│           ├── cfd/
+│           ├── stencil/
+│           └── propulsion/
 ├── desktop/tauri/
 │   ├── AGENTS.md
 │   ├── agent-rust.md
 │   └── src/
+├── desktop/modules/
+│   ├── agent-rust.md
+│   ├── Cargo.toml
+│   ├── src/
+│   └── tests/
+├── desktop/installer/
+│   ├── agent-cpp.md
+│   ├── CMakeLists.txt
+│   ├── src/
+│   ├── tests/
+│   └── ui/
 ├── engine/
 │   ├── AGENTS.md
 │   ├── agent-python.md
 │   └── src/lmbox_geometry/
+│       ├── ai_worker.py
+│       ├── cfd_worker.py
+│       └── modules/
+│           ├── video/
+│           ├── agent/
+│           ├── cfd/
+│           └── stencil/
 ├── contracts/
 │   ├── AGENTS.md
 │   ├── agent-contracts.md

@@ -18,7 +18,7 @@
 
 1. 首次运行 `npm run setup:wasm` 与 `npm run setup:geometry`。
 2. 运行 `npm run build:wasm`、`npm run build:worker`、`npm run check:worker`。
-3. 开发运行 `npm run desktop:dev`，使用独立端口 1421；生产资源验证运行 `npm run desktop:build -- --no-bundle`。
+3. 开发运行 `npm run desktop:dev`，Tauri 窗口内的前端使用独立端口 `6522`；生产资源验证运行 `npm run desktop:build -- --no-bundle`。
 4. 在根目录运行 `cargo fmt --manifest-path desktop/tauri/Cargo.toml --check`、`cargo clippy --manifest-path desktop/tauri/Cargo.toml --locked --all-targets -- -D warnings`、`cargo test --manifest-path desktop/tauri/Cargo.toml --locked`，并按根规范运行前端及核心检查。
 
 `tests/packaged_worker.rs` 使用本目录的打包资源验证真实协议与取消；核心的任务生命周期和源码 Python 集成测试保留在 `src-rust/tests/`。`npm run check:worker` 把引擎移出源码目录验证模型与 STL。CI 的 Linux、Windows、macOS 矩阵必须全部成功，编译不代表三平台 GUI 操作已验证。
@@ -31,3 +31,7 @@
 ## 验证
 
 全部矩阵与质量门禁须成功；本地检查不代表实际发布完成。
+
+AI 使用独立 `resources/lmbox-ai → ai` 目录。先运行 `npm run setup:ai`、`npm run build:ai-worker`、`npm run check:ai-worker`；资源搬移后以明确的本地模型夹具验证 LangGraph、工具和文本产物。AI 凭据从宿主环境读取，不打入安装器。视频预览只允许应用自身与 Blob 媒体来源。
+
+模块 ZIP 分发使用独立 `modular` 构建和 `tauri.modules.conf.json`，基础包只包含宿主与基础 UI，资源从安装快照读取；原有整包配置保持独立。构建、发布配置及平台运行库约束见[模块构建](../../scripts/agent-javascript-modules.md)，加载边界见[模块适配](src/agent-rust-modules.md)。

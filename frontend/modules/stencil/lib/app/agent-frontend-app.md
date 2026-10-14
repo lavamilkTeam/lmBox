@@ -6,11 +6,11 @@
 
 覆盖模块内 `app/Workspace.vue` 和 `app/lib/`；组装 feature、连接事件与跨 feature 模型预览/导出流程。
 
-依赖 `features/domain/platform/ui/contracts` 的公开入口。应用层不实现解析、制造算法或 feature 专有用例。主题、布局和 CSS 归 `ui`；工作台 CSS 位于模块 `ui/workspace.css`，共享主题由平台提供。
+依赖 `features/domain/platform/ui/contracts` 的公开入口。应用层不实现解析、制造算法或 feature 专有用例。主题、布局和 CSS 归 `ui`；工作台 CSS 位于模块 `ui/workspace.css`，共享主题由平台提供；通知通过共享主题公开入口发送，关闭确认使用共享 Dialog。
 
 ## 行为约束
 
-- `app` 从 `platform/desktop` 加载示例 IR，传给 domain；预览组件通过 `demo` 事件请求应用层打开示例，不自行加载或跨 feature 调用。
+- `app` 从 `platform/desktop` 加载示例 IR，传给 domain 的幂等 `initialize`；预览组件通过 `demo` 事件请求应用层打开示例，不自行加载或跨 feature 调用。
 
 - `app/lib/useModelPreview` 协调模型任务；`platform/desktop::generatePreview` 统一适配入口：浏览器向同源 `/api/preview` 发送版本化请求，桌面环境通过 Tauri IPC 使用同一协议。
 

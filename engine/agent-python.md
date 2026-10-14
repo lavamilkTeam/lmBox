@@ -4,31 +4,33 @@
 
 ## 结构与职责
 
-`src/lmbox_geometry` 按能力组织：`features` 封装建模、检查和二维/三维编码，`runner` 协调一次请求，`runtime` 封装文件适配，`contracts` 封装库无关数据和共享 schema 校验。每个包从 `__init__.py` 暴露少量稳定入口，`_` 前缀实现私有，不从根包转导出整棵子树。
+`src/lmbox_geometry/modules` 按业务域分组，包括 `stencil`、`cfd`、`video` 和 `agent`。业务模块内部 `features` 封装算法及数据转换，`application.py` 协调用例，`runtime` 管外部适配；外部只从模块 `__init__.py` 调用公开入口。共享 `contracts` 仍放在包根，负责库无关数据和跨语言 schema。保留现有 Python 包名和 JSONL 进程协议。
 
-各能力专有类型由本包公开入口提供；跨能力数据归 `contracts`，跨语言语义以根 schema 为准。
-
-Python 接收 Rust 已解析 IR，负责图元几何、补偿、轮廓、实体网格与检查；不再次解析源文件，不管理工程、任务队列、缓存或切片进程。当前支持模型及 STL/SVG/DXF；STEP 和切片未实现，不预建空模块。
+Python 接收 Rust 已解析 IR，负责几何、补偿、轮廓、实体网格与检查；不再次解析源文件，不管理工程队列/缓存/切片。当前支持模型及 STL/SVG/DXF；STEP 和切片未实现。CFD 通过独立原生控制器会话适配，不复用钢网 JSONL 任务协议。
 
 ## 依赖
 
-`__main__ → runner → features/runtime/contracts`；各 `feature → contracts`，`runtime → contracts`。四个 feature 相互独立，算法不依赖 runner/runtime/通信信封。格式编码属于导出 feature，文件写入属于 runtime，格式选择属于 runner。
+`__main__ → runner → modules/stencil 的公开入口 → application → features/runtime → contracts`。四个 feature 相互独立，不依赖 application/runtime/通信信封。编码属于导出 feature，文件写入属于 runtime，格式选择属于 application。
 
-第三方库调用和异常转换就近封装，不泄漏库对象；仅有真实复用时提取职责明确的模块，不建立泛化 utils/common 包。import-linter 的独立性和私有实现约束不可弱化。
+跨业务模块只能经公开入口，不能导入另一模块的内部 feature；跨模块流程由外层 runner 协调。第三方对象不跨公共数据边界，不建立泛化 utils/common 容器。import-linter 保留 feature 独立性、私有实现保护，并约束进程适配不能直接导入钢网内部实现。
+
+`cfd_worker → modules/cfd 的公开入口 → application → runtime`；CFD 的 FreeCAD、Qt、Docker 和原生文件适配全部归私有 `runtime`，不向共享协议暴露第三方对象。
+
+`ai_worker → modules/video 或 modules/agent 的公开入口 → application → features/runtime → contracts`；独立 AI JSONL 进程每次执行一个作业，Rust 管任务身份、状态、取消及工作目录。视频与 Agent 不互相导入；ComfyUI、LangGraph、HTTP 和文件对象留在各自私有适配层。AI extra 的 Python 3.10+ 要求不改变基础几何环境的 Python 3.9 支持。
 
 ## 模块索引
 
 | 范围 | 必读说明 |
 | --- | --- |
-| `src/lmbox_geometry/runner.py、__main__.py` | [请求协调](src/lmbox_geometry/agent-python-runner.md) |
-| `src/lmbox_geometry/features/stencil/` | [模板几何](src/lmbox_geometry/features/stencil/agent-python-stencil.md) |
-| `src/lmbox_geometry/features/inspection/` | [网格检查](src/lmbox_geometry/features/inspection/agent-python-inspection.md) |
-| `src/lmbox_geometry/features/export_2d/` | [二维编码](src/lmbox_geometry/features/export_2d/agent-python-export-2d.md) |
-| `src/lmbox_geometry/features/export_3d/` | [三维编码](src/lmbox_geometry/features/export_3d/agent-python-export-3d.md) |
-| `src/lmbox_geometry/runtime/` | [任务产物 I/O](src/lmbox_geometry/runtime/agent-python-artifacts.md) |
-| `src/lmbox_geometry/contracts/` | [Python 协议映射](src/lmbox_geometry/contracts/agent-python-contracts.md) |
-| `pyproject.toml 的 bundle 配置` | [计算引擎打包](agent-python-bundle.md) |
+| `src/lmbox_geometry/modules/stencil/` | [钢网协调及内部索引](src/lmbox_geometry/modules/stencil/agent-python-stencil.md) |
+| `src/lmbox_geometry/modules/cfd/` | [CFD 原生控制器适配](src/lmbox_geometry/modules/cfd/agent-python-cfd.md) |
+| `src/lmbox_geometry/modules/video/` | [视频工作流](src/lmbox_geometry/modules/video/agent-python-video.md) |
+| `src/lmbox_geometry/modules/agent/` | [工作 Agent](src/lmbox_geometry/modules/agent/agent-python-agent.md) |
+| `src/lmbox_geometry/contracts/` | [共享协议](src/lmbox_geometry/contracts/agent-python-contracts.md) |
+| `pyproject.toml 的 bundle 配置` | [引擎打包](agent-python-bundle.md) |
 
 ## 验证与维护
 
 首次安装运行 `npm run setup:geometry`，代码改动运行 `npm run check:geometry`；跨端另运行 Rust 检查与 `npm run check`。测试从公开入口和进程协议验证单位、极性、圆弧、编辑、无效轮廓、二维三维一致性、网格及错误，使用仓库夹具。算法或输出依赖变化更新算法版本/缓存失效信息。具体规则只更新所属模块，本文件只维护结构和边界。
+
+AI 环境用 `npm run setup:ai` 独立安装；AI 改动另运行 `npm run check:ai`，确保真实 LangGraph 测试不因基础 Python 3.9 而跳过。

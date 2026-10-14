@@ -75,6 +75,7 @@ impl Catalog {
             return Err("模块清单数量无效。".into());
         }
         let mut ids = std::collections::BTreeSet::new();
+        let mut archives = std::collections::BTreeSet::new();
         let mut assets = std::collections::BTreeSet::new();
         for p in &self.packages {
             if !safe_segment(&p.id)
@@ -82,6 +83,7 @@ impl Catalog {
                 || !safe_segment(&p.file)
                 || !p.file.ends_with(".zip")
                 || !matches!(p.kind.as_str(), "base" | "module" | "runtime")
+                || (p.kind == "base") != (p.id == "base")
                 || p.sha256.len() != 64
                 || hex::decode(&p.sha256).is_err()
                 || p.size == 0
@@ -91,6 +93,7 @@ impl Catalog {
                 || p.dependencies.len() > 64
                 || p.ui_files.len() > 20000
                 || !ids.insert(&p.id)
+                || !archives.insert(p.file.to_ascii_lowercase())
             {
                 return Err("模块包描述无效或重复。".into());
             }
@@ -108,11 +111,37 @@ impl Catalog {
             return Err("缺少基础程序包。".into());
         }
         for p in &self.packages {
+            let mut dependencies = std::collections::BTreeSet::new();
             if p.dependencies
                 .iter()
-                .any(|d| !ids.contains(d) || d == &p.id)
+                .any(|d| !ids.contains(d) || d == &p.id || !dependencies.insert(d))
             {
                 return Err("模块依赖缺失或无效。".into());
+            }
+            if p.dependencies.iter().any(|id| {
+                self.packages
+                    .iter()
+                    .any(|dependency| &dependency.id == id && dependency.kind == "module")
+            }) {
+                return Err("可选功能不能作为依赖自动安装，请将共用文件放入运行库包。".into());
+            }
+        }
+        // Validate the entire release before any archive is downloaded, including
+        // runtime packages outside the user's current selection.
+        let mut unresolved: Vec<_> = self.packages.iter().collect();
+        let mut resolved = std::collections::BTreeSet::new();
+        while !unresolved.is_empty() {
+            let count = unresolved.len();
+            unresolved.retain(|package| {
+                if package.dependencies.iter().all(|id| resolved.contains(id)) {
+                    resolved.insert(package.id.clone());
+                    false
+                } else {
+                    true
+                }
+            });
+            if unresolved.len() == count {
+                return Err("模块依赖存在循环。".into());
             }
         }
         Ok(())

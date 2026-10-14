@@ -4,6 +4,7 @@
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
+#include <QTimer>
 
 int main(int argc, char *argv[])
 {
@@ -23,6 +24,9 @@ int main(int argc, char *argv[])
     parser.addOption(reducedMotion);
     const QCommandLineOption catalog(QStringLiteral("catalog"), QStringLiteral("Signed module catalog URL."), QStringLiteral("url"));
     parser.addOption(catalog);
+    const QCommandLineOption smokeTest(QStringLiteral("smoke-test"),
+        QStringLiteral("Load the installed QML interface and exit for deployment verification."));
+    parser.addOption(smokeTest);
     parser.process(app);
     InstallController installer(parser.value(catalog));
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &installer, &InstallController::cancel);
@@ -33,5 +37,7 @@ int main(int argc, char *argv[])
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
         &app, [] { QCoreApplication::exit(1); }, Qt::QueuedConnection);
     engine.loadFromModule(QStringLiteral("LmBox.Installer"), QStringLiteral("Welcome"));
+    if (parser.isSet(smokeTest))
+        QTimer::singleShot(0, &app, [&app, &engine] { app.exit(engine.rootObjects().isEmpty() ? 1 : 0); });
     return app.exec();
 }

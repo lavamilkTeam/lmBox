@@ -4,6 +4,8 @@
 
 `setup-cfd.mjs` 只负责本地外部运行环境，不执行业务仿真。检测 FreeCAD 随附 Python 及 GUI 模块，探测使用独立临时用户目录。只从固定官方仓库获取固定 CfdOF commit，放入 `.tools/cfd/source`，原文件及许可证保持完整，来源写入 `.tools/cfd/source-manifest.json`。已有源版本或修改不匹配时失败，不覆盖本地改动。
 
+`node scripts/setup-cfd.mjs --source-only` 为模块发布构建只获取并校验上述固定源码与许可证；不探测外部程序、不创建或更新 runtime.json，也不宣称运行环境已就绪。常规 `setup:cfd` 仍执行完整运行环境探测。
+
 运行配置 `.tools/cfd/runtime.json` 包含 `schemaVersion`、`sourceCommit`、`pythonExecutable`、`upstreamPath`，以及可选 `dockerExecutable`、`dockerImage`、`paraviewExecutable`。它是宿主可信配置，不透传给前端。脚本不修改用户 FreeCAD 插件、偏好或系统 Python 包。
 
 可用环境变量为 `LMBOX_FREECAD_PYTHON` 或 `LMBOX_FREECAD_ROOT`、`LMBOX_CFD_DOCKER`、`LMBOX_CFD_DOCKER_IMAGE`、`LMBOX_CFD_PARAVIEW`；执行文件覆盖必须实际存在。未安装 Docker 时说明缺失，不能宣称网格/求解依赖就绪。默认镜像固定到经过真实求解验证的 CfdOF/OpenFOAM digest，可通过用户环境或已有可信配置覆盖；脚本不自动启动或拉取镜像。原版依赖检查仍报告镜像中低于上游要求的组件版本，不能因镜像可运行而屏蔽错误。

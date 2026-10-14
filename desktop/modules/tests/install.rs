@@ -4,14 +4,31 @@ use lmbox_modules::{
     install, installed, load_catalog, package_path, read_ui, remove, target, Catalog, Package,
 };
 use sha2::{Digest, Sha256};
-use std::{fs, io::Write, path::Path};
+use std::{
+    fs,
+    io::{BufRead, BufReader, Write},
+    path::Path,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    },
+};
 use zip::write::SimpleFileOptions;
 
 fn package(source: &Path, id: &str, dependencies: &[&str], extra: &[(&str, &[u8])]) -> Package {
+    versioned_package(source, id, "0.1.1", dependencies, extra)
+}
+fn versioned_package(
+    source: &Path,
+    id: &str,
+    version: &str,
+    dependencies: &[&str],
+    extra: &[(&str, &[u8])],
+) -> Package {
     let file = format!("{id}.zip");
     let mut archive = zip::ZipWriter::new(fs::File::create(source.join(&file)).unwrap());
     let manifest =
-        serde_json::to_vec(&serde_json::json!({"id":id,"version":"0.1.1","target":target()}))
+        serde_json::to_vec(&serde_json::json!({"id":id,"version":version,"target":target()}))
             .unwrap();
     let mut size = manifest.len() as u64;
     archive
@@ -29,10 +46,10 @@ fn package(source: &Path, id: &str, dependencies: &[&str], extra: &[(&str, &[u8]
     let bytes = fs::read(source.join(&file)).unwrap();
     Package {
         id: id.into(),
-        version: "0.1.1".into(),
+        version: version.into(),
         kind: if id == "base" {
             "base"
-        } else if id == "shared" {
+        } else if id == "shared" || id.ends_with("-runtime") {
             "runtime"
         } else {
             "module"
@@ -52,7 +69,7 @@ fn package(source: &Path, id: &str, dependencies: &[&str], extra: &[(&str, &[u8]
 fn catalog(source: &Path, packages: Vec<Package>) -> (String, [u8; 32]) {
     let catalog = Catalog {
         schema_version: 1,
-        app_version: "0.1.1".into(),
+        app_version: packages[0].version.clone(),
         target: target(),
         packages,
     };
@@ -65,6 +82,98 @@ fn catalog(source: &Path, packages: Vec<Package>) -> (String, [u8; 32]) {
             .to_string(),
         key.verifying_key().to_bytes(),
     )
+}
+
+struct HttpSource {
+    url: String,
+    requests: Arc<Mutex<Vec<String>>>,
+    stop: Arc<AtomicBool>,
+    server: Option<std::thread::JoinHandle<()>>,
+}
+impl HttpSource {
+    fn new(source: &Path) -> Self {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        listener.set_nonblocking(true).unwrap();
+        let requests = Arc::new(Mutex::new(Vec::new()));
+        let records = requests.clone();
+        let stop = Arc::new(AtomicBool::new(false));
+        let finished = stop.clone();
+        let directory = source.to_owned();
+        let server = std::thread::spawn(move || {
+            while !finished.load(Ordering::Relaxed) {
+                let (mut socket, _) = match listener.accept() {
+                    Ok(socket) => socket,
+                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                        std::thread::sleep(std::time::Duration::from_millis(2));
+                        continue;
+                    }
+                    Err(error) => panic!("HTTP test listener failed: {error}"),
+                };
+                // Windows accepted streams inherit the listener's nonblocking
+                // mode. Requests may also arrive in more than one TCP packet.
+                socket.set_nonblocking(false).unwrap();
+                socket
+                    .set_read_timeout(Some(std::time::Duration::from_secs(5)))
+                    .unwrap();
+                socket
+                    .set_write_timeout(Some(std::time::Duration::from_secs(5)))
+                    .unwrap();
+                let mut input = BufReader::new(&mut socket);
+                let mut request = String::new();
+                assert!(input.read_line(&mut request).unwrap() > 0);
+                let path = request
+                    .split_whitespace()
+                    .nth(1)
+                    .unwrap()
+                    .trim_start_matches('/')
+                    .to_owned();
+                let mut total = request.len();
+                loop {
+                    let mut header = String::new();
+                    let count = input.read_line(&mut header).unwrap();
+                    assert!(count > 0, "incomplete HTTP request");
+                    total += count;
+                    assert!(total <= 8192, "oversized HTTP request");
+                    if header == "\r\n" {
+                        break;
+                    }
+                }
+                drop(input);
+                records.lock().unwrap().push(path.clone());
+                let (status, bytes) = match fs::read(directory.join(path)) {
+                    Ok(bytes) => ("200 OK", bytes),
+                    Err(_) => ("404 Not Found", Vec::new()),
+                };
+                write!(
+                    socket,
+                    "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                    bytes.len()
+                )
+                .unwrap();
+                socket.write_all(&bytes).unwrap();
+            }
+        });
+        Self {
+            url: format!("http://{address}/catalog.json"),
+            requests,
+            stop,
+            server: Some(server),
+        }
+    }
+
+    fn take_requests(&self) -> Vec<String> {
+        std::mem::take(&mut *self.requests.lock().unwrap())
+    }
+}
+impl Drop for HttpSource {
+    fn drop(&mut self) {
+        self.stop.store(true, Ordering::Relaxed);
+        let result = self.server.take().unwrap().join();
+        if !std::thread::panicking() {
+            result.unwrap();
+        }
+    }
 }
 #[test]
 fn selected_modules_dependencies_addition_removal_and_snapshot_isolation() {
@@ -164,81 +273,166 @@ fn dependency_cycle_rejected_without_installing_payloads() {
 
 #[test]
 fn http_downloads_only_requested_payloads_and_dependencies() {
-    use std::io::Read;
-    use std::sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc, Mutex,
-    };
     let source = tempfile::tempdir().unwrap();
     let root = tempfile::tempdir().unwrap();
     let base = package(source.path(), "base", &[], &[("ui/index.html", b"base")]);
+    let shared = package(source.path(), "ui-runtime", &["base"], &[]);
+    let propulsion = package(source.path(), "propulsion-runtime", &["base"], &[]);
+    let ai = package(source.path(), "ai-runtime", &["base"], &[]);
     let nozzle = package(
         source.path(),
         "nozzle",
-        &["base"],
+        &["ui-runtime", "propulsion-runtime"],
         &[("ui/nozzle.js", b"nozzle")],
     );
     let agent = package(
         source.path(),
         "agent",
-        &["base"],
+        &["ui-runtime", "ai-runtime"],
         &[("ui/agent.js", b"agent")],
     );
-    let (_, key) = catalog(source.path(), vec![base, nozzle, agent]);
-    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let address = listener.local_addr().unwrap();
-    listener.set_nonblocking(true).unwrap();
-    let requests = Arc::new(Mutex::new(Vec::new()));
-    let records = requests.clone();
-    let stop = Arc::new(AtomicBool::new(false));
-    let finished = stop.clone();
-    let directory = source.path().to_owned();
-    let server = std::thread::spawn(move || {
-        while !finished.load(Ordering::Relaxed) {
-            let Ok((mut socket, _)) = listener.accept() else {
-                std::thread::sleep(std::time::Duration::from_millis(2));
-                continue;
-            };
-            socket
-                .set_read_timeout(Some(std::time::Duration::from_secs(2)))
-                .unwrap();
-            let mut request = [0; 4096];
-            let size = socket.read(&mut request).unwrap();
-            let line = std::str::from_utf8(&request[..size])
-                .unwrap()
-                .lines()
-                .next()
-                .unwrap();
-            let path = line
-                .split_whitespace()
-                .nth(1)
-                .unwrap()
-                .trim_start_matches('/');
-            records.lock().unwrap().push(path.to_owned());
-            let bytes = fs::read(directory.join(path)).unwrap();
-            write!(
-                socket,
-                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
-                bytes.len()
-            )
-            .unwrap();
-            socket.write_all(&bytes).unwrap();
-        }
-    });
-    let result = install(
+    let cfd = package(source.path(), "cfd", &["ui-runtime"], &[]);
+    let (_, key) = catalog(
+        source.path(),
+        vec![base, shared, propulsion, ai, nozzle, agent, cfd],
+    );
+    let http = HttpSource::new(source.path());
+
+    let first = install(
         root.path(),
-        &format!("http://{address}/catalog.json"),
+        &http.url,
         &key,
-        &["nozzle".into()],
+        &["nozzle".into(), "nozzle".into()],
         |_| {},
-    );
-    stop.store(true, Ordering::Relaxed);
-    server.join().unwrap();
-    assert!(result.is_ok(), "{result:?}");
+    )
+    .unwrap();
     assert_eq!(
-        *requests.lock().unwrap(),
-        vec!["catalog.json", "base.zip", "nozzle.zip"]
+        http.take_requests(),
+        vec![
+            "catalog.json",
+            "base.zip",
+            "ui-runtime.zip",
+            "propulsion-runtime.zip",
+            "nozzle.zip"
+        ]
     );
+    assert_eq!(
+        first
+            .packages
+            .keys()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        vec!["base", "nozzle", "propulsion-runtime", "ui-runtime"]
+    );
+
+    let second = install(root.path(), &http.url, &key, &["agent".into()], |_| {}).unwrap();
+    assert!(second.packages.contains_key("nozzle"));
+    assert!(second.packages.contains_key("agent"));
+    assert!(!second.packages.contains_key("cfd"));
+    assert_eq!(
+        http.take_requests(),
+        vec!["catalog.json", "ai-runtime.zip", "agent.zip"]
+    );
+
+    install(root.path(), &http.url, &key, &["agent".into()], |_| {}).unwrap();
+    assert_eq!(http.take_requests(), vec!["catalog.json"]);
+
+    let base_only = tempfile::tempdir().unwrap();
+    let snapshot = install(base_only.path(), &http.url, &key, &[], |_| {}).unwrap();
+    assert_eq!(snapshot.packages.len(), 1);
+    assert_eq!(http.take_requests(), vec!["catalog.json", "base.zip"]);
+
+    let before = fs::read(root.path().join("installed.json")).unwrap();
+    for invalid in ["injector", "base", "ai-runtime", "unknown"] {
+        assert!(install(root.path(), &http.url, &key, &[invalid.into()], |_| {}).is_err());
+        assert_eq!(http.take_requests(), vec!["catalog.json"]);
+        assert_eq!(
+            fs::read(root.path().join("installed.json")).unwrap(),
+            before
+        );
+    }
+}
+
+#[test]
+fn malformed_dependency_catalogs_never_download_archives() {
+    let source = tempfile::tempdir().unwrap();
+    let root = tempfile::tempdir().unwrap();
+    let base = package(source.path(), "base", &[], &[]);
+    let nozzle = package(source.path(), "nozzle", &["base"], &[]);
+    let http = HttpSource::new(source.path());
+    for mut owner in [
+        base.clone(),
+        package(source.path(), "ui-runtime", &[], &[]),
+        package(source.path(), "agent", &[], &[]),
+    ] {
+        owner.dependencies.push("nozzle".into());
+        let mut packages = vec![nozzle.clone(), owner.clone()];
+        if owner.id != "base" {
+            packages.push(base.clone());
+        }
+        let (_, key) = catalog(source.path(), packages);
+        assert!(install(root.path(), &http.url, &key, &[], |_| {}).is_err());
+        assert_eq!(http.take_requests(), vec!["catalog.json"]);
+    }
+    // An unused runtime cycle is invalid even when only the base was selected.
+    let first = package(source.path(), "first-runtime", &["second-runtime"], &[]);
+    let second = package(source.path(), "second-runtime", &["first-runtime"], &[]);
+    let (_, key) = catalog(source.path(), vec![base.clone(), first, second]);
+    assert!(install(root.path(), &http.url, &key, &[], |_| {}).is_err());
+    assert_eq!(http.take_requests(), vec!["catalog.json"]);
+
+    let mut duplicate = nozzle;
+    duplicate.file = "BASE.zip".into();
+    let (_, key) = catalog(source.path(), vec![base, duplicate]);
+    assert!(install(root.path(), &http.url, &key, &[], |_| {}).is_err());
+    assert_eq!(http.take_requests(), vec!["catalog.json"]);
+    assert!(installed(root.path()).unwrap().packages.is_empty());
+}
+
+#[test]
+fn release_upgrade_retires_missing_modules_without_downloading_unselected_features() {
+    let source = tempfile::tempdir().unwrap();
+    let root = tempfile::tempdir().unwrap();
+    let base = package(source.path(), "base", &[], &[("ui/index.html", b"old")]);
+    let injector = package(
+        source.path(),
+        "injector",
+        &["base"],
+        &[("ui/injector.js", b"old")],
+    );
+    let (_, key) = catalog(source.path(), vec![base.clone(), injector]);
+    let http = HttpSource::new(source.path());
+    let old = install(root.path(), &http.url, &key, &["injector".into()], |_| {}).unwrap();
+    assert_eq!(
+        http.take_requests(),
+        vec!["catalog.json", "base.zip", "injector.zip"]
+    );
+    let previous_registry = fs::read(root.path().join("installed.json")).unwrap();
+
+    // The same release cannot silently revoke an installed module.
+    catalog(source.path(), vec![base]);
+    assert!(install(root.path(), &http.url, &key, &[], |_| {}).is_err());
+    assert_eq!(http.take_requests(), vec!["catalog.json"]);
+    assert_eq!(
+        fs::read(root.path().join("installed.json")).unwrap(),
+        previous_registry
+    );
+
+    let base = versioned_package(
+        source.path(),
+        "base",
+        "0.1.2",
+        &[],
+        &[("ui/index.html", b"new")],
+    );
+    let cfd = versioned_package(source.path(), "cfd", "0.1.2", &["base"], &[]);
+    catalog(source.path(), vec![base, cfd]);
+    let next = install(root.path(), &http.url, &key, &[], |_| {}).unwrap();
+    assert_eq!(http.take_requests(), vec!["catalog.json", "base.zip"]);
+    assert_eq!(next.app_version, "0.1.2");
+    assert_eq!(next.packages.len(), 1);
+    assert!(read_ui(root.path(), &next, "injector.js").is_err());
+    assert_eq!(read_ui(root.path(), &old, "injector.js").unwrap(), b"old");
 }
 
 #[cfg(unix)]

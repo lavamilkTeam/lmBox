@@ -76,6 +76,12 @@ function prepareSource() {
 }
 
 try {
+  if (process.argv[2] === '--source-only') {
+    prepareSource()
+    console.log('Prepared pinned CfdOF source and license for module packaging; no runtime was configured.')
+    process.exit(0)
+  }
+  if (process.argv.length > 2) throw new Error('Expected no arguments or --source-only')
   const pythonExecutable = pythonCandidates().find(probePython)
   if (!pythonExecutable) throw new Error('未找到可用的 FreeCAD Python。请安装 FreeCAD，或设置 LMBOX_FREECAD_PYTHON / LMBOX_FREECAD_ROOT 后重试。')
   prepareSource()

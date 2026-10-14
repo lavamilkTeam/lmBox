@@ -98,12 +98,19 @@ pub fn install(
         .map_err(|_| "另一个安装任务正在运行。")?;
     let old = installed(root)?;
     let mut wanted = selected.to_vec();
-    wanted.extend(
-        old.packages
-            .values()
-            .filter(|p| p.kind == "module")
-            .map(|p| p.id.clone()),
-    );
+    for previous in old.packages.values().filter(|p| p.kind == "module") {
+        if catalog
+            .packages
+            .iter()
+            .any(|p| p.id == previous.id && p.kind == "module")
+        {
+            wanted.push(previous.id.clone());
+        } else if old.app_version == catalog.app_version {
+            return Err("同一发布集缺少已安装的功能模块。".into());
+        }
+        // A later release may retire a module. Keep its immutable files for
+        // running snapshots, but do not carry its registration into that release.
+    }
     wanted.push("base".into());
     let (mut visiting, mut done, mut order) = (BTreeSet::new(), BTreeSet::new(), Vec::new());
     for id in wanted {

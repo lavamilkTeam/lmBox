@@ -154,6 +154,9 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
       - name: Test release artifact validation
         run: node --test scripts/release-assets.check.mjs
 
@@ -166,14 +169,20 @@ jobs:
           - os: ubuntu-24.04
             platform: linux-x64
             bundles: deb,appimage
+            qt-host: linux
+            qt-arch: linux_gcc_64
           - os: windows-2022
             platform: windows-x64
             bundles: nsis
+            qt-host: windows
+            qt-arch: win64_msvc2022_64
           - os: macos-14
             platform: macos-arm64
             bundles: app,dmg
+            qt-host: mac
+            qt-arch: clang_64
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -202,7 +211,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf libfuse2t64
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf libfuse2t64 gfortran cmake ninja-build libgl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0
       - run: npm ci
       - run: npm run setup:geometry
       - run: npm run setup:ai
@@ -281,6 +290,144 @@ jobs:
         with:
           name: installers-${{ matrix.platform }}
           path: .tools/release-assets/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Install the module solver compiler on macOS
+        if: runner.os == 'macOS'
+        run: brew install gcc ninja
+      - name: Install the module solver compiler on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          & C:\msys64\usr\bin\bash.exe -lc 'pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-gcc-fortran mingw-w64-ucrt-x86_64-ninja'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          'C:\msys64\ucrt64\bin' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Build real solver runtimes and fetch the pinned CFD source
+        env:
+          FC: gfortran
+          CC: gcc
+        run: |
+          npm run build:backend
+          node scripts/setup-cfd.mjs --source-only
+      - name: Prepare compiler runtime license notices
+        if: runner.os != 'macOS'
+        shell: bash
+        run: |
+          mkdir -p .tools/compiler-licenses
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            cp /usr/share/doc/libgfortran5/copyright .tools/compiler-licenses/gcc-copyright
+            cp /usr/share/common-licenses/GPL-3 .tools/compiler-licenses/
+            cp /usr/share/common-licenses/LGPL-2.1 .tools/compiler-licenses/
+          else
+            cp -R /c/msys64/ucrt64/share/licenses/gcc-libs .tools/compiler-licenses/
+            cp -R /c/msys64/ucrt64/share/licenses/libwinpthread .tools/compiler-licenses/
+          fi
+          echo "LMBOX_COMPILER_LICENSE_DIR=$GITHUB_WORKSPACE/.tools/compiler-licenses" >> "$GITHUB_ENV"
+      - name: Install the pinned Qt SDK for the native download installer
+        env:
+          QT_HOST: ${{ matrix.qt-host }}
+          QT_ARCH: ${{ matrix.qt-arch }}
+        shell: bash
+        run: |
+          python -m pip install aqtinstall==3.3.0
+          python -m aqt install-qt "$QT_HOST" desktop 6.8.3 "$QT_ARCH" --outputdir .tools/qt --archives qtbase qtdeclarative qttools qtsvg
+          python - <<'PY'
+          import glob, os, pathlib
+          tools = glob.glob('.tools/qt/6.8.3/*/bin/qmake') + glob.glob('.tools/qt/6.8.3/*/bin/qmake.exe')
+          assert len(tools) == 1, tools
+          qmake = pathlib.Path(tools[0]).resolve()
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf8') as env:
+              env.write(f'QMAKE={qmake}\nQTDIR={qmake.parent.parent}\n')
+          PY
+      - name: Build separate optional module ZIPs and the download-only installer
+        env:
+          LMBOX_MODULE_PUBLIC_KEY: ${{ vars.LMBOX_MODULE_PUBLIC_KEY }}
+          LMBOX_MODULE_RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+        shell: bash
+        run: |
+          npm run modules:package
+          npm run installer:package
+          node scripts/module-package.mjs installer-archive
+      - name: Validate and exercise the archived module release set
+        env:
+          RELEASE_PLATFORM: ${{ matrix.platform }}
+        shell: bash
+        run: |
+          module_target="$(node -p 'process.platform + "-" + process.arch')"
+          node scripts/release-assets.mjs collect-modules "$RELEASE_PLATFORM" "dist-modules/$module_target" .tools/module-release-assets
+          python - <<'PY'
+          import glob, json, pathlib, shutil, subprocess, tempfile, zipfile, os, stat, sys
+          root = pathlib.Path(tempfile.mkdtemp(prefix='lmbox-modules-relocated-'))
+          try:
+              catalogs = glob.glob('dist-modules/*/catalog-*.payload.json')
+              assert len(catalogs) == 1
+              catalog_path = pathlib.Path(catalogs[0])
+              catalog = json.loads(catalog_path.read_text())
+              for definition in catalog['packages']:
+                  archive = catalog_path.parent / definition['file']
+                  with zipfile.ZipFile(archive) as package:
+                      identifier = json.loads(package.read('package.json'))['id']
+                      assert identifier == definition['id']
+                      if identifier == 'base':
+                          assert not any('/geometry/' in name or '/ai/' in name or name.endswith('.wasm') for name in package.namelist()), 'Base package includes optional resources'
+                      for item in package.infolist():
+                          destination = root / f'lmbox-{identifier}' / item.filename
+                          destination.parent.mkdir(parents=True, exist_ok=True)
+                          mode = item.external_attr >> 16
+                          if stat.S_ISLNK(mode):
+                              destination.symlink_to(package.read(item).decode())
+                          else:
+                              destination.write_bytes(package.read(item))
+                              destination.chmod(mode & 0o777)
+              def module(name):
+                  return root / f'lmbox-{name}'
+              subprocess.run(['node', 'scripts/check-worker.mjs', str(module('stencil') / 'geometry')], check=True)
+              subprocess.run(['node', 'scripts/check-ai-worker.mjs', str(module('ai-runtime') / 'ai')], check=True)
+              env = dict(os.environ, LMBOX_CEA_RUNTIME=str(module('propulsion-runtime') / 'solvers/cea/runtime'), LMBOX_PROPULSION_RUNTIME=str(module('propulsion-runtime') / 'solvers/propulsion/runtime'))
+              env.pop('LD_LIBRARY_PATH', None)
+              env.pop('DYLD_LIBRARY_PATH', None)
+              if os.name == 'nt':
+                  env['PATH'] = os.pathsep.join([str(pathlib.Path(env['SystemRoot']) / 'System32'), env['SystemRoot']])
+              compiled = subprocess.run(['cargo', 'test', '--manifest-path', 'src-rust/Cargo.toml', '--locked', '--features', 'cea-integration', '--test', 'cea_native', '--test', 'propulsion_native', '--no-run', '--message-format=json'], capture_output=True, text=True)
+              if compiled.returncode:
+                  print(compiled.stdout, file=sys.stderr)
+                  print(compiled.stderr, file=sys.stderr)
+                  compiled.check_returncode()
+              tests = [item['executable'] for line in compiled.stdout.splitlines() if (item := json.loads(line)).get('reason') == 'compiler-artifact' and item.get('executable') and item.get('target', {}).get('name') in ('cea_native', 'propulsion_native')]
+              assert len(tests) == 2, tests
+              for executable in tests:
+                  subprocess.run([executable], env=env, check=True)
+              installers = glob.glob('dist-modules/*/lmBox-*-module-installer.zip')
+              assert len(installers) == 1
+              installer_root = root / 'installer'
+              with zipfile.ZipFile(installers[0]) as package:
+                  for item in package.infolist():
+                      destination = installer_root / item.filename
+                      destination.parent.mkdir(parents=True, exist_ok=True)
+                      mode = item.external_attr >> 16
+                      if stat.S_ISLNK(mode):
+                          destination.symlink_to(package.read(item).decode())
+                      else:
+                          destination.write_bytes(package.read(item))
+                          destination.chmod(mode & 0o777)
+              executables = [path for path in installer_root.rglob('*') if path.is_file() and path.name in ('lmbox-installer', 'lmbox-installer.exe')]
+              assert len(executables) == 1, executables
+              smoke_env = dict(os.environ, QT_QUICK_BACKEND='software')
+              if sys.platform == 'linux':
+                  smoke_env['QT_QPA_PLATFORM'] = 'offscreen'
+              else:
+                  smoke_env.pop('QT_QPA_PLATFORM', None)
+              subprocess.run([str(executables[0]), '--smoke-test'], env=smoke_env, check=True, timeout=30)
+              print('Relocated Qt module installer loaded its QML successfully.')
+          finally:
+              shutil.rmtree(root)
+          PY
+      - name: Upload complete module release artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: modules-${{ matrix.platform }}
+          path: .tools/module-release-assets/
           if-no-files-found: error
           retention-days: 7
 

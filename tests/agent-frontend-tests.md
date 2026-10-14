@@ -20,7 +20,7 @@
 
 统一检查见 [语言说明](../frontend/agent-frontend.md#验证与维护)。执行完整浏览器套件，保留失败 trace/截图；真实计算采用两个 worker，不用重试掩盖失败。
 
-`propulsion.pw.ts` 验证功能页签、真实 Fortran 锥形/钟形和液体圆孔/环隙计算、三类收敛段、SVG 转义与 DXF 毫米坐标、JSON 导出身份配对、参数失效、迟到响应、错误恢复、模块返回和窄屏。运行前先构建 `npm run build:backend`；不以计算 mock 替代正常路径。
+`propulsion.pw.ts` 验证功能页签、真实 Fortran 锥形/钟形和液体圆孔/环隙计算；暂未开放的喷注器通过仅供测试的 `fixtures/propulsion-harness.html` 挂载模块公开入口，保持真实服务、草稿恢复和迟到响应验证，不进入生产构建。其余覆盖包括三类收敛段、SVG 转义与 DXF 毫米坐标、JSON 导出身份配对、参数失效、迟到响应、错误恢复、模块返回和窄屏。运行前先构建 `npm run build:backend`；不以计算 mock 替代正常路径。
 
 `cfd-native.pw.ts` 仅在 `LMBOX_CFD_INTEGRATION=1` 时运行，`LMBOX_CFD_TEST_FILE` 指向公开来源的纯几何 CAD 夹具。通过真实原生会话验证导入、物理模型动态控件、单位输入、属性回写与 FCStd 保存，并关闭测试自身的会话；不替换后端响应。
 

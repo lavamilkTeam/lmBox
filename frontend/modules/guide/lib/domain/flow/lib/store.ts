@@ -6,7 +6,6 @@ export const guideTools = [
   { id: 'equilibrium', label: '化学平衡分析', category: '热化学', description: '组织热化学与平衡分析流程', kind: 'chemistry', available: false },
   { id: 'cfd', label: '流体力学', category: '流体与动力', description: '几何导入、网格、流动物理模型与求解', kind: 'fluid', available: true },
   { id: 'nozzle', label: '喷管初步设计', category: '流体与动力', description: '喷管轮廓、尺寸与性能计算', kind: 'fluid', available: true },
-  { id: 'injector', label: '喷注器水力设计', category: '流体与动力', description: '流量分配与流道尺寸计算', kind: 'fluid', available: true },
   { id: 'video', label: '视频工作流', category: 'AI', description: '云端模型视频生成工作流', kind: 'ai', available: true },
   { id: 'agent', label: 'AI 工作助手', category: 'AI', description: '工具调用与工作文件处理', kind: 'ai', available: true },
 ] as const

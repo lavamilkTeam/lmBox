@@ -3,6 +3,44 @@ import { readFile } from 'node:fs/promises'
 import { selectWorkspace } from './workspace-navigation'
 import { aiRuntimeFixture } from './ai-runtime-fixture'
 
+test('docked AI shares the Agent conversation across workspaces and full view', async ({ page }, testInfo) => {
+  test.setTimeout(60000)
+  const runtime = await aiRuntimeFixture(page)
+  try {
+    await page.goto('/')
+    const assistant = page.getByRole('region', { name: 'AI 助手', exact: true })
+    await expect(assistant).toBeVisible()
+    await expect(assistant.getByText('fixture-agent-model', { exact: true })).toBeVisible({ timeout: 20000 })
+    await assistant.getByLabel('Agent 任务', { exact: true }).fill('Fixture: write 42 to answer.txt.')
+    await assistant.getByRole('button', { name: '发送消息', exact: true }).click()
+    await expect(assistant.getByLabel('助手回复 1', { exact: true })).toContainText('answer.txt contains 42', { timeout: 20000 })
+    const canvas = await page.getByLabel('流程画布', { exact: true }).boundingBox()
+    const panel = await assistant.boundingBox()
+    expect(canvas!.x + canvas!.width).toBeLessThanOrEqual(panel!.x)
+    await assistant.getByLabel('Agent 任务', { exact: true }).fill('Fixture follow-up:')
+    await page.getByRole('tab', { name: '功能库', exact: true }).click()
+    await expect(assistant.getByLabel('Agent 任务', { exact: true })).toHaveValue('Fixture follow-up:')
+    await assistant.getByRole('button', { name: '对话设置', exact: true }).click()
+    await expect(assistant.getByRole('complementary', { name: '对话设置面板', exact: true })).toBeVisible()
+    await assistant.getByRole('button', { name: '关闭对话设置', exact: true }).click()
+    await page.screenshot({ path: testInfo.outputPath('docked-ai.png') })
+    await assistant.getByRole('button', { name: '展开到 Agent 工作区', exact: true }).click()
+    await expect(assistant).toHaveCount(0)
+    await expect(page.getByRole('tab', { name: 'AI 工作助手', exact: true })).toHaveAttribute('data-state', 'active')
+    await expect(page.getByLabel('Agent 任务', { exact: true })).toHaveValue('Fixture follow-up:')
+    await page.getByLabel('Agent 任务', { exact: true }).press('Enter')
+    await expect(page.getByLabel('助手回复 2', { exact: true })).toContainText('previous answer was 42', { timeout: 20000 })
+    expect(runtime.counts().completions).toBe(3)
+    await page.getByRole('tab', { name: '开始', exact: true }).click()
+    await expect(assistant.getByLabel('助手回复 2', { exact: true })).toContainText('previous answer was 42')
+    await expect(assistant.getByLabel('助手回复 2', { exact: true })).toBeInViewport()
+    await page.setViewportSize({ width: 390, height: 844 })
+    await expect(assistant.getByLabel('Agent 任务', { exact: true })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.screenshot({ path: testInfo.outputPath('docked-ai-mobile.png') })
+  } finally { await runtime.close() }
+})
+
 test('video canvas executes a provider workflow through real Rust and Python, saves output and preserves draft', async ({ page }, testInfo) => {
   const runtime = await aiRuntimeFixture(page)
   try {

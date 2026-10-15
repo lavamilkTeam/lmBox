@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { installedModules } from '../platform/desktop'
 import { useNotification } from '../ui/theme'
 import { AppTheme } from '../ui/theme'
@@ -22,6 +22,7 @@ const tools = ref([
 const notification = useNotification()
 const availabilityReady = ref(false)
 const installedIds = ref<string[] | null>(null)
+const agentAvailable = computed(() => availabilityReady.value && tools.value.some(tool => tool.id === 'agent' && tool.available))
 onMounted(async () => {
   try {
     const installed = await installedModules()
@@ -58,5 +59,7 @@ function openInstalledTool(id: string) {
     <VideoWorkspace v-else-if="active === 'video'" />
     <AgentWorkspace v-else-if="active === 'agent'" />
     <NozzleWorkspace v-else-if="active === 'nozzle'" />
-  </EngineeringShell></AppTheme>
+    <template v-if="agentAvailable && active !== 'agent'" #assistant><AgentWorkspace sidebar @expand="openInstalledTool('agent')" /></template>
+  </EngineeringShell>
+  </AppTheme>
 </template>

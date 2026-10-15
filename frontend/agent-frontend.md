@@ -24,6 +24,7 @@
 | `frontend/app` | [平台组装](app/agent-frontend-app.md) |
 | `frontend/app/features/workspace-tabs` | [工作区页签功能](app/features/workspace-tabs/agent-frontend-workspace-tabs.md) |
 | `frontend/ui/installer-welcome` | [安装欢迎页](ui/installer-welcome/agent-frontend-installer-welcome.md) |
+| `frontend/ui/flow-editor` | [共享列表与节点画布](ui/flow-editor/agent-frontend-flow-editor.md) |
 | `frontend/modules/guide` | [引导模块](modules/guide/agent-frontend-guide.md) |
 | `frontend/modules/video` | [视频工作流](modules/video/agent-frontend-video.md) |
 | `frontend/modules/agent` | [AI 工作助手](modules/agent/agent-frontend-agent.md) |

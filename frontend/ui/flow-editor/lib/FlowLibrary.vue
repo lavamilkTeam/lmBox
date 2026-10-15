@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { GripVertical, Plus, Search } from '@lucide/vue'
-import { Badge, Button, Input } from '../../../../ui/shadcn'
+import { Badge, Button, Input } from '../../shadcn'
 import type { ToolView } from './types'
-const props = defineProps<{ tools: readonly ToolView[] }>()
+const props = withDefaults(defineProps<{
+  tools: readonly ToolView[]; title?: string; label?: string; navigationLabel?: string; searchLabel?: string; placeholder?: string
+}>(), { title: '功能库', label: '功能列表', navigationLabel: '引导功能库', searchLabel: '搜索功能', placeholder: '搜索功能…' })
 const emit = defineEmits<{ add: [id: string] }>()
 const query = ref('')
-const filtered = computed(() => props.tools.filter(tool => `${tool.label}${tool.category}`.includes(query.value.trim())))
+const filtered = computed(() => props.tools.filter(tool => `${tool.label}${tool.category}`.toLowerCase().includes(query.value.trim().toLowerCase())))
 function drag(event: DragEvent, id: string) {
   if (!event.dataTransfer) return
   event.dataTransfer.setData('application/x-lmbox-guide-tool', id)
@@ -14,10 +16,10 @@ function drag(event: DragEvent, id: string) {
 }
 </script>
 <template>
-  <aside class="guide-library" aria-label="功能列表">
-    <div class="guide-library-heading"><span>功能库</span><Badge variant="secondary" class="guide-count">{{ tools.length }}</Badge></div>
-    <div class="guide-search"><Search class="guide-search-icon" :size="15" aria-hidden="true" /><Input v-model="query" class="guide-search-input" aria-label="搜索功能" placeholder="搜索功能…" /></div>
-    <nav aria-label="引导功能库">
+  <aside class="guide-library" :aria-label="label">
+    <div class="guide-library-heading"><span>{{ title }}</span><Badge variant="secondary" class="guide-count">{{ tools.length }}</Badge></div>
+    <div class="guide-search"><Search class="guide-search-icon" :size="15" aria-hidden="true" /><Input v-model="query" class="guide-search-input" :aria-label="searchLabel" :placeholder="placeholder" /></div>
+    <nav :aria-label="navigationLabel">
       <section v-for="category in [...new Set(filtered.map(tool => tool.category))]" :key="category" class="guide-category">
         <h2>{{ category }}</h2>
         <Button variant="ghost" size="sm" v-for="tool in filtered.filter(tool => tool.category === category)" :key="tool.id" class="guide-tool"

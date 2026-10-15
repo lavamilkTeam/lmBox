@@ -38,9 +38,14 @@ watch(() => props.active, () => {
         </div>
       </TabsList>
     </header>
-    <TabsContent v-for="tab in tabs" :key="tab.id" :value="tab.id" class="engineering-content">
-      <div class="engineering-content-inner"><slot v-if="active === tab.id" /></div>
-    </TabsContent>
+    <div class="engineering-body" :class="{ 'has-assistant': !!$slots.assistant }">
+      <div class="engineering-main">
+        <TabsContent v-for="tab in tabs" :key="tab.id" :value="tab.id" class="engineering-content">
+          <div class="engineering-content-inner"><slot v-if="active === tab.id" /></div>
+        </TabsContent>
+      </div>
+      <aside v-if="$slots.assistant" class="engineering-assistant" aria-label="AI 侧栏"><slot name="assistant" /></aside>
+    </div>
     <AlertDialog :open="!!closeConfirmation" @update:open="!$event && emit('cancelClose')">
       <AlertDialogContent>
         <AlertDialogHeader>

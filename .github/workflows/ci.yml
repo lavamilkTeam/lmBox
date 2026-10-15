@@ -320,8 +320,10 @@ jobs:
             cp /usr/share/common-licenses/GPL-3 .tools/compiler-licenses/
             cp /usr/share/common-licenses/LGPL-2.1 .tools/compiler-licenses/
           else
-            cp -R /c/msys64/ucrt64/share/licenses/gcc-libs .tools/compiler-licenses/
-            cp -R /c/msys64/ucrt64/share/licenses/libwinpthread .tools/compiler-licenses/
+            # MSYS2 GCC ships runtime notices in separate packages.
+            for runtime_package in libgcc libgfortran libquadmath libstdc++ libwinpthread; do
+              cp -R "/c/msys64/ucrt64/share/licenses/$runtime_package" .tools/compiler-licenses/
+            done
           fi
           echo "LMBOX_COMPILER_LICENSE_DIR=$GITHUB_WORKSPACE/.tools/compiler-licenses" >> "$GITHUB_ENV"
       - name: Install the pinned Qt SDK for the native download installer
@@ -331,12 +333,18 @@ jobs:
         shell: bash
         run: |
           python -m pip install aqtinstall==3.3.0
-          python -m aqt install-qt "$QT_HOST" desktop 6.8.3 "$QT_ARCH" --outputdir .tools/qt --archives qtbase qtdeclarative qttools qtsvg
+          qt_archives=(qtbase qtdeclarative qttools qtsvg)
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            # The Qt SDK requires ICU 73; Ubuntu 24.04 provides ICU 74.
+            qt_archives+=(icu)
+          fi
+          python -m aqt install-qt "$QT_HOST" desktop 6.8.3 "$QT_ARCH" --outputdir .tools/qt --archives "${qt_archives[@]}"
           python - <<'PY'
-          import glob, os, pathlib
+          import glob, os, pathlib, subprocess
           tools = glob.glob('.tools/qt/6.8.3/*/bin/qmake') + glob.glob('.tools/qt/6.8.3/*/bin/qmake.exe')
           assert len(tools) == 1, tools
           qmake = pathlib.Path(tools[0]).resolve()
+          subprocess.run([str(qmake), '-query', 'QT_VERSION'], check=True)
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf8') as env:
               env.write(f'QMAKE={qmake}\nQTDIR={qmake.parent.parent}\n')
           PY
@@ -414,8 +422,16 @@ jobs:
               executables = [path for path in installer_root.rglob('*') if path.is_file() and path.name in ('lmbox-installer', 'lmbox-installer.exe')]
               assert len(executables) == 1, executables
               smoke_env = dict(os.environ, QT_QUICK_BACKEND='software')
+              for name in ('LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH', 'QT_PLUGIN_PATH', 'QML_IMPORT_PATH', 'QML2_IMPORT_PATH'):
+                  smoke_env.pop(name, None)
               if sys.platform == 'linux':
                   smoke_env['QT_QPA_PLATFORM'] = 'offscreen'
+                  linked = subprocess.check_output(['ldd', str(executables[0])], env=smoke_env, text=True)
+                  dependencies = dict(line.strip().split(' => ', 1) for line in linked.splitlines() if ' => ' in line)
+                  for library in ('libicui18n.so.73', 'libicuuc.so.73', 'libicudata.so.73'):
+                      resolved = dependencies.get(library, '').split(' (', 1)[0]
+                      assert resolved and pathlib.Path(resolved).is_file(), f'Missing archived dependency: {library}\n{linked}'
+                      assert pathlib.Path(resolved).resolve().is_relative_to(installer_root.resolve()), f'{library} resolves outside the installer: {resolved}'
               else:
                   smoke_env.pop('QT_QPA_PLATFORM', None)
               subprocess.run([str(executables[0]), '--smoke-test'], env=smoke_env, check=True, timeout=30)

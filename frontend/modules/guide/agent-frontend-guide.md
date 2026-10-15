@@ -6,7 +6,7 @@
 | --- | --- |
 | `lib/app` | [界面协调](lib/app/agent-frontend-guide-app.md) |
 | `lib/domain/flow` | [流程草稿](lib/domain/flow/agent-frontend-flow.md) |
-| `lib/ui` | [功能库与画布](lib/ui/agent-frontend-guide-ui.md) |
+| 共享 `ui/flow-editor` | [功能库与画布](../../ui/flow-editor/agent-frontend-flow-editor.md) |
 
 启动默认显示引导界面。功能库中的条目可以添加到画布；化学平衡节点不显示打开入口，不能打开未实现页面。流体力学节点通过 `open('cfd')` 请求平台打开现有 CFD 工作区；CEA 理想火箭性能后端不作为独立前端功能列出。连线仅用于流程编排，不触发计算或传递工程数据。同一种功能可以添加多个节点，但打开的是该功能现有工作区，节点不拥有独立计算工程。
 

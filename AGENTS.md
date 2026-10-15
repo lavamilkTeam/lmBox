@@ -101,8 +101,7 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   │   │   ├── agent-frontend-guide.md
 │   │   │   └── lib/
 │   │   │       ├── app/
-│   │   │       ├── domain/
-│   │   │       └── ui/
+│   │   │       └── domain/
 │   │   ├── cfd/
 │   │   │   ├── index.ts
 │   │   │   ├── agent-frontend-cfd.md
@@ -130,6 +129,10 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── platform/
 │   ├── contracts/
 │   └── ui/
+│       ├── flow-editor/
+│       │   ├── index.ts
+│       │   ├── agent-frontend-flow-editor.md
+│       │   └── lib/
 │       ├── shadcn/
 │       │   ├── index.ts
 │       │   ├── agent-frontend-shadcn.md

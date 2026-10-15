@@ -2,4 +2,4 @@ Components adapted from shadcn-vue official new-york-v4 registry.
 Source: https://www.shadcn-vue.com/r/styles/new-york-v4/
 Upstream: https://github.com/unovue/shadcn-vue
 License: MIT; see LICENSE in this directory.
-Adaptations: relative private imports, cycle-free variant modules, input element exposure, localized close labels, visible tooltip accessibility, and application theme integration.
+Adaptations: relative private imports, cycle-free variant modules, borderless floating cards, input element exposure, localized close labels, visible tooltip accessibility, and application theme integration.

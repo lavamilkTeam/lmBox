@@ -8,6 +8,8 @@
 
 所有新增或修改的样式封装在共享或所属领域模块的 `ui`，包括 scoped CSS、全局主题样式和内联视觉配置；不在 features/domain/platform 添加样式。`app` 只组装和引入 UI。UI 不访问工程 store、源文件、IPC 或算法，不包含导入/建模/切片逻辑。渲染交互所属边界见预览说明。
 
+列表及画布复用归 [节点编辑 UI](flow-editor/agent-frontend-flow-editor.md)。
+
 ## 行为约束
 
 - 保持顶部导入和文件标签、左侧窄预览菜单、中央预览、右侧对应参数、底部日志的工作台布局。

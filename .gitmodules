@@ -1,0 +1,12 @@
+[submodule "runtime/cfdof"]
+	path = runtime/cfdof
+	url = https://github.com/jaheyns/CfdOF.git
+	shallow = true
+[submodule "runtime/freecad"]
+	path = runtime/freecad
+	url = https://github.com/FreeCAD/FreeCAD.git
+	shallow = true
+[submodule "runtime/paraview"]
+	path = runtime/paraview
+	url = https://github.com/Kitware/ParaView.git
+	shallow = true

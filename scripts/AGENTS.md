@@ -9,6 +9,8 @@
 <!-- agent-directory:start -->
 ```text
 scripts/
+├── cfd-runtime/
+│   └── agent-python-cfd-runtime.md
 ├── agent-javascript-ai.md
 ├── agent-javascript-modules.md
 ├── agent-javascript-installer.md

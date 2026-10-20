@@ -6,7 +6,8 @@
 | --- | --- |
 | `module-package.mjs/module-archive.py` | [模块 ZIP 发布构建](agent-javascript-modules.md) |
 | `installer.mjs`、根 `vite.installer.config.ts` | [安装页面构建](agent-javascript-installer.md) |
-| `setup-cfd.mjs` | [CFD 环境准备](agent-javascript-cfd.md) |
+| `setup-cfd.mjs`、`prepare-openfoam-source.py/prepare-openfoam-source.check.py` | [CFD 环境准备](agent-javascript-cfd.md) |
+| `bundle-cfd-runtime.py`、`check-cfd-runtime.py`、`cfd-runtime/` | [CFD 原生构建与裁剪](cfd-runtime/agent-python-cfd-runtime.md) |
 | `build-propulsion.mjs` | [推进设计构建](agent-javascript-propulsion.md) |
 | `build-cea.mjs` | [CEA 构建](agent-javascript-cea.md) |
 | `build-wasm/build-worker/check-worker/geometry-env` | [构建与引擎环境](agent-javascript-build.md) |

@@ -10,13 +10,15 @@
 - `node scripts/module-package.mjs installer-archive`：将已部署的 Qt 下载安装器单独归档，并记录其校验值。
 - `node scripts/module-package.mjs plan-ui MANIFEST DIST`：输出 Vite 资源归属及依赖规划，不构建或生成密钥。
 
-输入须先准备真实运行库：`build:worker`、`build:ai-worker`、`build:backend` 和 `setup:cfd`。CI 通过 `setup-cfd.mjs --source-only` 只获取固定源版本。缺少产物明确失败，不生成占位包或读取本机 CFD runtime.json 进入发布包。CFD ZIP 包含原版 CfdOF、许可证和本项目适配器；FreeCAD、Docker/OpenFOAM、ParaView 由用户环境提供，模块包不声称安装这些外部产品。
+输入须先准备真实运行库：`build:worker`、`build:ai-worker`、`build:backend` 和 `setup:cfd`。CI 通过 `setup-cfd.mjs --source-only` 只获取固定源版本。缺少产物明确失败，不生成占位包或读取本机 CFD runtime.json 进入发布包。CFD ZIP 包含原版 CfdOF、许可证和本项目适配器；存在 `.tools/cfd/bundle/bundle.json` 时，默认验证并复制该平台的裁剪运行库到 `cfd/native`，`LMBOX_CFD_BUNDLE` 可覆盖输入位置，验证失败不回退宿主。构建与验证见[原生运行库](cfd-runtime/agent-python-cfd-runtime.md)。没有该输入时仍生成依赖宿主环境的适配器包，不能宣称含原生求解环境。
 
 每个平台输出到 `dist-modules/<系统>-<架构>/`，包括基础包、stencil/cfd/nozzle/video/agent 五个功能包、ui-runtime/propulsion-runtime/ai-runtime 三个共用包，共九个模块 ZIP。injector 暂不发布。原生下载安装器另为一个 ZIP，包含 Qt 与安装管理程序，不包含可选功能资源。发布时上传三平台完整 ZIP 集和对应签名 catalog，安装器仅下载所选功能的依赖闭包。
 
 Vite manifest 的静态/内部动态依赖、CSS 与资源决定所有权；基础程序和引导界面使用的资源放 base，仅被单一功能使用的资源放对应功能包，其余可选共享资源放 ui-runtime。跨功能分发入口不会被基础依赖遍历；功能入口混入其他包时构建失败。WASM 与解析 Worker 归 stencil。源模块只从自己的公开入口接入分发入口，不重排业务目录。
 
 三平台构建将 Fortran 非系统编译器运行库复制到各求解器同级并保留许可证。macOS 重写相对加载路径并执行 ad-hoc 签名；Linux 设置 `$ORIGIN` 并核对依赖确实解析到包内；Windows 收集导入表中的 GCC/线程 DLL。Linux/Windows 必须提供 `LMBOX_COMPILER_LICENSE_DIR`；已有资源可通过 `LMBOX_PROPULSION_BUNDLE` 输入。归档保留执行权限和内部符号链接，拒绝逃逸或失效链接。Windows 仍需 WebView2，Linux 仍需受支持的 WebKit/GTK 系统环境。
+
+Windows PE 探测由同模块进程适配 `module-pe-imports.mjs` 逐行读取 `objdump -p`，仅返回导入 DLL 名称；大体积导出表不进入打包器的同步捕获缓冲。单行、导入名总量和错误尾部有界，工具启动失败、非零退出或异常输出仍终止打包。该适配不导出可供业务模块依赖的 JavaScript 接口。
 
 ## 发布配置
 
@@ -27,6 +29,7 @@ Vite manifest 的静态/内部动态依赖、CSS 与资源决定所有权；基�
 - `LMBOX_PACKAGE_PYTHON`：可覆盖 ZIP 适配使用的 Python；默认使用几何构建虚拟环境。
 - `LMBOX_PROPULSION_BUNDLE`：外部准备的可搬移 solver 资源输入。
 - `LMBOX_COMPILER_LICENSE_DIR`：Linux/Windows 编译器运行库许可文本目录。
+- `LMBOX_CFD_BUNDLE`：含 `bundle.json` 的已验证 CFD 运行库目录，平台必须匹配当前发布目标；只复制相对路径清单与二进制，不复制宿主配置。
 
 没有签名配置时只在忽略提交的 `.tools/modules` 创建开发密钥，用于本地和分支 CI。正式发布必须固定同一公钥并编译到安装器；开发密钥不能发布。ZIP 和待签名 catalog 的 SHA-256、来源提交、公钥记录在平台构建清单中；发布阶段核对清单后才用私钥签名。公钥下载附件不能代替安装器内的信任锚。
 

@@ -18,6 +18,8 @@ desktop/tauri/target/
 
 # Reproducible browser parser build and local build tools
 .tools/
+runtime/openfoam/source/
+runtime/openfoam/.source-stage-*/
 frontend/platform/desktop/lib/generated/
 engine/.venv/
 engine/.pytest_cache/
@@ -33,4 +35,5 @@ desktop/tauri/resources/
 
 # Optional module distribution artifacts
 dist-modules/
+dist-cfd-runtime/
 desktop/modules/target/

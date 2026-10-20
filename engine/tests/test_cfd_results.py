@@ -1,4 +1,7 @@
 """Narrow tests of the private filesystem/process adapter, not solver physics."""
+
+import sys
+import time
 from types import SimpleNamespace
 
 from lmbox_geometry.modules.cfd.runtime.results import Results
@@ -18,6 +21,7 @@ def runtime(tmp_path, running=False):
     r = SimpleNamespace(
         session=tmp_path,
         paraview_executable=None,
+        pvpython_executable=None,
         app=SimpleNamespace(ActiveDocument=SimpleNamespace(Name="Fixture", Objects=[solver])),
         tools=SimpleNamespace(
             getParentAnalysisObject=lambda obj: None,
@@ -61,3 +65,35 @@ def test_end_marker_reports_run_finished_without_claiming_convergence(tmp_path):
     fields, progress = Results(r).snapshot()
     assert fields == {"status": "unavailable"}
     assert progress == {"stage": "finished", "current": 500, "total": 500}
+
+
+def test_configured_vtk_reader_does_not_require_paraview_gui(tmp_path, monkeypatch):
+    r, case, _ = runtime(tmp_path)
+    for name in ("U", "p"):
+        (case / "1").mkdir(exist_ok=True)
+        (case / "1" / name).write_text("fixture")
+    reader = tmp_path / "vtkpython"
+    reader.write_text(
+        f"#!{sys.executable}\n"
+        "import json,os,pathlib,sys\n"
+        "assert 'PYTHONHOME' not in os.environ\n"
+        "assert 'PYTHONPATH' not in os.environ\n"
+        "pathlib.Path(sys.argv[3]).write_text(json.dumps({'fixture':True}))\n"
+    )
+    reader.chmod(0o755)
+    r.pvpython_executable = str(reader)
+    monkeypatch.setenv("PYTHONHOME", "/missing/host")
+    monkeypatch.setenv("PYTHONPATH", "/missing/host")
+    results = Results(r)
+    try:
+        assert results.snapshot()[0]["status"] == "loading"
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            fields, _ = results.snapshot()
+            if fields["status"] != "loading":
+                break
+            time.sleep(0.01)
+        assert fields["status"] == "ready", fields
+        assert fields["data"]["fixture"] is True
+    finally:
+        results.close()

@@ -46,6 +46,9 @@ class Runtime:
         log,
         paraview_executable=None,
         container_name=None,
+        *,
+        pvpython_executable=None,
+        openfoam_directory=None,
     ):
         source = Path(upstream).resolve(strict=True)
         if not (source / "CfdOF/CfdTools.py").is_file():
@@ -68,6 +71,15 @@ class Runtime:
         self.docker_executable = docker_executable
         self.docker_name = container_name or "lmbox-cfd-" + uuid.uuid4().hex[:12]
         self.paraview_executable = paraview_executable
+        self.pvpython_executable = pvpython_executable
+        self.openfoam_directory = openfoam_directory
+        if openfoam_directory:
+            if docker_image:
+                raise ValueError("Local OpenFOAM and Docker cannot both be configured")
+            if not (Path(openfoam_directory) / "etc/bashrc").is_file():
+                raise ValueError("OpenFOAM runtime is missing etc/bashrc")
+        if pvpython_executable and not Path(pvpython_executable).is_file():
+            raise ValueError("ParaView pvpython executable is missing")
         self.external_processes = []
         self._load()
 
@@ -86,6 +98,9 @@ class Runtime:
         tempfile.tempdir = str(self.session / "tmp")
         for name in ("TMPDIR", "TMP", "TEMP"):
             os.environ[name] = tempfile.tempdir
+        if self.openfoam_directory:
+            os.environ["FOAM_CONFIG_MODE"] = "o"
+            os.environ["LMBOX_OPENFOAM_USER_DIR"] = str(self.session / "openfoam-user")
         sys.path[:0] = [
             str(root / "lib"),
             str(root / "Mod/Part"),
@@ -117,13 +132,19 @@ class Runtime:
             ("SystemParameterFile", str(self.session / "profile/system.cfg")),
         ):
             self.app.ConfigSet(key, value)
+        # The hidden window's notification popup can re-enter its own mutex
+        # when the offscreen platform reports a warning while raising it.
+        notifications = self.app.ParamGet("User parameter:BaseApp/Preferences/NotificationArea")
+        notifications.SetBool("NotificationAreaEnabled", False)
+        notifications.SetBool("NonIntrusiveNotificationsEnabled", False)
         self.qt = importlib.import_module("PySide.QtCore")
         self.qt.QCoreApplication.setAttribute(self.qt.Qt.AA_DontUseNativeDialogs, True)
+        # Register QWidget's Shiboken type before FreeCAD wraps its main window.
+        self.widgets = importlib.import_module("PySide.QtWidgets")
         self.gui = importlib.import_module("FreeCADGui")
         self.gui.showMainWindow()
         self.gui.getMainWindow().hide()
         self.qt = importlib.import_module("PySide.QtCore")
-        self.widgets = importlib.import_module("PySide.QtWidgets")
         self.qt_app = self.widgets.QApplication.instance()
         self.qt_app.setQuitOnLastWindowClosed(False)
         self._qprocess = self.qt.QProcess
@@ -138,9 +159,10 @@ class Runtime:
                 process.setArguments(args[1])
             if len(args) > 2:
                 process.setWorkingDirectory(args[2])
-            if self.paraview_executable and Path(process.program()).resolve() == Path(
+            if (
                 self.paraview_executable
-            ).resolve():
+                and Path(process.program()).resolve() == Path(self.paraview_executable).resolve()
+            ):
                 environment = process.processEnvironment()
                 if environment.isEmpty():
                     environment = self.qt.QProcessEnvironment.systemEnvironment()
@@ -165,8 +187,17 @@ class Runtime:
         self.prefs.SetBool("AppendDocNameToOutputPath", False)
         self.prefs.SetBool("UseDocker", bool(self.docker_image))
         self.prefs.SetString("DockerURL", self.docker_image or "")
+        if self.openfoam_directory:
+            self.prefs.SetString("InstallationPath", self.openfoam_directory)
         if self.paraview_executable:
             self.prefs.SetString("ParaviewPath", self.paraview_executable)
+        elif self.pvpython_executable:
+            # A VTK-only runtime must not discover and launch a host ParaView GUI.
+            def unavailable_paraview(_case, _script, message):
+                message("此运行库未包含 ParaView 桌面程序，请使用内置结果视图。")
+                return False
+
+            self.tools.startParaview = unavailable_paraview
 
         self._add_command = self.gui.addCommand
 

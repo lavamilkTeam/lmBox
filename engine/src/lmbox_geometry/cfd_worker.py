@@ -12,6 +12,8 @@ def main():
     parser.add_argument("--docker-image")
     parser.add_argument("--docker-executable", default="docker")
     parser.add_argument("--paraview-executable")
+    parser.add_argument("--pvpython-executable")
+    parser.add_argument("--openfoam-directory")
     parser.add_argument("--container-name")
     args = parser.parse_args()
     run_worker(
@@ -21,6 +23,8 @@ def main():
         args.docker_executable,
         args.paraview_executable,
         args.container_name,
+        pvpython_executable=args.pvpython_executable,
+        openfoam_directory=args.openfoam_directory,
     )
 
 

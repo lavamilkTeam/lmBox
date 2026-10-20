@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import test from 'node:test'
 
 const script = fileURLToPath(new URL('./release-assets.mjs', import.meta.url))
@@ -23,6 +23,91 @@ const fixture = t => {
   t.after(() => rmSync(path, { recursive: true, force: true }))
   return path
 }
+const peImportsScript = fileURLToPath(new URL('./module-pe-imports.mjs', import.meta.url))
+function peToolFixture(t, report) {
+  const path = fixture(t)
+  // Node parses its -p argument before loading the process fixture. A quoted
+  // path is valid JavaScript while still checking the argument stays intact.
+  const library = JSON.stringify(join(path, 'solver with spaces.dll'))
+  const config = join(path, 'report.json')
+  const tool = join(path, 'objdump-fixture.mjs')
+  writeFileSync(config, JSON.stringify({ ...report, library }))
+  // Run an actual child process on every host, including Windows where .cmd
+  // and shebang scripts cannot be spawned with shell:false.
+  writeFileSync(tool, `
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { once } from 'node:events'
+if (process.execArgv[0] === '-p') {
+  const report = JSON.parse(readFileSync(process.env.LMBOX_TEST_OBJDUMP, 'utf8'))
+  assert.equal(process.execArgv[1], report.library)
+  for (const { text, repeat = 1 } of report.stdout || []) {
+    for (let index = 0; index < repeat; index++) {
+      if (!process.stdout.write(text)) await once(process.stdout, 'drain')
+    }
+  }
+  for (const { text, repeat = 1 } of report.stderr || []) {
+    for (let index = 0; index < repeat; index++) {
+      if (!process.stderr.write(text)) await once(process.stderr, 'drain')
+    }
+  }
+  await Promise.all([
+    new Promise(resolve => process.stdout.write('', resolve)),
+    new Promise(resolve => process.stderr.write('', resolve)),
+  ])
+  process.exit(report.status || 0)
+}
+`)
+  return spawnSync(process.execPath, [peImportsScript, library], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      OBJDUMP: process.execPath,
+      LMBOX_TEST_OBJDUMP: config,
+      NODE_OPTIONS: `--import=${JSON.stringify(pathToFileURL(tool).href)}`,
+    },
+  })
+}
+
+test('PE import inspection streams large reports without losing DLL names', t => {
+  const result = peToolFixture(t, { stdout: [
+    { text: '\tDLL Name: KERNEL32.dll\r\n' },
+    { text: 'export and unwind table row\n'.repeat(256), repeat: 1024 },
+    { text: '\tDLL Na' }, { text: 'me: libgfortran-5.dll\r\n\tDLL Name: libquadmath-0.dll\n' },
+    { text: '\tDLL Name: libgfortran-5.dll\n\tDLL Name: libgcc_s_seh-1.dll' },
+  ] })
+  pass(result)
+  assert.deepEqual(JSON.parse(result.stdout), ['KERNEL32.dll', 'libgfortran-5.dll', 'libquadmath-0.dll', 'libgcc_s_seh-1.dll'])
+})
+
+test('PE import inspection preserves failed tool exits after large output', t => {
+  const result = peToolFixture(t, {
+    stdout: [{ text: '\tDLL Name: libgfortran-5.dll\n' }],
+    stderr: [{ text: 'objdump diagnostic\n'.repeat(256), repeat: 1024 }, { text: 'invalid PE image\n' }],
+    status: 9,
+  })
+  fail(result, /invalid PE image/)
+  assert.equal(result.stdout, '')
+  assert(result.stderr.length < 16 * 1024)
+})
+
+test('PE import inspection rejects missing tools and unbounded report lines', t => {
+  const path = fixture(t)
+  const missing = spawnSync(process.execPath, [peImportsScript, join(path, 'solver.dll')], {
+    encoding: 'utf8', env: { ...process.env, OBJDUMP: join(path, 'missing-objdump') },
+  })
+  fail(missing, /ENOENT/)
+  const longLine = peToolFixture(t, { stdout: [{ text: 'x'.repeat(64 * 1024 + 1) }] })
+  fail(longLine, /output line exceeds/)
+  assert.equal(longLine.stdout, '')
+})
+
+test('PE import inspection permits valid libraries with no imports', t => {
+  const result = peToolFixture(t, { stdout: [{ text: 'PE headers without an import directory\n' }] })
+  pass(result)
+  assert.deepEqual(JSON.parse(result.stdout), [])
+})
+
 const collectAll = path => {
   for (const [platform, extensions] of Object.entries({
     'windows-x64': ['exe'], 'macos-arm64': ['dmg'], 'linux-x64': ['deb', 'AppImage'],

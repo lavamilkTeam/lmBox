@@ -114,6 +114,7 @@ function finishLink(id: string, port: string) {
 }
 function path(x1: number, y1: number, x2: number, y2: number) {
   if (props.wireStyle === 'orthogonal') {
+    if (y1 === y2 && x2 > x1) return `M ${x1} ${y1} H ${x2}`
     if (x2 >= x1 + 40) {
       const middle = (x1 + x2) / 2
       return `M ${x1} ${y1} H ${middle} V ${y2} H ${x2}`

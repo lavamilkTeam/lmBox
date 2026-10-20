@@ -1,5 +1,42 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Locator, type Page } from '@playwright/test'
 import { selectWorkspace } from './workspace-navigation'
+
+async function pinCenter(pin: Locator) {
+  const bounds = (await pin.boundingBox())!
+  return { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 }
+}
+
+async function dragGate(page: Page, handle: Locator, dx: number, dy: number) {
+  const start = await pinCenter(handle)
+  await page.mouse.move(start.x, start.y)
+  await page.mouse.down()
+  await page.mouse.move(start.x + dx, start.y + dy, { steps: 8 })
+  await page.mouse.up()
+}
+
+async function expectAttachedWire(wire: Locator, output: Locator, input: Locator, straight: boolean) {
+  const from = await pinCenter(output), to = await pinCenter(input)
+  const rendered = await wire.evaluate((element: SVGPathElement) => {
+    const matrix = element.getScreenCTM()!
+    const start = element.getPointAtLength(0).matrixTransform(matrix)
+    const end = element.getPointAtLength(element.getTotalLength()).matrixTransform(matrix)
+    return {
+      start: { x: start.x, y: start.y }, end: { x: end.x, y: end.y },
+      commands: element.getAttribute('d')!.match(/[A-Za-z]/g),
+    }
+  })
+  expect(rendered.start.x).toBeCloseTo(from.x, 0)
+  expect(rendered.start.y).toBeCloseTo(from.y, 0)
+  expect(rendered.end.x).toBeCloseTo(to.x, 0)
+  expect(rendered.end.y).toBeCloseTo(to.y, 0)
+  if (straight) {
+    expect(to.y).toBeCloseTo(from.y, 0)
+    expect(rendered.commands).toEqual(['M', 'H'])
+  } else {
+    expect(Math.abs(to.y - from.y)).toBeGreaterThan(1)
+    expect(rendered.commands).toContain('V')
+  }
+}
 
 test('logic page uses searchable gate library and real symbols with one or two input ports', async ({ page }) => {
   const errors: string[] = []
@@ -176,6 +213,88 @@ test('terminal dragging connects symbol pins and keeps wire ends attached after 
   await input.click()
   await expect(page.getByText('该输入端已连接，请先删除原连线', { exact: true })).toBeVisible()
   await expect(wire).toHaveCount(1)
+})
+
+test('connecting nearby pins aligns only the target and draws a short horizontal wire', async ({ page }) => {
+  await page.goto('/')
+  await selectWorkspace(page, '数字逻辑仿真')
+  await page.getByRole('button', { name: '添加非门 NOT', exact: true }).click()
+  await page.getByRole('button', { name: '添加与门 AND', exact: true }).click()
+  const source = page.getByRole('article', { name: '非门 NOT', exact: true })
+  const target = page.getByRole('article', { name: '与门 AND', exact: true })
+  const output = source.getByRole('button', { name: '非门 NOT输出端', exact: true })
+  const input = target.getByRole('button', { name: '与门 AND输入端 B', exact: true })
+  const handle = target.getByRole('button', { name: '移动与门 AND', exact: true })
+  const from = await pinCenter(output), before = await pinCenter(input)
+  await dragGate(page, handle, from.x + 28 - before.x, from.y + 8 - before.y)
+  const unconnected = await pinCenter(input)
+  expect(unconnected.x - from.x).toBeCloseTo(28, 0)
+  expect(unconnected.y - from.y).toBeCloseTo(8, 0)
+
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(unconnected.x, unconnected.y, { steps: 12 })
+  await page.mouse.up()
+  const wire = page.getByRole('button', { name: '连接：非门 NOT → 与门 AND B', exact: true })
+  await expect(wire).toHaveCount(1)
+  const afterSource = await pinCenter(output), afterTarget = await pinCenter(input)
+  expect(afterSource.x).toBeCloseTo(from.x, 0)
+  expect(afterSource.y).toBeCloseTo(from.y, 0)
+  expect(afterTarget.x).toBeCloseTo(unconnected.x, 0)
+  expect(afterTarget.y - unconnected.y).toBeCloseTo(-8, 0)
+  await expectAttachedWire(wire, output, input, true)
+})
+
+test('connected gates snap by canvas distance while dragging either end and remain movable at reduced zoom', async ({ page }) => {
+  await page.goto('/')
+  await selectWorkspace(page, '数字逻辑仿真')
+  await page.getByRole('button', { name: '添加与门 AND', exact: true }).click()
+  await page.getByRole('button', { name: '添加非门 NOT', exact: true }).click()
+  const source = page.getByRole('article', { name: '与门 AND', exact: true })
+  const target = page.getByRole('article', { name: '非门 NOT', exact: true })
+  const output = source.getByRole('button', { name: '与门 AND输出端', exact: true })
+  const input = target.getByRole('button', { name: '非门 NOT输入端 A', exact: true })
+  const sourceHandle = source.getByRole('button', { name: '移动与门 AND', exact: true })
+  const targetHandle = target.getByRole('button', { name: '移动非门 NOT', exact: true })
+  const from = await pinCenter(output), before = await pinCenter(input)
+  await dragGate(page, targetHandle, from.x + 180 - before.x, from.y + 60 - before.y)
+  await output.click()
+  await input.click()
+  const wire = page.getByRole('button', { name: '连接：与门 AND → 非门 NOT A', exact: true })
+  await expect(wire).toHaveCount(1)
+  expect((await pinCenter(input)).y - (await pinCenter(output)).y).toBeCloseTo(60, 0)
+  await expectAttachedWire(wire, output, input, false)
+
+  await dragGate(page, targetHandle, 0, -52)
+  expect((await pinCenter(output)).y).toBeCloseTo(from.y, 0)
+  await expectAttachedWire(wire, output, input, true)
+  await dragGate(page, targetHandle, 0, 24)
+  expect((await pinCenter(input)).y - (await pinCenter(output)).y).toBeCloseTo(24, 0)
+  await expectAttachedWire(wire, output, input, false)
+
+  const fixedTarget = await pinCenter(input)
+  await dragGate(page, sourceHandle, 0, 16)
+  expect((await pinCenter(input)).y).toBeCloseTo(fixedTarget.y, 0)
+  await expectAttachedWire(wire, output, input, true)
+  await sourceHandle.press('ArrowUp')
+  expect((await pinCenter(input)).y - (await pinCenter(output)).y).toBeCloseTo(20, 0)
+  await expectAttachedWire(wire, output, input, false)
+
+  for (let count = 0; count < 5; count++) await page.getByRole('button', { name: '缩小画布', exact: true }).click()
+  // At 50%, an 8px gap is 16 canvas units and must remain free; 5px is inside the threshold.
+  await dragGate(page, targetHandle, 0, -2)
+  expect((await pinCenter(input)).y - (await pinCenter(output)).y).toBeCloseTo(8, 0)
+  await expectAttachedWire(wire, output, input, false)
+  await dragGate(page, targetHandle, 0, -3)
+  await expectAttachedWire(wire, output, input, true)
+
+  const zoomedTarget = await pinCenter(input)
+  await dragGate(page, sourceHandle, 0, 8)
+  expect((await pinCenter(output)).y - (await pinCenter(input)).y).toBeCloseTo(8, 0)
+  await expectAttachedWire(wire, output, input, false)
+  await dragGate(page, sourceHandle, 0, -3)
+  expect((await pinCenter(input)).y).toBeCloseTo(zoomedTarget.y, 0)
+  await expectAttachedWire(wire, output, input, true)
 })
 
 test('guide and circuit drafts stay separate through tab switching, closing and compact layout', async ({ page }) => {

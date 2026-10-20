@@ -4,6 +4,8 @@
 
 视图卸载和普通页签关闭不清空草稿；重新打开恢复同一 Pinia 会话，刷新页面清空。这里不实现样式、图形绘制或逻辑求值。
 
+通过 UI 公开的 `gatePorts` 向 circuit-editing 注入端口几何，使水平吸附使用实际显示的引脚位置；app 不复制坐标或计算吸附规则。
+
 逻辑门说明的开关通过 [公共 help-dialog feature](../../../../features/help-dialog/agent-frontend-help-dialog.md) 协调，并把当前说明 ID 与事件传给 UI；说明内容随领域目录传入。弹窗状态随工作区卸载清理，不改变电路草稿。
 
 验证统一执行 `npm run check`。

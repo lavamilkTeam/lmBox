@@ -1,10 +1,12 @@
 # 前端：数字逻辑编辑器外观
 
-先读 [模块说明](../../agent-frontend-digital-logic.md)。`index.ts` 公开模块内部 `LogicEditor`。只接收目录、节点和连线并发送操作事件，不导入 domain、feature 或 app。
+先读 [模块说明](../../agent-frontend-digital-logic.md)。`index.ts` 公开模块内部 `LogicEditor` 及纯坐标查询 `gatePorts`。组件只接收目录、节点和连线并发送操作事件，不导入 domain、feature 或 app。
 
 左侧复用 [共享列表](../../../../ui/flow-editor/agent-frontend-flow-editor.md)，右侧复用同一共享画布。`GateSymbol.vue` 封装透明无边框逻辑门与图片，画布不显示卡片、页脚或关闭按钮；名称通过可访问标签和悬停标题提供。聚焦符号后 Delete/Backspace 请求删除，方向键请求移动。
 
 原始 SVG 及 [来源](assets/sources.json)、[授权](assets/NOTICE.txt) 保存在本 UI 的 `assets`，`symbols.ts` 私有管理 URL 和引脚显示坐标。原图为 100×50，显示为 200×100；输入/输出端坐标跟随 SVG 实际线端，包括单输入门与缓冲器的端点偏移。通过共享画布的 `ports` 与 `node` 插槽提供显示数据及符号；引脚、连线预览和最终折线使用一致端点，无箭头。
+
+`gatePorts` 接收门 ID 和输入名称，返回画布单位的局部输入/输出坐标；显示几何与 app 注入 feature 的吸附查询共用这一来源，不公开素材 URL。吸附决策及节点位置更新仍由 circuit-editing feature 负责。
 
 支持点击输出再点击输入，以及从输出点拖到输入点；端口是符号引脚上的点。拖动符号移动电路节点，缩放仅变更画布呈现。连线约束由 feature 验证，UI 不计算逻辑值。宽屏左右布局，小屏沿用共享上下布局。
 

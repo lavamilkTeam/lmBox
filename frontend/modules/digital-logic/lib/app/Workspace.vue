@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useCircuitEditing } from '../features/circuit-editing'
-import { LogicEditor } from '../ui'
+import { LogicEditor, gatePorts } from '../ui'
 import { useNotification } from '../../../../ui/theme'
 import { useHelpDialog } from '../../../../features/help-dialog'
-const editing = useCircuitEditing()
+const editing = useCircuitEditing(gatePorts)
 const help = useHelpDialog()
 const notification = useNotification()
 function connect(source: string, target: string, port?: string) {

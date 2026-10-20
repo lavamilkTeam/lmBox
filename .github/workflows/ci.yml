@@ -224,7 +224,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf libfuse2t64 gfortran cmake ninja-build libgl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 xvfb xauth
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf libfuse2t64 gfortran cmake ninja-build libgl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 xvfb xauth
       - run: npm ci
       - run: npm run setup:geometry
       - run: npm run setup:ai
@@ -409,7 +409,7 @@ jobs:
               env.pop('LD_LIBRARY_PATH', None)
               env.pop('DYLD_LIBRARY_PATH', None)
               if os.name == 'nt':
-                  env['PATH'] = os.pathsep.join([str(pathlib.Path(env['SystemRoot']) / 'System32'), env['SystemRoot']])
+                  env['PATH'] = os.pathsep.join([str(pathlib.Path(env['SYSTEMROOT']) / 'System32'), env['SYSTEMROOT']])
               compiled = subprocess.run(['cargo', 'test', '--manifest-path', 'src-rust/Cargo.toml', '--locked', '--features', 'cea-integration', '--test', 'cea_native', '--test', 'propulsion_native', '--no-run', '--message-format=json'], capture_output=True, text=True)
               if compiled.returncode:
                   print(compiled.stdout, file=sys.stderr)
@@ -448,6 +448,11 @@ jobs:
                       resolved = dependencies.get(library, '').split(' (', 1)[0]
                       assert resolved and pathlib.Path(resolved).is_file(), f'Missing archived dependency: {library}\n{linked}'
                       assert pathlib.Path(resolved).resolve().is_relative_to(installer_root.resolve()), f'{library} resolves outside the installer: {resolved}'
+                  # Qt loads the platform plugin dynamically; executable ldd omits its dependencies.
+                  platform_plugin = installer_root / 'plugins' / 'platforms' / 'libqxcb.so'
+                  assert platform_plugin.is_file(), f'Missing archived platform plugin: {platform_plugin}'
+                  plugin_linked = subprocess.check_output(['ldd', str(platform_plugin)], env=smoke_env, text=True)
+                  assert '=> not found' not in plugin_linked, f'Missing archived xcb plugin dependency:\n{plugin_linked}'
               else:
                   smoke_env.pop('QT_QPA_PLATFORM', None)
               subprocess.run(smoke_command, env=smoke_env, check=True, timeout=30)

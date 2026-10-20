@@ -14,4 +14,6 @@ Python 门禁同时检查 CFD 构建脚本的 Ruff；工作流任务验证 OpenF
 
 桌面矩阵另执行独立模块分发 crate 的 fmt/Clippy/tests，以及宿主 modular 特性的 Clippy；构建五个可选模块 ZIP、基础与共享运行库包及 Qt 下载安装器。实际 ZIP 解压搬移后执行 geometry/AI/Fortran 检查和安装器 QML 启动测试。模块 ZIP 发布构建与签名配置见[模块构建](../../scripts/agent-javascript-modules.md)。Release 下载本次运行的整包和模块产物，校验完整性、公钥与来源后，仅在发布任务读取私钥签名 catalog，再一起上传；缺少固定签名配置时拒绝发布。
 
-Linux Qt 6.8.3 SDK 必须同时安装官方 `icu` archive，不能用系统 ICU 74 替代其 ICU 73 ABI；安装后执行 `qmake -query QT_VERSION`，缺少动态依赖时立即失败。归档安装器启动检查清除外部 Qt/QML 和动态库搜索路径，Linux 使用 Xvfb 加载实际部署的 `xcb` 平台插件，并验证三个 ICU 73 库均解析到解压目录内部。Windows 编译器运行库许可证从 MSYS2 的 `libgcc`、`libgfortran`、`libquadmath`、`libstdc++` 和 `libwinpthread` 包目录收集，任一目录缺失均使构建失败。
+Linux Qt 6.8.3 SDK 必须同时安装官方 `icu` archive，不能用系统 ICU 74 替代其 ICU 73 ABI；安装后执行 `qmake -query QT_VERSION`，缺少动态依赖时立即失败。归档安装器启动检查清除外部 Qt/QML 和动态库搜索路径，Linux 使用 Xvfb 加载实际部署的 `xcb` 平台插件，并验证三个 ICU 73 库均解析到解压目录内部。`xcb` 系统依赖必须包含 `libxcb-cursor0`、`libxcb-icccm4`、`libxcb-keysyms1` 与 `libxkbcommon-x11-0`；启动前单独对归档内 `libqxcb.so` 执行 `ldd`，缺库直接失败，不能只检查主程序而遗漏动态加载的插件。Windows 编译器运行库许可证从 MSYS2 的 `libgcc`、`libgfortran`、`libquadmath`、`libstdc++` 和 `libwinpthread` 包目录收集，任一目录缺失均使构建失败。
+
+Windows 归档求解器验证从复制后的环境字典读取大写 `SYSTEMROOT`，只保留系统目录组成的 `PATH`；普通字典不具备 Windows `os.environ` 的大小写无关访问行为，不能使用混合大小写键或回退到含编译器路径的原环境。

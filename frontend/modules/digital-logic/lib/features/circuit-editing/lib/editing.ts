@@ -1,3 +1,4 @@
+import { parseDocument } from './document'
 import { circuitComponents, useLogicCircuit } from '../../../domain/circuit'
 
 interface PortLayout {
@@ -21,10 +22,10 @@ export function useCircuitEditing(portsForComponent: (componentId: string, input
       const input = portsForComponent(to.gateId, toGate.inputs).inputs.find(port => port.id === edge.targetPort)
       if (!output || !input || input.side === 'top' || ![output.x, output.y, input.x, input.y].every(Number.isFinite)) continue
       const movingSource = edge.source === id
-      const sourceX = (movingSource ? x : from.x) + output.x
-      const targetX = (movingSource ? to.x : x) + input.x
+      const sourceX = (movingSource ? x : from.x) + output.x * (from.scale ?? 1)
+      const targetX = (movingSource ? to.x : x) + input.x * (to.scale ?? 1)
       if (targetX <= sourceX) continue
-      const candidate = movingSource ? to.y + input.y - output.y : from.y + output.y - input.y
+      const candidate = movingSource ? to.y + input.y * (to.scale ?? 1) - output.y * (from.scale ?? 1) : from.y + output.y * (from.scale ?? 1) - input.y * (to.scale ?? 1)
       const distance = Math.abs(candidate - y)
       if (candidate >= 24 && distance <= 12 && distance < nearestDistance) {
         nearestY = candidate
@@ -33,13 +34,28 @@ export function useCircuitEditing(portsForComponent: (componentId: string, input
     }
     return nearestY
   }
+  function nextId(prefix: string) {
+    let id: string
+    do { id = `${prefix}-${circuit.nextId++}` } while (circuit.nodes.some(node => node.id === id) || circuit.edges.some(edge => edge.id === id))
+    return id
+  }
   function add(gateId: string, x: number, y: number) {
     const component = circuitComponents.find(component => component.id === gateId)
     if (!component || !Number.isFinite(x) || !Number.isFinite(y)) return
-    const id = `gate-${circuit.nextId++}`
+    const id = nextId('gate')
     if (gateId === 'input') circuit.inputValues[id] = '0'
     circuit.nodes.push({ id, gateId: component.id, x: Math.max(24, x), y: Math.max(24, y) })
     return id
+  }
+  function importDocument(value: unknown) {
+    try {
+      const document = parseDocument(value)
+      circuit.$patch(state => {
+        state.nodes = document.nodes; state.edges = document.edges
+        state.inputValues = document.inputValues; state.nextId = 1
+      })
+      return ''
+    } catch (error) { return error instanceof Error ? error.message : '电路文件无效' }
   }
   function move(id: string, x: number, y: number) {
     const node = circuit.nodes.find(node => node.id === id)
@@ -66,7 +82,7 @@ export function useCircuitEditing(portsForComponent: (componentId: string, input
       return circuit.edges.filter(edge => edge.source === id).some(edge => reaches(edge.target))
     }
     if (reaches(target)) return '组合逻辑反馈必须经过触发器'
-    const edge = { id: `wire-${circuit.nextId++}`, source, target, targetPort: targetPort! }
+    const edge = { id: nextId('wire'), source, target, targetPort: targetPort! }
     circuit.edges.push(edge)
     to.y = snappedY(target, to.x, to.y, [edge])
     return ''
@@ -77,5 +93,5 @@ export function useCircuitEditing(portsForComponent: (componentId: string, input
     delete circuit.inputValues[id]
   }
   function removeEdge(id: string) { circuit.edges = circuit.edges.filter(edge => edge.id !== id) }
-  return { circuit, tools: circuitComponents, add, move, connect, removeNode, removeEdge }
+  return { importDocument, circuit, tools: circuitComponents, add, move, connect, removeNode, removeEdge }
 }

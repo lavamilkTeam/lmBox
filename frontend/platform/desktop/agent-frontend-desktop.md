@@ -49,3 +49,5 @@ AI 的 `aiRequest` 经同源 `/api/ai` 或原生 `ai_request` 传输[版本化 A
 CFD 可选流场投影在适配边界验证有限数值、场数组与顶点对应关系、三角/流线索引及矢量数量；错误或未就绪状态不能携带可显示数据。进度必须使用有限非负当前量与正总量或 null。
 
 `createDigitalLogicSession()` 为工作区创建独占的持久 Worker，经同一 Rust/WASM `DigitalLogicSimulator` 执行[数字逻辑协议](../../../contracts/schemas/v1/agent-contracts-digital-logic.md)。浏览器静态部署与桌面 WebView 使用相同入口；平台不实现信号求值。请求按发送顺序处理，最多 32 个未完成请求，每个实际执行请求限时 30 秒；请求 JSON 上限 1 MiB，响应 JSON 上限 4 MiB。适配完整验证身份、信号、计数器、显示及字典边界。dispose、超时、Worker 错误或无效响应会终止 Worker 并拒绝所有未完成请求；核心明确拒绝单次命令时保留会话。调用方负责工作区生命周期及当前输入版本，不允许旧响应覆盖新状态。
+
+`readLogicCircuitFile` 读取用户所选 JSON，限制 1 MiB；领域结构校验由数字逻辑编辑 feature 执行。

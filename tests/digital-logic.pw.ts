@@ -393,3 +393,29 @@ test('guide and circuit drafts stay separate through tab switching, closing and 
   await selectWorkspace(page, '数字逻辑仿真')
   await expect(page.getByRole('article')).toHaveCount(0)
 })
+
+test('imports a named circuit, fits its full extent and simulates its real signals', async ({ page }) => {
+  await page.goto('/')
+  await selectWorkspace(page, '数字逻辑仿真')
+  const document = { schemaVersion: 1, nodes: [
+    { id: 'source', gateId: 'input', label: 'RESET', x: 24, y: 24 },
+    { id: 'buffer', gateId: 'buf', x: 4200, y: 2400 },
+    { id: 'lcd', gateId: 'hd44780', label: 'LCD', scale: 3, x: 1000, y: 400 },
+  ], edges: [{ id: 'wire', source: 'source', target: 'buffer', targetPort: 'A' }], inputValues: { source: '1' } }
+  await page.getByLabel('选择逻辑电路文件').setInputFiles({ name: 'circuit.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(document)) })
+  await expect(page.getByRole('article')).toHaveCount(3)
+  await expect(page.getByLabel('缓冲器 BUF输出电平')).toHaveText('1')
+  await page.getByRole('button', { name: '显示全部节点' }).click()
+  const viewport = await page.getByLabel('逻辑电路画布').boundingBox()
+  const node = await page.getByRole('article', { name: '缓冲器 BUF', exact: true }).boundingBox()
+  expect(node!.x + node!.width).toBeLessThan(viewport!.x + viewport!.width)
+  expect(node!.y + node!.height).toBeLessThan(viewport!.y + viewport!.height)
+  await page.getByRole('button', { name: '切换RESET电平', exact: true }).click()
+  await expect(page.getByLabel('缓冲器 BUF输出电平')).toHaveText('0')
+  await page.getByLabel('选择逻辑电路文件').setInputFiles({ name: 'circuit.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(document)) })
+  await expect(page.getByLabel('缓冲器 BUF输出电平')).toHaveText('1')
+  const lcd = page.getByRole('article', { name: 'LCD', exact: true })
+  const pin = await lcd.getByRole('button', { name: 'LCD输入端 RS', exact: true }).boundingBox()
+  const bounds = (await lcd.boundingBox())!
+  expect((pin!.x + pin!.width / 2 - bounds.x) / bounds.width).toBeCloseTo(138 / 600, 2)
+})

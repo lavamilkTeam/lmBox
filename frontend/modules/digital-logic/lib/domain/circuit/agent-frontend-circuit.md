@@ -7,3 +7,5 @@
 逻辑门的 `description` 依据中文维基百科改写逻辑规则、表达式及电路用途，末句不带句号；`source` 保留各自条目的标签与链接。HD44780 文案依据控制器手册并注明当前写入仿真范围；目录说明与实际求值结果分开提供。
 
 输入开关变化由 [circuit-simulation feature](../../features/circuit-simulation/agent-frontend-circuit-simulation.md) 协调提交；编辑操作与连接规则归 [circuit-editing feature](../../features/circuit-editing/agent-frontend-circuit-editing.md)。草稿跨视图卸载保留，整页刷新重置；通过 feature 和浏览器公共行为验证，统一运行 `npm run check`。
+
+节点可带可选 `label` 和 `scale`，仅用于名称与显示比例，不进入逻辑计算。导入文档 schemaVersion 为 1，包含 nodes、edges、inputValues，由编辑 feature 校验。

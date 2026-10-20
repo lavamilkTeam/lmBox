@@ -9,3 +9,5 @@ export { AiRequestNotSentError, aiRequest, getAiProjectId, getAiRequestId, readA
 export { installedModules } from './lib/modules'
 export { createDigitalLogicSession } from './lib/digital-logic'
 export type { DigitalLogicSession } from './lib/digital-logic'
+
+export { readLogicCircuitFile } from './lib/logic-document'

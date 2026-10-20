@@ -71,7 +71,7 @@ export const circuitComponents = [
   },
 ] as const
 
-interface CircuitNode { id: string; gateId: LogicNodeKind; x: number; y: number }
+interface CircuitNode { label?: string; scale?: number; id: string; gateId: LogicNodeKind; x: number; y: number }
 interface CircuitEdge { id: string; source: string; target: string; targetPort: string }
 
 export const useLogicCircuit = defineStore('digital-logic-circuit', () => {

@@ -6,9 +6,9 @@ import type { NodeView, EdgeView } from './types'
 const props = withDefaults(defineProps<{
   nodes: NodeView[]; edges: EdgeView[]; label?: string; canvasLabel?: string; nodeHeight?: number
   wireStyle?: 'curve' | 'orthogonal'; dropAnchor?: { x: number; y: number }
-  emptyTitle?: string; emptyDescription?: string
+  minZoom?: number; emptyTitle?: string; emptyDescription?: string
 }>(), {
-  label: '引导界面', canvasLabel: '流程画布', nodeHeight: 88, wireStyle: 'curve', dropAnchor: () => ({ x: 116, y: 26 }),
+  minZoom: 0.5, label: '引导界面', canvasLabel: '流程画布', nodeHeight: 88, wireStyle: 'curve', dropAnchor: () => ({ x: 116, y: 26 }),
 })
 const emit = defineEmits<{
   add: [id: string, x: number, y: number]; move: [id: string, x: number, y: number]
@@ -167,7 +167,13 @@ function keyboardMove(event: KeyboardEvent, node: NodeView) {
 }
 function removeNode(id: string) { if (source.value === id) source.value = null; emit('removeNode', id) }
 function removeSelected() { if (selected.value) emit('removeEdge', selected.value.id); selectedEdge.value = null }
-function setZoom(value: number) { zoom.value = Math.min(1.5, Math.max(0.5, Math.round(value * 10) / 10)) }
+function setZoom(value: number) { zoom.value = Math.min(1.5, Math.max(props.minZoom, Math.round(value * 100) / 100)) }
+function fitView() {
+  const el = viewport.value
+  if (!el || !props.nodes.length) return
+  setZoom(Math.min(el.clientWidth / width.value, el.clientHeight / height.value) * 0.96)
+  el.scrollLeft = 0; el.scrollTop = 0
+}
 </script>
 <template>
   <section class="guide-board" :aria-label="label" :class="{ 'guide-circuit-board': wireStyle === 'orthogonal' }" @keydown.esc="source = null; selectedEdge = null; cancelWire()">
@@ -211,7 +217,7 @@ function setZoom(value: number) { zoom.value = Math.min(1.5, Math.max(0.5, Math.
     <div class="guide-floating-tools">
       <Button variant="outline" size="sm" v-if="source" class="guide-remove-link" @click="source = null">取消连线 <X :size="12" /></Button>
       <Button variant="outline" size="sm" v-if="selected" class="guide-remove-link" @click="removeSelected"><Trash2 :size="14" />删除所选连接</Button>
-      <div class="guide-zoom"><Button variant="ghost" size="sm" aria-label="缩小画布" :disabled="zoom <= 0.5" @click="setZoom(zoom - 0.1)"><Minus :size="14" /></Button><Button variant="ghost" size="sm" aria-label="重置画布缩放" @click="setZoom(1)">{{ Math.round(zoom * 100) }}%</Button><Button variant="ghost" size="sm" aria-label="放大画布" :disabled="zoom >= 1.5" @click="setZoom(zoom + 0.1)"><Plus :size="14" /></Button></div>
+      <div class="guide-zoom"><Button v-if="nodes.length" variant="ghost" size="sm" aria-label="显示全部节点" @click="fitView">全图</Button><Button variant="ghost" size="sm" aria-label="缩小画布" :disabled="zoom <= minZoom" @click="setZoom(zoom - 0.1)"><Minus :size="14" /></Button><Button variant="ghost" size="sm" aria-label="重置画布缩放" @click="setZoom(1)">{{ Math.round(zoom * 100) }}%</Button><Button variant="ghost" size="sm" aria-label="放大画布" :disabled="zoom >= 1.5" @click="setZoom(zoom + 0.1)"><Plus :size="14" /></Button></div>
     </div>
   </section>
 </template>

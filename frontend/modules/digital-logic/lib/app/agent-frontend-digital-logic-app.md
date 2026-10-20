@@ -9,3 +9,5 @@
 逻辑门说明的开关通过 [公共 help-dialog feature](../../../../features/help-dialog/agent-frontend-help-dialog.md) 协调，并把当前说明 ID 与事件传给 UI；说明内容随领域目录传入。弹窗状态随工作区卸载清理，不改变电路草稿。
 
 验证统一执行 `npm run check`。
+
+导入事件经平台 `readLogicCircuitFile` 读取，再交给编辑 feature 的 `importDocument` 校验与替换；异常通过通知呈现。成功导入后重建仿真，即使拓扑与原草稿相同也恢复文件中的输入意图；较旧读取与视图卸载后的读取不覆盖新草稿。

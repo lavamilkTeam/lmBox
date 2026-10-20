@@ -11,27 +11,42 @@ import type { SimulationView } from './simulation-view'
 const props = defineProps<{
   tools: readonly { id: string; label: string; category: string; inputs: readonly string[]; description: string; source?: { label: string; url: string } }[]
   activeHelpId: string | null
-  nodes: { id: string; gateId: string; x: number; y: number }[]
+  nodes: { id: string; gateId: string; label?: string; scale?: number; x: number; y: number }[]
   edges: { id: string; source: string; target: string; targetPort: string }[]
   simulation: SimulationView
 }>()
 const emit = defineEmits<{
   add: [id: string, x: number, y: number]; move: [id: string, x: number, y: number]
   connect: [source: string, target: string, targetPort?: string]; removeNode: [id: string]; removeEdge: [id: string]
+  importCircuit: [file: File]
   helpOpen: [id: string, open: boolean]
   simulationToggle: []; simulationStep: []; simulationReset: []; inputToggle: [nodeId: string]
 }>()
+const fileInput = ref<HTMLInputElement>()
+function importFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  if (input.files?.[0]) emit('importCircuit', input.files[0])
+  input.value = ''
+}
 const canvas = ref<InstanceType<typeof FlowCanvas>>()
 const diagnostics = computed(() => props.simulation.result?.diagnostics ?? [])
 const tools = computed(() => props.tools.map(tool => ({ ...tool, kind: 'electrical', available: false })))
 const nodes = computed(() => props.nodes.map(node => {
   const tool = tools.value.find(tool => tool.id === node.gateId)!
-  return { ...tool, ...node, ...circuitGeometry(node.gateId, tool.inputs) }
+  const geometry = circuitGeometry(node.gateId, tool.inputs), scale = node.scale ?? 1
+  return { ...tool, ...node, label: node.label ?? tool.label, width: geometry.width * scale, height: geometry.height * scale,
+    ports: { inputs: geometry.ports.inputs.map(port => ({ ...port, x: port.x * scale, y: port.y * scale })),
+      output: geometry.ports.output ? { x: geometry.ports.output.x * scale, y: geometry.ports.output.y * scale } : null } }
 }))
 const edges = computed(() => {
   const highEdgeIds = new Set(props.simulation.highEdgeIds)
   return props.edges.map(edge => ({ ...edge, class: highEdgeIds.has(edge.id) ? 'logic-wire-high' : undefined }))
 })
+function symbolStyle(id: string) {
+  const node = props.nodes.find(node => node.id === id)!
+  const geometry = circuitGeometry(node.gateId, tools.value.find(tool => tool.id === node.gateId)!.inputs)
+  return { width: `${geometry.width}px`, height: `${geometry.height}px`, transform: `scale(${node.scale ?? 1})`, transformOrigin: 'top left' }
+}
 function gateId(id: string) { return props.nodes.find(node => node.id === id)!.gateId }
 function signal(id: string) {
   return gateId(id) === 'probe' ? props.simulation.result?.inputs[id]?.A : props.simulation.result?.outputs[id]
@@ -59,6 +74,8 @@ function add(id: string, x?: number, y?: number) {
     </FlowLibrary>
     <section class="logic-editor-stage" aria-label="数字逻辑仿真">
       <div class="logic-simulation-toolbar" role="toolbar" aria-label="数字逻辑仿真控制">
+        <input ref="fileInput" type="file" accept=".json" class="sr-only" aria-label="选择逻辑电路文件" @change="importFile" />
+        <Button type="button" variant="ghost" size="sm" aria-label="导入逻辑电路" :disabled="simulation.running || simulation.busy" @click="fileInput?.click()">导入</Button>
         <Button type="button" variant="outline" size="sm" :aria-label="simulation.running ? '暂停仿真' : '运行仿真'" :disabled="simulation.busy && !simulation.running" @click="emit('simulationToggle')">{{ simulation.running ? '暂停' : '运行' }}</Button>
         <Button type="button" variant="ghost" size="sm" aria-label="单步仿真" :disabled="simulation.busy || simulation.running" @click="emit('simulationStep')">步进</Button>
         <Button type="button" variant="ghost" size="sm" aria-label="复位仿真" :disabled="simulation.busy" @click="emit('simulationReset')">复位</Button>
@@ -75,12 +92,12 @@ function add(id: string, x?: number, y?: number) {
         </Popover>
       </div>
       <p v-if="simulation.error" class="logic-simulation-error" role="alert">{{ simulation.error }}</p>
-      <FlowCanvas ref="canvas" :nodes="nodes" :edges="edges" label="数字逻辑编辑器" canvas-label="逻辑电路画布" wire-style="orthogonal" :drop-anchor="{ x: 100, y: 50 }"
+      <FlowCanvas ref="canvas" :min-zoom="0.1" :nodes="nodes" :edges="edges" label="数字逻辑编辑器" canvas-label="逻辑电路画布" wire-style="orthogonal" :drop-anchor="{ x: 100, y: 50 }"
       @add="add" @move="(id, x, y) => emit('move', id, x, y)" @connect="(source, target, port) => emit('connect', source, target, port)"
       @remove-node="id => emit('removeNode', id)" @remove-edge="id => emit('removeEdge', id)">
       <template #node="{ node, startMove, endMove, keyboardMove, remove }">
-        <CircuitSymbol :gate-id="gateId(node.id)" :label="node.label" :signal="signal(node.id)" :input-value="simulation.values[node.id]" :display="simulation.result?.displays[node.id]"
-          @move-start="startMove" @move-end="endMove" @keyboard-move="keyboardMove" @remove="remove" @input-toggle="emit('inputToggle', node.id)" />
+        <div :style="symbolStyle(node.id)"><CircuitSymbol :gate-id="gateId(node.id)" :label="node.label" :signal="signal(node.id)" :input-value="simulation.values[node.id]" :display="simulation.result?.displays[node.id]"
+          @move-start="startMove" @move-end="endMove" @keyboard-move="keyboardMove" @remove="remove" @input-toggle="emit('inputToggle', node.id)" /></div>
       </template>
       </FlowCanvas>
     </section>

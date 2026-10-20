@@ -1,11 +1,11 @@
-import { logicGates, useLogicCircuit } from '../../../domain/circuit'
+import { circuitComponents, useLogicCircuit } from '../../../domain/circuit'
 
 interface PortLayout {
-  inputs: readonly { id: string; x: number; y: number }[]
-  output: { x: number; y: number }
+  inputs: readonly { id: string; x: number; y: number; side?: 'left' | 'top' }[]
+  output: { x: number; y: number } | null
 }
 
-export function useCircuitEditing(portsForGate: (gateId: string, inputs: readonly string[]) => PortLayout) {
+export function useCircuitEditing(portsForComponent: (componentId: string, inputs: readonly string[]) => PortLayout) {
   const circuit = useLogicCircuit()
   function snappedY(id: string, x: number, y: number, edges = circuit.edges) {
     let nearestY = y, nearestDistance = Infinity
@@ -14,12 +14,12 @@ export function useCircuitEditing(portsForGate: (gateId: string, inputs: readonl
       const from = circuit.nodes.find(node => node.id === edge.source)
       const to = circuit.nodes.find(node => node.id === edge.target)
       if (!from || !to) continue
-      const fromGate = logicGates.find(gate => gate.id === from.gateId)
-      const toGate = logicGates.find(gate => gate.id === to.gateId)
+      const fromGate = circuitComponents.find(component => component.id === from.gateId)
+      const toGate = circuitComponents.find(component => component.id === to.gateId)
       if (!fromGate || !toGate) continue
-      const output = portsForGate(from.gateId, fromGate.inputs).output
-      const input = portsForGate(to.gateId, toGate.inputs).inputs.find(port => port.id === edge.targetPort)
-      if (!input || ![output.x, output.y, input.x, input.y].every(Number.isFinite)) continue
+      const output = portsForComponent(from.gateId, fromGate.inputs).output
+      const input = portsForComponent(to.gateId, toGate.inputs).inputs.find(port => port.id === edge.targetPort)
+      if (!output || !input || input.side === 'top' || ![output.x, output.y, input.x, input.y].every(Number.isFinite)) continue
       const movingSource = edge.source === id
       const sourceX = (movingSource ? x : from.x) + output.x
       const targetX = (movingSource ? to.x : x) + input.x
@@ -34,7 +34,7 @@ export function useCircuitEditing(portsForGate: (gateId: string, inputs: readonl
     return nearestY
   }
   function add(gateId: string, x: number, y: number) {
-    if (!logicGates.some(gate => gate.id === gateId) || !Number.isFinite(x) || !Number.isFinite(y)) return
+    if (!circuitComponents.some(component => component.id === gateId) || !Number.isFinite(x) || !Number.isFinite(y)) return
     const id = `gate-${circuit.nextId++}`
     circuit.nodes.push({ id, gateId, x: Math.max(24, x), y: Math.max(24, y) })
     return id
@@ -49,9 +49,10 @@ export function useCircuitEditing(portsForGate: (gateId: string, inputs: readonl
   function connect(source: string, target: string, targetPort?: string) {
     const from = circuit.nodes.find(node => node.id === source)
     const to = circuit.nodes.find(node => node.id === target)
-    if (!from || !to) return '逻辑门已不存在'
-    if (source === target) return '请选择另一个逻辑门'
-    const gate = logicGates.find(gate => gate.id === to.gateId)!
+    if (!from || !to) return '元件已不存在'
+    if (source === target) return '请选择另一个元件'
+    if (!circuitComponents.find(component => component.id === from.gateId)?.hasOutput) return '该元件没有可连接的输出端'
+    const gate = circuitComponents.find(component => component.id === to.gateId)!
     if (!gate.inputs.some(port => port === targetPort)) return '请选择有效的输入端'
     if (circuit.edges.some(edge => edge.target === target && edge.targetPort === targetPort)) return '该输入端已连接，请先删除原连线'
     const visited = new Set<string>()
@@ -72,5 +73,5 @@ export function useCircuitEditing(portsForGate: (gateId: string, inputs: readonl
     circuit.edges = circuit.edges.filter(edge => edge.source !== id && edge.target !== id)
   }
   function removeEdge(id: string) { circuit.edges = circuit.edges.filter(edge => edge.id !== id) }
-  return { circuit, tools: logicGates, add, move, connect, removeNode, removeEdge }
+  return { circuit, tools: circuitComponents, add, move, connect, removeNode, removeEdge }
 }

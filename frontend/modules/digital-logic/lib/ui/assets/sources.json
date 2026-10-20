@@ -1,5 +1,5 @@
 {
-  "collection": "Logic gate symbols",
+  "collection": "Digital logic symbols and component illustrations",
   "assets": [
     {
       "id": "and",
@@ -168,6 +168,19 @@
       "upstreamSha1": "862f70d7eb9bfb303b36a3f903fde5fb7dd68739",
       "sha256": "4909abbd36c3ce86177824b831e4a49fab2e080dd2659cfdfb059086711ba278",
       "modified": false
+    },
+    {
+      "id": "hd44780",
+      "label": "HD44780 字符液晶屏",
+      "file": "hd44780.svg",
+      "sourceTitle": "Original HD44780-compatible LCD module illustration",
+      "sourceType": "Original vector artwork",
+      "author": "lmBox project",
+      "license": "Repository license (see LICENSE)",
+      "width": 600,
+      "height": 280,
+      "sha256": "47c5fb82c47e9ab5031e1378c9ef0e081671099d5b01a16c646edbd52e165a1d",
+      "original": true
     }
   ]
 }

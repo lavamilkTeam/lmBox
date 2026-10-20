@@ -43,12 +43,12 @@ test('logic page uses searchable gate library and real symbols with one or two i
   page.on('pageerror', error => errors.push(error.message))
   await page.goto('/')
   await selectWorkspace(page, '数字逻辑仿真')
-  const library = page.getByRole('navigation', { name: '逻辑门库' })
-  await expect(library.getByRole('button', { name: /^添加/ })).toHaveCount(8)
-  await page.getByRole('textbox', { name: '搜索逻辑门' }).fill('xor')
+  const library = page.getByRole('navigation', { name: '电路元件库' })
+  await expect(library.getByRole('button', { name: /^添加/ })).toHaveCount(9)
+  await page.getByRole('textbox', { name: '搜索电路元件' }).fill('xor')
   await expect(library.getByRole('button', { name: /^添加/ })).toHaveCount(1)
   await library.getByRole('button', { name: '添加异或门 XOR', exact: true }).click()
-  await page.getByRole('textbox', { name: '搜索逻辑门' }).fill('')
+  await page.getByRole('textbox', { name: '搜索电路元件' }).fill('')
   await library.getByRole('button', { name: '添加非门 NOT', exact: true }).click()
   await library.getByRole('button', { name: '添加缓冲器 BUF', exact: true }).click()
   for (const label of ['异或门 XOR', '非门 NOT', '缓冲器 BUF']) {
@@ -66,8 +66,8 @@ test('logic page uses searchable gate library and real symbols with one or two i
 test('gate help opens independently of adding gates and restores keyboard focus', async ({ page }) => {
   await page.goto('/')
   await selectWorkspace(page, '数字逻辑仿真')
-  const library = page.getByRole('navigation', { name: '逻辑门库' })
-  await expect(library.getByRole('button', { name: /说明$/ })).toHaveCount(8)
+  const library = page.getByRole('navigation', { name: '电路元件库' })
+  await expect(library.getByRole('button', { name: /说明$/ })).toHaveCount(9)
   const andHelp = library.getByRole('button', { name: '与门 AND说明', exact: true })
   await andHelp.click()
   const dialog = page.getByRole('dialog', { name: '与门 AND', exact: true })
@@ -297,6 +297,76 @@ test('connected gates snap by canvas distance while dragging either end and rema
   await expectAttachedWire(wire, output, input, true)
 })
 
+test('HD44780 exposes aligned digital inputs and keeps top-entry wires attached through move, zoom and deletion', async ({ page }) => {
+  await page.goto('/')
+  await selectWorkspace(page, '数字逻辑仿真')
+  const label = '字符屏 HD44780'
+  await page.getByRole('button', { name: '添加与门 AND', exact: true }).click()
+  const canvas = page.getByLabel('逻辑电路画布', { exact: true })
+  await page.getByRole('button', { name: `添加${label}`, exact: true }).dragTo(canvas, { targetPosition: { x: 360, y: 300 } })
+  const lcd = page.getByRole('article', { name: label, exact: true })
+  const image = lcd.getByRole('img', { name: `${label}外观`, exact: true })
+  await expect.poll(() => image.evaluate((element: HTMLImageElement) =>
+    element.complete && element.naturalWidth === 600 && element.naturalHeight === 280)).toBe(true)
+  const pins = ['RS', 'R/W', 'E', 'D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7']
+  await expect(lcd.getByRole('button', { name: `${label}输入端`, exact: false })).toHaveCount(pins.length)
+  await expect(lcd.getByRole('button', { name: `${label}输出端`, exact: true })).toHaveCount(0)
+  for (const pin of ['VSS', 'VDD', 'V0', 'A', 'K']) {
+    await expect(lcd.getByRole('button', { name: `${label}输入端 ${pin}`, exact: true })).toHaveCount(0)
+  }
+
+  const imageSrc = (await image.getAttribute('src'))!
+  await page.getByRole('button', { name: `${label}说明`, exact: true }).click()
+  const help = page.getByRole('dialog', { name: label, exact: true })
+  await expect(help.getByRole('img', { name: `${label}引脚示意图`, exact: true })).toHaveAttribute('src', imageSrc)
+  await expect(help).toContainText('尚未接入仿真')
+  await page.keyboard.press('Escape')
+  await expect(help).toBeHidden()
+
+  const output = page.getByRole('button', { name: '与门 AND输出端', exact: true })
+  for (const pin of ['E', 'D4']) {
+    const from = await pinCenter(output), to = await pinCenter(lcd.getByRole('button', { name: `${label}输入端 ${pin}`, exact: true }))
+    await page.mouse.move(from.x, from.y)
+    await page.mouse.down()
+    await page.mouse.move(to.x, to.y, { steps: 12 })
+    await page.mouse.up()
+    await expect(page.getByRole('button', { name: `连接：与门 AND → ${label} ${pin}`, exact: true })).toHaveCount(1)
+  }
+  const handle = lcd.getByRole('button', { name: `移动${label}`, exact: true })
+  for (const moved of [false, true]) {
+    if (moved) {
+      const before = await pinCenter(handle)
+      await dragGate(page, handle, 40, 30)
+      const after = await pinCenter(handle)
+      expect(after.x - before.x).toBeCloseTo(40, 0)
+      expect(after.y - before.y).toBeCloseTo(30, 0)
+      await page.getByRole('button', { name: '缩小画布', exact: true }).click()
+    }
+    const bounds = (await image.boundingBox())!
+    for (const [index, pin] of pins.entries()) {
+      const center = await pinCenter(lcd.getByRole('button', { name: `${label}输入端 ${pin}`, exact: true }))
+      expect(center.x).toBeCloseTo(bounds.x + bounds.width * (138 + 26 * index) / 600, 0)
+      expect(center.y).toBeCloseTo(bounds.y + bounds.height * 22 / 280, 0)
+    }
+    for (const pin of ['E', 'D4']) {
+      const wire = page.getByRole('button', { name: `连接：与门 AND → ${label} ${pin}`, exact: true })
+      await expectAttachedWire(wire, output, lcd.getByRole('button', { name: `${label}输入端 ${pin}`, exact: true }), false)
+      const approach = await wire.evaluate((element: SVGPathElement) => {
+        const length = element.getTotalLength(), matrix = element.getScreenCTM()!
+        const end = element.getPointAtLength(length).matrixTransform(matrix)
+        const before = element.getPointAtLength(length - 8).matrixTransform(matrix)
+        return { end: { x: end.x, y: end.y }, before: { x: before.x, y: before.y } }
+      })
+      expect(approach.before.x).toBeCloseTo(approach.end.x, 0)
+      expect(approach.before.y).toBeLessThan(approach.end.y)
+    }
+  }
+  await handle.press('Delete')
+  await expect(lcd).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^连接：/ })).toHaveCount(0)
+  await expect(page.getByRole('article', { name: '与门 AND', exact: true })).toHaveCount(1)
+})
+
 test('guide and circuit drafts stay separate through tab switching, closing and compact layout', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: '添加数字逻辑仿真', exact: true }).click()
@@ -315,7 +385,7 @@ test('guide and circuit drafts stay separate through tab switching, closing and 
   await selectWorkspace(page, '数字逻辑仿真')
   await expect(page.getByRole('article')).toHaveCount(2)
   await page.setViewportSize({ width: 390, height: 844 })
-  await expect(page.getByRole('textbox', { name: '搜索逻辑门' })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: '搜索电路元件' })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: test.info().outputPath('digital-logic-compact.png') })
   await page.reload()

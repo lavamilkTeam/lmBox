@@ -6,15 +6,25 @@ import nor from './assets/ansi/nor.svg?url'
 import xor from './assets/ansi/xor.svg?url'
 import xnor from './assets/ansi/xnor.svg?url'
 import buf from './assets/ansi/buf.svg?url'
+import hd44780 from './assets/hd44780.svg?url'
 
-export const logicGateSymbols: Readonly<Record<string, string>> = { and, or, not, nand, nor, xor, xnor, buf }
+export const circuitSymbols: Readonly<Record<string, string>> = { and, or, not, nand, nor, xor, xnor, buf, hd44780 }
 
 // Pin coordinates follow the 100 × 50 upstream SVGs, displayed at 2× scale.
-export function gateGeometry(id: string, inputs: readonly string[]) {
-  return { width: 200, height: 100, ports: gatePorts(id, inputs) }
+export function circuitGeometry(id: string, inputs: readonly string[]) {
+  const size = id === 'hd44780' ? { width: 600, height: 280 } : { width: 200, height: 100 }
+  return { ...size, ports: circuitPorts(id, inputs) }
 }
 
-export function gatePorts(id: string, inputs: readonly string[]) {
+export function circuitPorts(id: string, inputs: readonly string[]) {
+  if (id === 'hd44780') {
+    // The 11 digital pins occupy pads 4–14; power, contrast and backlight are visual only.
+    const pins = ['RS', 'R/W', 'E', 'D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7']
+    return {
+      inputs: pins.filter(pin => inputs.includes(pin)).map(pin => ({ id: pin, x: 138 + 26 * pins.indexOf(pin), y: 22, side: 'top' as const })),
+      output: null,
+    }
+  }
   const single = inputs.length === 1
   const inputX = id === 'buf' ? 5.0434781 : id === 'not' ? 5.043478 : 5
   const outputX = id === 'buf' ? 95.085706 : 95

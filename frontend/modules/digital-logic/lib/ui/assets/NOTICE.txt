@@ -19,3 +19,16 @@ Buffer: source author Inductiveload; file history credits original jjbeard.
 
 These assets are display symbols, not simulation logic or executable
 engineering results.
+
+HD44780-compatible LCD illustration
+
+hd44780.svg is original vector artwork created for the lmBox project.
+Its geometry and colors were drawn from scratch; the supplied reference
+image informed the general appearance only. No photograph, logo, watermark,
+or third-party vector artwork is embedded or traced in this file.
+The repository license applies to this illustration.
+
+The artwork depicts a blank character display and labeled connection pads.
+It is a UI illustration, not a fabrication drawing, verified physical
+footprint, or simulated display result. See sources.json for its dimensions
+and SHA-256 checksum.

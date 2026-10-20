@@ -25,9 +25,11 @@ const wireDrag = ref<{ id: string; pointer: number; x: number; y: number; moved:
 const cursor = ref({ x: 0, y: 0 })
 const width = computed(() => Math.max(1400, ...props.nodes.map(node => node.x + (node.width ?? 232) + 112)))
 const height = computed(() => Math.max(900, ...props.nodes.map(node => node.y + (node.height ?? props.nodeHeight) + 144)))
-const sourceNode = computed(() => props.nodes.find(node => node.id === source.value))
+const sourceNode = computed(() => props.nodes.find(node => node.id === source.value && outputPosition(node)))
 const selected = computed(() => props.edges.find(edge => edge.id === selectedEdge.value))
-watch(() => props.nodes.map(node => node.id), ids => { if (source.value && !ids.includes(source.value)) source.value = null })
+watch(() => props.nodes.filter(node => outputPosition(node)).map(node => node.id), ids => {
+  if (source.value && !ids.includes(source.value)) { source.value = null; cancelWire() }
+})
 watch(() => props.edges.map(edge => edge.id), ids => { if (selectedEdge.value && !ids.includes(selectedEdge.value)) selectedEdge.value = null })
 function inputPorts(node: NodeView) { return node.ports?.inputs.map(port => port.id) ?? node.inputPorts ?? [''] }
 function defaultPortY(node: NodeView, port?: string) {
@@ -35,8 +37,15 @@ function defaultPortY(node: NodeView, port?: string) {
   const index = port === undefined ? (node.inputPorts.length - 1) / 2 : node.inputPorts.indexOf(port)
   return 92 + (index - (node.inputPorts.length - 1) / 2) * 28
 }
-function inputPosition(node: NodeView, port: string) { return node.ports?.inputs.find(input => input.id === port) ?? { x: 0, y: defaultPortY(node, port) } }
-function outputPosition(node: NodeView) { return node.ports?.output ?? { x: node.width ?? 232, y: defaultPortY(node) } }
+function inputPosition(node: NodeView, port: string) { return node.ports?.inputs.find(input => input.id === port) ?? { x: 0, y: defaultPortY(node, port), side: 'left' as const } }
+function outputPosition(node: NodeView) {
+  if (node.ports?.output === null) return null
+  return node.ports?.output ?? { x: node.width ?? 232, y: defaultPortY(node) }
+}
+function outputStyle(node: NodeView) {
+  const port = outputPosition(node)
+  return port ? { left: `${port.x - 10}px`, right: 'auto', top: `${port.y - 10}px` } : undefined
+}
 function inputLabel(node: NodeView, port: string) { return `${node.label}输入端${port ? ` ${port}` : ''}` }
 function point(clientX: number, clientY: number) {
   const el = viewport.value!
@@ -78,6 +87,7 @@ function startMove(event: PointerEvent, node: NodeView) {
 function move(event: PointerEvent) {
   cursor.value = point(event.clientX, event.clientY)
   const wire = wireDrag.value
+  if (wire && !props.nodes.some(node => node.id === wire.id && outputPosition(node))) { cancelWire(); return }
   if (wire && wire.pointer === event.pointerId && (wire.moved || Math.hypot(event.clientX - wire.x, event.clientY - wire.y) > 4)) {
     if (!wire.moved) viewport.value?.setPointerCapture(event.pointerId)
     wire.moved = true
@@ -88,13 +98,14 @@ function move(event: PointerEvent) {
   if (current && current.pointer === event.pointerId) emit('move', current.id, current.x + (event.clientX - current.clientX) / zoom.value, current.y + (event.clientY - current.clientY) / zoom.value)
 }
 function startLink(node: NodeView) {
-  source.value = source.value === node.id ? null : node.id
   const port = outputPosition(node)
+  if (!port) return
+  source.value = source.value === node.id ? null : node.id
   cursor.value = { x: node.x + port.x, y: node.y + port.y }
 }
-function beginWire(event: PointerEvent, id: string) {
-  if (event.button !== 0) return
-  wireDrag.value = { id, pointer: event.pointerId, x: event.clientX, y: event.clientY, moved: false }
+function beginWire(event: PointerEvent, node: NodeView) {
+  if (event.button !== 0 || !outputPosition(node)) return
+  wireDrag.value = { id: node.id, pointer: event.pointerId, x: event.clientX, y: event.clientY, moved: false }
 }
 function endWire(event: PointerEvent) {
   const wire = wireDrag.value
@@ -108,12 +119,22 @@ function endWire(event: PointerEvent) {
 }
 function cancelWire() { if (wireDrag.value?.moved) source.value = null; wireDrag.value = null }
 function finishLink(id: string, port: string) {
-  if (!source.value) return
-  emit('connect', source.value, id, port || undefined)
+  if (!sourceNode.value) return
+  emit('connect', sourceNode.value.id, id, port || undefined)
   source.value = null
 }
-function path(x1: number, y1: number, x2: number, y2: number) {
+function path(x1: number, y1: number, x2: number, y2: number, topTarget?: NodeView) {
   if (props.wireStyle === 'orthogonal') {
+    if (topTarget) {
+      const above = Math.min(y1, topTarget.y - 24)
+      let exitX = x1 + 20
+      if (y1 >= topTarget.y) {
+        exitX = x1 < topTarget.x
+          ? Math.min(exitX, topTarget.x - 24)
+          : Math.max(exitX, topTarget.x + (topTarget.width ?? 232) + 24)
+      }
+      return `M ${x1} ${y1} H ${exitX} V ${above} H ${x2} V ${y2}`
+    }
     if (y1 === y2 && x2 > x1) return `M ${x1} ${y1} H ${x2}`
     if (x2 >= x1 + 40) {
       const middle = (x1 + x2) / 2
@@ -129,12 +150,14 @@ const lines = computed(() => props.edges.flatMap(edge => {
   const a = props.nodes.find(node => node.id === edge.source), b = props.nodes.find(node => node.id === edge.target)
   if (!a || !b) return []
   const from = outputPosition(a), to = inputPosition(b, edge.targetPort ?? '')
-  return [{ ...edge, label: `${a.label} → ${b.label}${edge.targetPort ? ` ${edge.targetPort}` : ''}`, path: path(a.x + from.x, a.y + from.y, b.x + to.x, b.y + to.y) }]
+  if (!from) return []
+  return [{ ...edge, label: `${a.label} → ${b.label}${edge.targetPort ? ` ${edge.targetPort}` : ''}`, path: path(a.x + from.x, a.y + from.y, b.x + to.x, b.y + to.y, to.side === 'top' ? b : undefined) }]
 }))
 const previewPath = computed(() => {
   const node = sourceNode.value
   if (!node) return ''
   const port = outputPosition(node)
+  if (!port) return ''
   return path(node.x + port.x, node.y + port.y, cursor.value.x, cursor.value.y)
 })
 function keyboardMove(event: KeyboardEvent, node: NodeView) {
@@ -178,8 +201,8 @@ function setZoom(value: number) { zoom.value = Math.min(1.5, Math.max(0.5, Math.
             </template>
             <Button v-for="port in inputPorts(node)" :key="port" variant="ghost" size="icon-xs" class="guide-port guide-port-in" :data-flow-input="node.id" :data-flow-port="port"
               :style="{ left: `${inputPosition(node, port).x - 10}px`, top: `${inputPosition(node, port).y - 10}px` }" :class="{ 'is-ready': source && source !== node.id }" :aria-label="inputLabel(node, port)" :title="inputLabel(node, port)" @click="finishLink(node.id, port)"><span v-if="port && !$slots.node" class="guide-port-label">{{ port }}</span></Button>
-            <Button variant="ghost" size="icon-xs" class="guide-port guide-port-out" :style="{ left: `${outputPosition(node).x - 10}px`, right: 'auto', top: `${outputPosition(node).y - 10}px` }"
-              :aria-label="`${node.label}输出端`" :title="`${node.label}输出端`" :aria-pressed="source === node.id" @pointerdown.stop="beginWire($event, node.id)" @click="startLink(node)" />
+            <Button v-if="outputPosition(node)" variant="ghost" size="icon-xs" class="guide-port guide-port-out" :style="outputStyle(node)"
+              :aria-label="`${node.label}输出端`" :title="`${node.label}输出端`" :aria-pressed="source === node.id" @pointerdown.stop="beginWire($event, node)" @click="startLink(node)" />
           </component>
         </div>
       </div>

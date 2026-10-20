@@ -3,9 +3,11 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useCircuitEditing } from '../index'
 
 // Deliberately use a different symbol layout to verify the injected port coordinates.
-const ports = (_id: string, inputs: readonly string[]) => ({
-  inputs: inputs.map((id, index) => ({ id, x: 8, y: inputs.length === 1 ? 45 : 25 + index * 40 })),
-  output: { x: 150, y: 45 },
+const ports = (componentId: string, inputs: readonly string[]) => ({
+  inputs: inputs.map((id, index) => componentId === 'hd44780'
+    ? { id, x: 80 + index * 24, y: 20, side: 'top' as const }
+    : { id, x: 8, y: inputs.length === 1 ? 45 : 25 + index * 40 }),
+  output: componentId === 'hd44780' ? null : { x: 150, y: 45 },
 })
 const createEditing = () => useCircuitEditing(ports)
 
@@ -51,6 +53,28 @@ describe('logic circuit draft', () => {
     editing.move(id, Infinity, 40)
     expect(createEditing().circuit.nodes.at(-1)).toMatchObject({ id, x: 300, y: 450 })
     expect(new Set(circuit.nodes.map(node => node.id)).size).toBe(circuit.nodes.length)
+  })
+  it('accepts the LCD digital pins, rejects non-digital pins and never uses the display as a source', () => {
+    // Source capability belongs to the catalog, even if an injected layout supplies an output.
+    const editing = useCircuitEditing((id, inputs) => ({ ...ports(id, inputs), output: { x: 150, y: 45 } }))
+    const source = editing.add('buf', 40, 40)!, display = editing.add('hd44780', 400, 200)!
+    const inputs = ['RS', 'R/W', 'E', 'D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7']
+    for (const input of inputs) expect(editing.connect(source, display, input)).toBe('')
+    expect(editing.connect(source, display, 'E')).not.toBe('')
+    for (const pin of ['VSS', 'VDD', 'V0', 'A', 'K']) expect(editing.connect(source, display, pin)).not.toBe('')
+    expect(editing.connect(display, source, 'A')).not.toBe('')
+    expect(editing.circuit.edges).toHaveLength(11)
+    editing.removeNode(display)
+    expect(editing.circuit.edges).toEqual([])
+  })
+  it('leaves top-facing LCD pins unsnapped when connecting and moving either endpoint', () => {
+    const editing = createEditing()
+    const source = editing.add('not', 40, 100)!, display = editing.add('hd44780', 400, 130)!
+    expect(editing.connect(source, display, 'E')).toBe('')
+    expect(editing.circuit.nodes[1]!.y).toBe(130)
+    editing.move(display, 420, 132)
+    editing.move(source, 40, 102)
+    expect(editing.circuit.nodes.map(node => node.y)).toEqual([102, 132])
   })
   it('aligns the named input after a valid near-horizontal connection without moving the source', () => {
     const editing = createEditing()

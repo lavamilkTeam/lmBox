@@ -1,1 +1,1 @@
-export { logicGates, useLogicCircuit } from './lib/store'
+export { circuitComponents, useLogicCircuit } from './lib/store'

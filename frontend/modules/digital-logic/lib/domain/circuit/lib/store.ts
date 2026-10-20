@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export const logicGates = [
+const logicGates = [
   {
     id: 'and', label: '与门 AND', inputs: ['A', 'B'],
     description: '与门执行布尔代数中的“与”运算，可以理解为所有输入条件都满足时才通过。对于图中的双输入门，输入 A、B 都为 1 时输出 Y 才为 1，任何一个输入为 0 都会使输出变成 0。\n\n逻辑式写作 Y = A ∧ B，也常记为 Y = A · B。按二值大小比较，它的输出等于两个输入中的较小值；这与取较大值的或门相对应。\n\n实际门电路可以由 MOS 晶体管实现，7408 和 4081 都是包含四个双输入与门的集成电路。没有独立与门时，也可组合与非门或或非门得到同样的逻辑功能',
@@ -41,6 +41,16 @@ export const logicGates = [
     id: 'buf', label: '缓冲器 BUF', inputs: ['A'],
     description: '缓冲门是单输入、单输出的逻辑门，逻辑式为 Y = A。输入为 0 时输出 0，输入为 1 时输出 1；它保持信号的逻辑状态，与将信号取反的非门相对应。\n\n虽然逻辑值没有改变，真实缓冲门仍能提高信号的驱动能力，使前级输出能够带动更多后级输入，因此具有实际的电路用途，并不等同于一根导线。\n\n缓冲门也存在传播延迟，在某些电路中可用于延迟信号。将两个反相器串联可以获得同相的逻辑效果，常见的 4050 芯片包含六个同相缓冲器',
     source: { label: '中文维基百科：缓冲门', url: 'https://zh.wikipedia.org/wiki/緩衝閘' },
+  },
+] as const
+
+export const circuitComponents = [
+  ...logicGates.map(gate => ({ ...gate, category: '逻辑门', hasOutput: true })),
+  {
+    id: 'hd44780', label: '字符屏 HD44780', category: '显示器', hasOutput: false,
+    inputs: ['RS', 'R/W', 'E', 'D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7'],
+    description: 'HD44780 是字符液晶控制器，常用于并口字符屏。RS 选择指令或字符数据，R/W 选择读写方向，E 是使能信号，D0–D7 是数据总线；4 位接口使用 D4–D7，先传高四位，再传低四位。VSS、VDD 是电源引脚，V0 调节对比度，A、K 是背光引脚。\n\n当前元件提供外观、移动和控制/数据端接线，电源、对比度与背光引脚仅作标识。控制器指令、字符显示、忙标志和双向总线尚未接入仿真',
+    source: { label: 'Hitachi：HD44780U 数据手册', url: 'https://www.sparkfun.com/datasheets/LCD/HD44780.pdf' },
   },
 ] as const
 

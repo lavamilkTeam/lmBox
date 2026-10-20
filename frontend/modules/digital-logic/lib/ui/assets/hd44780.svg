@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="280" viewBox="0 0 600 280">
+  <title>HD44780-compatible character LCD module</title>
+  <desc>Original illustration of a green module with sixteen labeled gold pads, four mounting holes, a black bezel, and a blank blue display.</desc>
+  <defs>
+    <linearGradient id="board" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#168d56"/>
+      <stop offset="0.48" stop-color="#087b46"/>
+      <stop offset="1" stop-color="#096c40"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff2b8"/>
+      <stop offset="0.42" stop-color="#d5b76a"/>
+      <stop offset="0.72" stop-color="#b28c3f"/>
+      <stop offset="1" stop-color="#ead393"/>
+    </linearGradient>
+    <linearGradient id="bezel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#303936"/>
+      <stop offset="0.18" stop-color="#141c1b"/>
+      <stop offset="0.8" stop-color="#101716"/>
+      <stop offset="1" stop-color="#242d29"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14245b"/>
+      <stop offset="0.18" stop-color="#1b326e"/>
+      <stop offset="0.55" stop-color="#1e3674"/>
+      <stop offset="1" stop-color="#15285f"/>
+    </linearGradient>
+    <mask id="board-holes">
+      <rect x="4" y="8" width="592" height="264" rx="5" fill="#fff"/>
+      <g fill="#000">
+        <circle cx="24" cy="30" r="8"/>
+        <circle cx="576" cy="30" r="8"/>
+        <circle cx="24" cy="250" r="8"/>
+        <circle cx="576" cy="250" r="8"/>
+      </g>
+    </mask>
+    <g id="mounting-hole">
+      <circle r="11" fill="none" stroke="url(#gold)" stroke-width="6"/>
+      <circle r="8.5" fill="none" stroke="#725e34" stroke-width="1"/>
+      <path d="M-10-7A12.2 12.2 0 0 1 8-9" fill="none" stroke="#fff1bc" stroke-width="1"/>
+    </g>
+    <g id="pad">
+      <rect x="-7" y="-12" width="14" height="24" rx="6" fill="url(#gold)" stroke="#b89a54" stroke-width="0.8"/>
+      <circle r="5" fill="#123b2b" stroke="#806637" stroke-width="1.4"/>
+      <path d="M-4-8H4" fill="none" stroke="#fff0b5" stroke-width="1" stroke-linecap="round"/>
+    </g>
+  </defs>
+
+  <g mask="url(#board-holes)">
+    <rect x="4" y="8" width="592" height="264" rx="5" fill="url(#board)" stroke="#075a35" stroke-width="1.5"/>
+    <rect x="7" y="11" width="586" height="258" rx="3" fill="none" stroke="#46a777" stroke-opacity="0.65"/>
+    <path d="M478 25H540L560 45V52M478 31H536L553 48V53M450 252H531L549 234M450 258H534L553 239" fill="none" stroke="#075e37" stroke-width="3"/>
+    <path d="M478 24H540L560 44M450 251H531L548 234" fill="none" stroke="#32a36a" stroke-width="0.8"/>
+    <path d="M18 58V220M582 57V221M51 259H427" fill="none" stroke="#32a36a" stroke-opacity="0.55"/>
+  </g>
+
+  <g>
+    <use href="#mounting-hole" x="24" y="30"/>
+    <use href="#mounting-hole" x="576" y="30"/>
+    <use href="#mounting-hole" x="24" y="250"/>
+    <use href="#mounting-hole" x="576" y="250"/>
+  </g>
+
+  <g id="pins">
+    <g id="pin-vss" transform="translate(60 22)">
+      <rect x="-7" y="-12" width="14" height="24" rx="2" fill="url(#gold)" stroke="#b89a54" stroke-width="0.8"/>
+      <circle r="5" fill="#123b2b" stroke="#806637" stroke-width="1.4"/>
+      <path d="M-4-8H4" fill="none" stroke="#fff0b5" stroke-width="1" stroke-linecap="round"/>
+    </g>
+    <use id="pin-vdd" href="#pad" x="86" y="22"/>
+    <use id="pin-v0" href="#pad" x="112" y="22"/>
+    <use id="pin-rs" href="#pad" x="138" y="22"/>
+    <use id="pin-rw" href="#pad" x="164" y="22"/>
+    <use id="pin-e" href="#pad" x="190" y="22"/>
+    <use id="pin-d0" href="#pad" x="216" y="22"/>
+    <use id="pin-d1" href="#pad" x="242" y="22"/>
+    <use id="pin-d2" href="#pad" x="268" y="22"/>
+    <use id="pin-d3" href="#pad" x="294" y="22"/>
+    <use id="pin-d4" href="#pad" x="320" y="22"/>
+    <use id="pin-d5" href="#pad" x="346" y="22"/>
+    <use id="pin-d6" href="#pad" x="372" y="22"/>
+    <use id="pin-d7" href="#pad" x="398" y="22"/>
+    <use id="pin-a" href="#pad" x="424" y="22"/>
+    <use id="pin-k" href="#pad" x="450" y="22"/>
+  </g>
+  <g fill="#f1f3d5" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">
+    <text x="60" y="49">VSS</text>
+    <text x="86" y="49">VDD</text>
+    <text x="112" y="49">V0</text>
+    <text x="138" y="49">RS</text>
+    <text x="164" y="49">R/W</text>
+    <text x="190" y="49">E</text>
+    <text x="216" y="49">D0</text>
+    <text x="242" y="49">D1</text>
+    <text x="268" y="49">D2</text>
+    <text x="294" y="49">D3</text>
+    <text x="320" y="49">D4</text>
+    <text x="346" y="49">D5</text>
+    <text x="372" y="49">D6</text>
+    <text x="398" y="49">D7</text>
+    <text x="424" y="49">A</text>
+    <text x="450" y="49">K</text>
+  </g>
+
+  <rect x="34" y="64" width="534" height="177" rx="7" fill="#034e31" fill-opacity="0.65"/>
+  <path d="M33 105H29V128H33M567 169H571V192H567" fill="#727d69" stroke="#344b39" stroke-width="1"/>
+  <rect x="33" y="59" width="534" height="179" rx="7" fill="#0a1110" stroke="#092e20" stroke-width="1.5"/>
+  <rect x="36" y="62" width="528" height="172" rx="5" fill="url(#bezel)"/>
+  <path d="M42 66H558L553 72H47L42 227V66Z" fill="#45514a" fill-opacity="0.66"/>
+  <path d="M558 66V229H42L48 222H551V73Z" fill="#080e0d"/>
+  <rect x="49" y="77" width="502" height="143" rx="7" fill="#0a1114" stroke="#050a0b" stroke-width="2"/>
+  <path d="M55 83H545L539 96H61L55 83Z" fill="#060d14"/>
+  <path d="M55 83L61 96V208L55 215Z" fill="#101a1f"/>
+  <path d="M545 83V215L539 208V96Z" fill="#263129"/>
+  <path d="M55 215H545L539 208H61Z" fill="#35423a"/>
+  <rect x="59" y="95" width="482" height="114" rx="4" fill="url(#glass)" stroke="#080f26" stroke-width="2"/>
+  <path d="M64 98H536" fill="none" stroke="#2f457e" stroke-opacity="0.55"/>
+  <path d="M63 205H537" fill="none" stroke="#0f1d4b" stroke-opacity="0.8"/>
+  <path d="M49 71H550M49 225H550" fill="none" stroke="#090f0d" stroke-width="3" stroke-linecap="round"/>
+  <path d="M50 70H549M50 224H549" fill="none" stroke="#5b655b" stroke-opacity="0.52" stroke-width="0.8" stroke-linecap="round"/>
+</svg>

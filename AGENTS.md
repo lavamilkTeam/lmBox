@@ -120,10 +120,11 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   │   │       │       ├── lib/
 │   │   │       │       └── tests/
 │   │   │       └── ui/
-│   │   │           ├── GateSymbol.vue
+│   │   │           ├── CircuitSymbol.vue
 │   │   │           ├── symbols.ts
 │   │   │           └── assets/
 │   │   │               ├── ansi/
+│   │   │               ├── hd44780.svg
 │   │   │               ├── sources.json
 │   │   │               └── NOTICE.txt
 │   │   ├── cfd/

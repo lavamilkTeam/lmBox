@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { logicGateSymbols } from './symbols'
+import { circuitSymbols } from './symbols'
 defineProps<{ gateId: string; label: string }>()
 const emit = defineEmits<{
   moveStart: [event: PointerEvent]; moveEnd: []; keyboardMove: [event: KeyboardEvent]; remove: []
@@ -16,7 +16,7 @@ function keydown(event: KeyboardEvent) {
   <button type="button" class="logic-gate-symbol" :aria-label="`移动${label}`" :title="label"
     @pointerdown="emit('moveStart', $event)" @pointerup="emit('moveEnd')" @pointercancel="emit('moveEnd')"
     @lostpointercapture="emit('moveEnd')" @keydown="keydown">
-    <img :src="logicGateSymbols[gateId]" :alt="`${label}符号`" draggable="false" />
+    <img :src="circuitSymbols[gateId]" :alt="gateId === 'hd44780' ? `${label}外观` : `${label}符号`" draggable="false" />
   </button>
 </template>
 <style scoped>

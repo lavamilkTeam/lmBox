@@ -121,6 +121,7 @@ function createController(circuit: Circuit, dependencies: Dependencies) {
   const view = computed(() => ({
     busy: busy.value, running: running.value, error: error.value, result: result.value,
     values: circuit.inputValues,
+    highEdgeIds: circuit.edges.filter(edge => result.value?.outputs[edge.source] === '1').map(edge => edge.id),
     status: error.value ? '计算失败' : running.value ? '运行中' : result.value ? '已暂停' : '未就绪',
   }))
   const controller = { view, toggleInput, step, toggleRunning, pause, reset: load, dispose }

@@ -11,4 +11,4 @@ export interface NodeView extends Omit<ToolView, 'id'> {
   width?: number; height?: number
   ports?: { inputs: readonly { id: string; x: number; y: number; side?: 'left' | 'top' }[]; output: { x: number; y: number } | null }
 }
-export interface EdgeView { id: string; source: string; target: string; targetPort?: string }
+export interface EdgeView { id: string; source: string; target: string; targetPort?: string; class?: string }

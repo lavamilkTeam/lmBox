@@ -33,9 +33,9 @@
 .guide-scroll-space { position: relative; min-width:100%; min-height:100%; overflow:hidden; }
 .guide-surface { position: relative; transform-origin: 0 0; }
 .guide-connections { position: absolute; inset: 0; overflow: visible; pointer-events: none; color: #7e8b9f; }
-.guide-edge { fill: none; stroke: #8d9bb0; stroke-width: 1.8px; }
+.guide-edge { fill: none; stroke: var(--flow-edge-stroke, #8d9bb0); stroke-width: 1.8px; }
 .guide-edge-hit { fill: none; stroke: transparent; stroke-width: 18px; pointer-events: stroke; cursor: pointer; }
-.guide-connections .is-selected .guide-edge { stroke: #355b97; stroke-width: 3px; }
+.guide-connections .is-selected .guide-edge { stroke: var(--flow-edge-stroke, #355b97); stroke-width: 3px; }
 .guide-edge-hit:focus-visible { outline: none; stroke: #536d9533; }
 .guide-edge-preview { stroke-dasharray: 5 5; }
 .guide-node { position: absolute; width: 232px; height: 88px; padding: 0; gap: 0; }
@@ -45,7 +45,7 @@
 .guide-node.is-moving { z-index: 3; box-shadow: 0 6px 18px #00000012; }
 .guide-node.is-link-source { outline: 2px solid var(--guide-color); outline-offset: 2px; }
 .guide-node.guide-symbol-node { border: 0; border-radius: 0; background: transparent; box-shadow: none; outline: none; }
-.guide-circuit-board .guide-edge { stroke: var(--foreground); stroke-width: 2px; }
+.guide-circuit-board .guide-edge { stroke: var(--flow-edge-stroke, var(--foreground)); stroke-width: 2px; }
 .guide-circuit-board .guide-port::after { background: var(--foreground); }
 .guide-circuit-board .guide-port.is-ready::after, .guide-circuit-board .guide-port:hover::after { background: var(--guide-color); }
 .guide-workspace .guide-node-heading { width: calc(100% - 25px); height: 52px; padding: 12px; justify-content: flex-start; background: transparent; text-align: left; cursor: grab; touch-action: none; user-select: none; }

@@ -12,6 +12,8 @@ HD44780 使用原创 `assets/hd44780.svg`，显示为 600×280，完整绘制 16
 
 `LogicEditor` 接收 `simulation` 展示状态，发送 `simulationToggle`、`simulationStep`、`simulationReset`、`inputToggle` 事件。私有 `simulation-view.ts` 只描述呈现需要的字段，UI 不依赖协议、状态或计算实现。固定高度工具栏显示运行/暂停、步进、复位、实际步数、忙碌状态和诊断入口；真实诊断复用共享 Popover，错误使用浮层反馈，计算结果变化和展开诊断不会移动画布。输出与探针直接显示快照的 `0/1/X/Z`，尚无结果显示 `—`，不在 UI 中推导逻辑值。
 
+`simulation.highEdgeIds` 由功能层提供；UI 将对应连线映射为 `logic-wire-high`，通过共享画布的通用颜色变量显示绿色。选中高电平连线保持绿色并加粗，键盘焦点与点击命中区域保持不变；UI 不从电平重新计算连线状态。
+
 支持点击输出再点击输入，以及从输出点拖到输入点；端口是符号引脚上的点。拖动符号移动电路节点，缩放仅变更画布呈现。连线约束由 feature 验证，UI 不计算逻辑值。宽屏左右布局，小屏沿用共享上下布局。
 
 替换素材时核对渲染、来源、授权与校验值。运行 `npm run check`；`tests/digital-logic.pw.ts` 验证端点与实际图片引脚对齐、拖动连线，以及移动/缩放后的附着。

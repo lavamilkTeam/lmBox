@@ -178,7 +178,7 @@ function setZoom(value: number) { zoom.value = Math.min(1.5, Math.max(0.5, Math.
           <svg class="guide-connections" :width="width" :height="height" aria-label="功能连接">
             <defs><marker :id="arrowId" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" /></marker></defs>
             <g v-for="line in lines" :key="line.id" :class="{ 'is-selected': selectedEdge === line.id }">
-              <path class="guide-edge" :d="line.path" :marker-end="wireStyle === 'curve' ? `url(#${arrowId})` : undefined" />
+              <path class="guide-edge" :class="line.class" :d="line.path" :marker-end="wireStyle === 'curve' ? `url(#${arrowId})` : undefined" />
               <path class="guide-edge-hit" :d="line.path" role="button" tabindex="0" :aria-label="`连接：${line.label}`" :aria-pressed="selectedEdge === line.id"
                 @click.stop="selectedEdge = line.id" @keydown.enter.prevent="selectedEdge = line.id" @keydown.space.prevent="selectedEdge = line.id"
                 @keydown.delete.prevent="emit('removeEdge', line.id)" @keydown.backspace.prevent="emit('removeEdge', line.id)" />

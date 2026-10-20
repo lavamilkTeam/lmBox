@@ -18,5 +18,6 @@ export interface SimulationView {
     diagnostics: readonly { nodeId?: string; message: string }[]
   } | null
   values: Readonly<Record<string, '0' | '1'>>
+  highEdgeIds: readonly string[]
   status: string
 }

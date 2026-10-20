@@ -28,6 +28,10 @@ const nodes = computed(() => props.nodes.map(node => {
   const tool = tools.value.find(tool => tool.id === node.gateId)!
   return { ...tool, ...node, ...circuitGeometry(node.gateId, tool.inputs) }
 }))
+const edges = computed(() => {
+  const highEdgeIds = new Set(props.simulation.highEdgeIds)
+  return props.edges.map(edge => ({ ...edge, class: highEdgeIds.has(edge.id) ? 'logic-wire-high' : undefined }))
+})
 function gateId(id: string) { return props.nodes.find(node => node.id === id)!.gateId }
 function signal(id: string) {
   return gateId(id) === 'probe' ? props.simulation.result?.inputs[id]?.A : props.simulation.result?.outputs[id]
@@ -86,6 +90,7 @@ function add(id: string, x?: number, y?: number) {
 <style scoped>
 .logic-editor-stage { position:relative; display:flex; flex-direction:column; min-width:0; min-height:0; }
 .logic-editor-stage :deep(.guide-board) { flex:1; }
+.logic-editor-stage :deep(.logic-wire-high) { --flow-edge-stroke:#267847; }
 .logic-simulation-toolbar { display:flex; align-items:center; gap:6px; flex:0 0 49px; height:49px; padding:8px 12px; border-bottom:1px solid var(--border); overflow-x:auto; }
 .logic-simulation-toolbar button { flex-shrink:0; font-size:12px; }
 .logic-simulation-tick { margin-left:8px; font:12px/1.5 ui-monospace,monospace; white-space:nowrap; }

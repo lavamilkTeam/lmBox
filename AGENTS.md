@@ -79,6 +79,11 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── agent-frontend.md
 │   ├── main.ts
 │   ├── installer.ts
+│   ├── features/
+│   │   └── help-dialog/
+│   │       ├── index.ts
+│   │       ├── agent-frontend-help-dialog.md
+│   │       └── lib/
 │   ├── app/
 │   │   ├── module-entries/
 │   │   └── features/
@@ -101,8 +106,26 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   │   │   ├── agent-frontend-guide.md
 │   │   │   └── lib/
 │   │   │       ├── app/
+│   │   │       └── domain/
+│   │   ├── digital-logic/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-digital-logic.md
+│   │   │   └── lib/
+│   │   │       ├── app/
 │   │   │       ├── domain/
+│   │   │       ├── features/
+│   │   │       │   └── circuit-editing/
+│   │   │       │       ├── index.ts
+│   │   │       │       ├── agent-frontend-circuit-editing.md
+│   │   │       │       ├── lib/
+│   │   │       │       └── tests/
 │   │   │       └── ui/
+│   │   │           ├── GateSymbol.vue
+│   │   │           ├── symbols.ts
+│   │   │           └── assets/
+│   │   │               ├── ansi/
+│   │   │               ├── sources.json
+│   │   │               └── NOTICE.txt
 │   │   ├── cfd/
 │   │   │   ├── index.ts
 │   │   │   ├── agent-frontend-cfd.md
@@ -130,6 +153,17 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── platform/
 │   ├── contracts/
 │   └── ui/
+│       ├── logic-circuit-tutorial-gifs/
+│       │   ├── index.ts
+│       │   └── agent-frontend-logic-tutorials.md
+│       ├── help-dialog/
+│       │   ├── index.ts
+│       │   ├── agent-frontend-help-dialog.md
+│       │   └── lib/
+│       ├── flow-editor/
+│       │   ├── index.ts
+│       │   ├── agent-frontend-flow-editor.md
+│       │   └── lib/
 │       ├── shadcn/
 │       │   ├── index.ts
 │       │   ├── agent-frontend-shadcn.md

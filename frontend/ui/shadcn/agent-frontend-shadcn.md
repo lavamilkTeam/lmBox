@@ -10,6 +10,8 @@
 
 表单使用 `modelValue`，展开类控件使用 `open`；`Slider` 值为数组。保留原语的键盘、焦点管理和禁用行为。`Input` 额外公开 `input` 元素与 `focus()`；文件选择仍可使用原生隐藏 input。业务确认通过 `AlertDialog` 的受控状态和事件组合，不在共享 UI 执行业务动作。
 
+`DialogContent` 内置关闭按钮复用 Reka `DialogClose` 和 Lucide `X`，焦点标识使用 `focus-visible`；鼠标打开后的自动聚焦不显示焦点圈，键盘操作保留可见焦点。
+
 `Tooltip` 的 `role="tooltip"` 与描述 ID 放在可见浮层，触发器引用该 ID；隐藏 Reka 的重复文本节点。定位、悬停容错区域、开关时机与 Escape 仍由原语维护。
 
 验证运行前端边界、类型、构建与浏览器交互检查；检查对象包含弹层焦点、Escape、键盘选择、禁用和单位输入。

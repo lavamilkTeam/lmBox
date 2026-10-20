@@ -1,0 +1,21 @@
+Logic gate symbol assets
+
+Eight original ANSI-style SVG files downloaded from Wikimedia Commons.
+Retrieved: 2026-10-14.
+
+Each file description declares the image to be in the public domain
+(PD-self). The fallback permission grants use for any purpose without
+conditions apart from applicable law. Attribution is not required by the
+recorded permissions; source and author records are retained for provenance.
+These third-party images retain their upstream public-domain status.
+The repository license governs the surrounding software.
+
+The files are preserved byte-for-byte; filenames alone are changed.
+See sources.json for each author, source page, original download URL,
+input/output count, dimensions, and SHA-1/SHA-256 checksums.
+
+AND, OR, NOT, NAND, NOR, XOR, XNOR: source author jjbeard.
+Buffer: source author Inductiveload; file history credits original jjbeard.
+
+These assets are display symbols, not simulation logic or executable
+engineering results.

@@ -6,6 +6,7 @@ import { AppTheme } from '../ui/theme'
 import { EngineeringShell, ToolLibrary } from '../ui/engineering-shell'
 import { useWorkspaceTabs } from './features/workspace-tabs'
 const GuideWorkspace = defineAsyncComponent(() => import('../modules/guide').then(module => module.GuideWorkspace))
+const DigitalLogicWorkspace = defineAsyncComponent(() => import('../modules/digital-logic').then(module => module.DigitalLogicWorkspace))
 const StencilWorkspace = defineAsyncComponent(() => import('./module-entries/stencil'))
 const NozzleWorkspace = defineAsyncComponent(() => import('./module-entries/nozzle'))
 const CfdWorkspace = defineAsyncComponent(() => import('./module-entries/cfd'))
@@ -13,6 +14,7 @@ const VideoWorkspace = defineAsyncComponent(() => import('./module-entries/video
 const AgentWorkspace = defineAsyncComponent(() => import('./module-entries/agent'))
 const tools = ref([
   { id: 'stencil', label: '钢网设计与制造', category: '电子电气', available: true },
+  { id: 'digital-logic', label: '数字逻辑仿真', category: '电子电气', available: true },
   { id: 'equilibrium', label: '化学平衡分析', category: '热化学', available: false },
   { id: 'cfd', label: '流体力学', category: '流体与动力', available: true },
   { id: 'nozzle', label: '喷管初步设计', category: '流体与动力', available: true },
@@ -54,6 +56,7 @@ function openInstalledTool(id: string) {
     <GuideWorkspace v-if="active === 'guide' && availabilityReady" :installed-ids="installedIds" @open="openInstalledTool" />
     <ToolLibrary v-else-if="active === 'library'" :tools="tools" @open="openInstalledTool" />
     <StencilWorkspace v-else-if="active === 'stencil'" />
+    <DigitalLogicWorkspace v-else-if="active === 'digital-logic'" />
     <CfdWorkspace v-else-if="active === 'cfd'" />
     <VideoWorkspace v-else-if="active === 'video'" />
     <AgentWorkspace v-else-if="active === 'agent'" />

@@ -12,6 +12,8 @@
 
 Agent payload 的可选 `parentJobId` 语义由 [AI 协议](../../../contracts/schemas/v1/agent-contracts-ai.md) 维护；worker 历史上下文属于模块私有进程协议，不作为客户端请求类型公开。
 
+`digital_logic.rs` 映射[数字逻辑 v1 协议](../../../contracts/schemas/v1/agent-contracts-digital-logic.md)，通过 `contracts` 根入口公开 `Logic*` 类型。序列化保持四态信号、有限命令和请求身份；电路合法性与状态迁移由数字逻辑核心验证。
+
 ## 验证
 
 统一检查见 [语言说明](../../agent-rust.md#验证与维护)。经共享 schema/fixtures 验证序列化、未知版本、枚举、有限数值与兼容默认值。

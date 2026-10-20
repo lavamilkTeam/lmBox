@@ -25,6 +25,12 @@ export function circuitPorts(id: string, inputs: readonly string[]) {
       output: null,
     }
   }
+  if (id === 'input' || id === 'clock') return { inputs: [], output: { x: 190, y: 50 } }
+  if (id === 'probe') return { inputs: [{ id: 'A', x: 10, y: 50 }], output: null }
+  if (id === 'dff') return {
+    inputs: [{ id: 'D', x: 10, y: 30 }, { id: 'CLK', x: 10, y: 70 }],
+    output: { x: 190, y: 50 },
+  }
   const single = inputs.length === 1
   const inputX = id === 'buf' ? 5.0434781 : id === 'not' ? 5.043478 : 5
   const outputX = id === 'buf' ? 95.085706 : 95

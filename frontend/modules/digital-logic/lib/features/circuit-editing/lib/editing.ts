@@ -34,9 +34,11 @@ export function useCircuitEditing(portsForComponent: (componentId: string, input
     return nearestY
   }
   function add(gateId: string, x: number, y: number) {
-    if (!circuitComponents.some(component => component.id === gateId) || !Number.isFinite(x) || !Number.isFinite(y)) return
+    const component = circuitComponents.find(component => component.id === gateId)
+    if (!component || !Number.isFinite(x) || !Number.isFinite(y)) return
     const id = `gate-${circuit.nextId++}`
-    circuit.nodes.push({ id, gateId, x: Math.max(24, x), y: Math.max(24, y) })
+    if (gateId === 'input') circuit.inputValues[id] = '0'
+    circuit.nodes.push({ id, gateId: component.id, x: Math.max(24, x), y: Math.max(24, y) })
     return id
   }
   function move(id: string, x: number, y: number) {
@@ -50,19 +52,20 @@ export function useCircuitEditing(portsForComponent: (componentId: string, input
     const from = circuit.nodes.find(node => node.id === source)
     const to = circuit.nodes.find(node => node.id === target)
     if (!from || !to) return '元件已不存在'
-    if (source === target) return '请选择另一个元件'
+    if (source === target && from.gateId !== 'dff') return '请选择另一个元件'
     if (!circuitComponents.find(component => component.id === from.gateId)?.hasOutput) return '该元件没有可连接的输出端'
     const gate = circuitComponents.find(component => component.id === to.gateId)!
     if (!gate.inputs.some(port => port === targetPort)) return '请选择有效的输入端'
     if (circuit.edges.some(edge => edge.target === target && edge.targetPort === targetPort)) return '该输入端已连接，请先删除原连线'
     const visited = new Set<string>()
     function reaches(id: string): boolean {
+      if (circuit.nodes.find(node => node.id === id)?.gateId === 'dff') return false
       if (id === source) return true
       if (visited.has(id)) return false
       visited.add(id)
       return circuit.edges.filter(edge => edge.source === id).some(edge => reaches(edge.target))
     }
-    if (reaches(target)) return '暂不支持反馈回路'
+    if (reaches(target)) return '组合逻辑反馈必须经过触发器'
     const edge = { id: `wire-${circuit.nextId++}`, source, target, targetPort: targetPort! }
     circuit.edges.push(edge)
     to.y = snappedY(target, to.x, to.y, [edge])
@@ -71,6 +74,7 @@ export function useCircuitEditing(portsForComponent: (componentId: string, input
   function removeNode(id: string) {
     circuit.nodes = circuit.nodes.filter(node => node.id !== id)
     circuit.edges = circuit.edges.filter(edge => edge.source !== id && edge.target !== id)
+    delete circuit.inputValues[id]
   }
   function removeEdge(id: string) { circuit.edges = circuit.edges.filter(edge => edge.id !== id) }
   return { circuit, tools: circuitComponents, add, move, connect, removeNode, removeEdge }

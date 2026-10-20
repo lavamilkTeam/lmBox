@@ -14,6 +14,8 @@
 
 - 浏览器 Worker 管理本次计算的超时和取消；原生任务调度、工程保存仍未实现。源文件不会发送到远程服务。
 
+- `DigitalLogicSimulator` 是独立的持久 WASM 会话包装，只将有界 JSON 请求转给 `modules::digital_logic::Simulator` 并序列化结果；不在 ABI 中计算逻辑或复制状态机。每个前端工作区的 Worker 独占一个实例，终止 Worker 即释放仿真内存。浏览器和桌面 WebView 使用相同实现。
+
 ## 验证
 
 统一检查见 [语言说明](../agent-rust.md#验证与维护)。构建 WASM 并经真实 Worker 验证导入成功、诊断、超时和取消。

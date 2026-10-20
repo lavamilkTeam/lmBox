@@ -31,6 +31,7 @@
 | `frontend/ui/flow-editor` | [共享列表与节点画布](ui/flow-editor/agent-frontend-flow-editor.md) |
 | `frontend/modules/digital-logic` | [数字逻辑编辑模块](modules/digital-logic/agent-frontend-digital-logic.md) |
 | `frontend/modules/digital-logic/lib/features/circuit-editing` | [电路编辑功能](modules/digital-logic/lib/features/circuit-editing/agent-frontend-circuit-editing.md) |
+| `frontend/modules/digital-logic/lib/features/circuit-simulation` | [电路仿真协调](modules/digital-logic/lib/features/circuit-simulation/agent-frontend-circuit-simulation.md) |
 | `frontend/modules/guide` | [引导模块](modules/guide/agent-frontend-guide.md) |
 | `frontend/modules/video` | [视频工作流](modules/video/agent-frontend-video.md) |
 | `frontend/modules/agent` | [AI 工作助手](modules/agent/agent-frontend-agent.md) |

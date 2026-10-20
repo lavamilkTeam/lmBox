@@ -54,6 +54,31 @@ describe('logic circuit draft', () => {
     expect(createEditing().circuit.nodes.at(-1)).toMatchObject({ id, x: 300, y: 450 })
     expect(new Set(circuit.nodes.map(node => node.id)).size).toBe(circuit.nodes.length)
   })
+  it('accepts register feedback while still rejecting a combinational cycle beside it', () => {
+    const editing = createEditing()
+    const register = editing.add('dff', 40, 40)!, inverter = editing.add('not', 350, 40)!
+    const buffer = editing.add('buf', 650, 40)!, clock = editing.add('clock', 40, 250)!
+    expect(editing.connect(clock, register, 'CLK')).toBe('')
+    expect(editing.connect(register, inverter, 'A')).toBe('')
+    expect(editing.connect(inverter, register, 'D')).toBe('')
+    expect(editing.connect(inverter, buffer, 'A')).toBe('')
+    const feedback = editing.circuit.edges.find(edge => edge.target === inverter)!
+    editing.removeEdge(feedback.id)
+    expect(editing.connect(buffer, inverter, 'A')).toContain('触发器')
+    const self = editing.add('dff', 800, 250)!
+    expect(editing.connect(self, self, 'D')).toBe('')
+  })
+  it('keeps input intentions in the draft and removes them with the source', () => {
+    const editing = createEditing()
+    const source = editing.add('input', 40, 40)!, probe = editing.add('probe', 350, 40)!
+    expect(editing.circuit.inputValues[source]).toBe('0')
+    expect(editing.connect(source, probe, 'A')).toBe('')
+    expect(editing.connect(probe, source, 'A')).not.toBe('')
+    editing.circuit.inputValues[source] = '1'
+    editing.removeNode(source)
+    expect(editing.circuit.inputValues).toEqual({})
+    expect(editing.circuit.edges).toEqual([])
+  })
   it('accepts the LCD digital pins, rejects non-digital pins and never uses the display as a source', () => {
     // Source capability belongs to the catalog, even if an injected layout supplies an output.
     const editing = useCircuitEditing((id, inputs) => ({ ...ports(id, inputs), output: { x: 150, y: 45 } }))

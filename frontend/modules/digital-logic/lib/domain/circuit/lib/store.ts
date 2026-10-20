@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { LogicNodeKind } from '../../../../../../contracts'
 
 const logicGates = [
   {
@@ -47,20 +48,37 @@ const logicGates = [
 export const circuitComponents = [
   ...logicGates.map(gate => ({ ...gate, category: '逻辑门', hasOutput: true })),
   {
+    id: 'input', label: '输入开关', category: '输入与时序', hasOutput: true, inputs: [],
+    description: '点击电平按钮切换 0 和 1，作为其他元件的数字输入。切换电平后，信号沿线路传播到相连元件；未连接的输入保持高阻状态 Z',
+  },
+  {
+    id: 'clock', label: '时钟', category: '输入与时序', hasOutput: true, inputs: [],
+    description: '时钟从 0 开始，每次单步切换一次电平。运行会连续执行离散步进，暂停保留当前状态；这里的步数表示逻辑时间，不代表实际频率或传播延迟',
+  },
+  {
+    id: 'dff', label: 'D 触发器', category: '输入与时序', hasOutput: true, inputs: ['D', 'CLK'],
+    description: 'CLK 从确定的 0 变成 1 时，触发器采样 D 并更新输出，其余时刻保持输出。初始输出为未知状态 X；同一边沿触发的触发器同时采样，允许经过触发器的数据反馈，纯组合逻辑反馈会被拒绝',
+  },
+  {
+    id: 'probe', label: '电平探针', category: '显示器', hasOutput: false, inputs: ['A'],
+    description: '显示 A 引脚的当前状态：0 为低电平，1 为高电平，X 为未知，Z 为高阻或悬空。探针不产生输出，也不改变被测信号',
+  },
+  {
     id: 'hd44780', label: '字符屏 HD44780', category: '显示器', hasOutput: false,
     inputs: ['RS', 'R/W', 'E', 'D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7'],
-    description: 'HD44780 是字符液晶控制器，常用于并口字符屏。RS 选择指令或字符数据，R/W 选择读写方向，E 是使能信号，D0–D7 是数据总线；4 位接口使用 D4–D7，先传高四位，再传低四位。VSS、VDD 是电源引脚，V0 调节对比度，A、K 是背光引脚。\n\n当前元件提供外观、移动和控制/数据端接线，电源、对比度与背光引脚仅作标识。控制器指令、字符显示、忙标志和双向总线尚未接入仿真',
+    description: 'HD44780 是字符液晶控制器，常用于并口字符屏。RS 选择指令或字符数据，R/W 选择读写方向，E 是使能信号，D0–D7 是数据总线；4 位接口使用 D4–D7，先传高四位，再传低四位。VSS、VDD 是电源引脚，V0 调节对比度，A、K 是背光引脚。\n\n当前模型支持 E 下降沿写入、4/8 位接口、基础显示指令和 16×2 字符显示。R/W 应接低电平；读取、忙标志时序和自定义字形尚未实现。电源、对比度与背光引脚仅作标识，逻辑步进不模拟实际电压或指令执行时间',
     source: { label: 'Hitachi：HD44780U 数据手册', url: 'https://www.sparkfun.com/datasheets/LCD/HD44780.pdf' },
   },
 ] as const
 
-interface CircuitNode { id: string; gateId: string; x: number; y: number }
+interface CircuitNode { id: string; gateId: LogicNodeKind; x: number; y: number }
 interface CircuitEdge { id: string; source: string; target: string; targetPort: string }
 
 export const useLogicCircuit = defineStore('digital-logic-circuit', () => {
   const nodes = ref<CircuitNode[]>([])
   const edges = ref<CircuitEdge[]>([])
   const nextId = ref(1)
+  const inputValues = ref<Record<string, '0' | '1'>>({})
 
-  return { nodes, edges, nextId }
+  return { nodes, edges, nextId, inputValues }
 })

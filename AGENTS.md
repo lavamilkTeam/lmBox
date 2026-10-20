@@ -114,6 +114,11 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   │   │       ├── app/
 │   │   │       ├── domain/
 │   │   │       ├── features/
+│   │   │       │   ├── circuit-simulation/
+│   │   │       │   │   ├── index.ts
+│   │   │       │   │   ├── agent-frontend-circuit-simulation.md
+│   │   │       │   │   ├── lib/
+│   │   │       │   │   └── tests/
 │   │   │       │   └── circuit-editing/
 │   │   │       │       ├── index.ts
 │   │   │       │       ├── agent-frontend-circuit-editing.md
@@ -195,6 +200,8 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   └── src/
 │       └── modules/
 │           ├── ai/
+│           ├── digital_logic/
+│           │   └── agent-rust-digital-logic.md
 │           ├── cfd/
 │           ├── stencil/
 │           └── propulsion/

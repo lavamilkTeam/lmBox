@@ -7,3 +7,5 @@ export { cfdRequest, readCfdFile, saveCfdFile, chooseCfdPath, getCfdSessionId } 
 export { readWorkspaceSelection, saveWorkspaceSelection } from './lib/workspace'
 export { AiRequestNotSentError, aiRequest, getAiProjectId, getAiRequestId, readAiWorkflowFile, readAiTextFiles, loadAiArtifact, saveAiArtifact } from './lib/ai'
 export { installedModules } from './lib/modules'
+export { createDigitalLogicSession } from './lib/digital-logic'
+export type { DigitalLogicSession } from './lib/digital-logic'

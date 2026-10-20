@@ -15,4 +15,4 @@
 
 构建入口见[安装构建说明](../../scripts/agent-javascript-installer.md)。验证 `npm run installer:package`、`cmake --build .tools/installer-qt --target all_qmllint`，并实际打开打包程序检查显示、动画及关闭。跨平台源码不等于 Windows/Linux 打包或 GUI 已验证。
 
-`--smoke-test` 在真实加载 QML 根界面后退出，根对象不存在时返回失败；CI 将安装器解压到新目录，以 offscreen 平台检查部署后的 Qt/QML 依赖。该检查不代表交互和动画已通过人工验收。
+`--smoke-test` 在真实加载 QML 根界面后退出，根对象不存在时返回失败；CI 将安装器解压到新目录，清除外部 Qt/QML 搜索路径后检查部署依赖，Linux 使用 Xvfb 加载包内 `xcb` 平台插件。该检查不代表交互和动画已通过人工验收。

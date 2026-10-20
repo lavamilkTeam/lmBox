@@ -1,0 +1,12 @@
+{
+  "version": "6.8.3",
+  "sourceCommit": "3ae6c97953d563c33ff630f259716b01b81aa531",
+  "sourceUrl": "https://github.com/pyside/pyside-setup/archive/refs/tags/v6.8.3.tar.gz",
+  "sourceSha256": "055b467903327e947b60ddefd2e9e66f6b7558b92a0728c4596e0dc8ce5dd695",
+  "patchCommit": "d580aae898e10e7b4491f2692f320d7706899c1e",
+  "patchUrl": "https://api.github.com/repos/pyside/pyside-setup/commits/d580aae898e10e7b4491f2692f320d7706899c1e",
+  "patchAccept": "application/vnd.github.patch",
+  "patchSha256": "fe8d1eaf41aaf853408548fc1e1752eec9e87b458b169abf7c73f27e320bfed5",
+  "patchFile": "sources/pyside6/libpyside/dynamicslot.cpp",
+  "issue": "PYSIDE-3148"
+}

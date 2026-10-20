@@ -129,6 +129,8 @@ jobs:
           ruff check src tests
           lint-imports
           pytest --junitxml=test-results/geometry.xml
+      - name: Check CFD source and runtime build scripts
+        run: ruff check scripts/cfd-runtime scripts/bundle-cfd-runtime.py scripts/bundle-cfd-runtime.check.py scripts/check-cfd-runtime.py scripts/prepare-openfoam-source.py scripts/prepare-openfoam-source.check.py
       - name: Upload geometry test report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -159,6 +161,12 @@ jobs:
           python-version: '3.11'
       - name: Test release artifact validation
         run: node --test scripts/release-assets.check.mjs
+      - name: Validate case-safe OpenFOAM source preparation
+        run: |
+          python -B scripts/prepare-openfoam-source.check.py -v
+          python -B scripts/prepare-openfoam-source.py
+          python -B scripts/prepare-openfoam-source.py --check
+          git diff --exit-code -- runtime/openfoam/case-map.json
 
   desktop:
     name: Desktop (${{ matrix.os }})
@@ -196,6 +204,11 @@ jobs:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: engine/pyproject.toml
+      - name: Test native CFD bundle validation on macOS
+        if: runner.os == 'macOS'
+        run: |
+          python -B scripts/bundle-cfd-runtime.check.py
+          python -B scripts/prepare-openfoam-source.check.py -v
       - name: Install the pinned Rust toolchain in a fresh directory
         shell: bash
         run: |
@@ -211,7 +224,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf libfuse2t64 gfortran cmake ninja-build libgl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf libfuse2t64 gfortran cmake ninja-build libgl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 xvfb xauth
       - run: npm ci
       - run: npm run setup:geometry
       - run: npm run setup:ai
@@ -424,8 +437,11 @@ jobs:
               smoke_env = dict(os.environ, QT_QUICK_BACKEND='software')
               for name in ('LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH', 'QT_PLUGIN_PATH', 'QML_IMPORT_PATH', 'QML2_IMPORT_PATH'):
                   smoke_env.pop(name, None)
+              smoke_command = [str(executables[0]), '--smoke-test']
               if sys.platform == 'linux':
-                  smoke_env['QT_QPA_PLATFORM'] = 'offscreen'
+                  # Exercise the xcb plugin shipped by Qt's deployment script.
+                  smoke_env['QT_QPA_PLATFORM'] = 'xcb'
+                  smoke_command = ['xvfb-run', '--auto-servernum', *smoke_command]
                   linked = subprocess.check_output(['ldd', str(executables[0])], env=smoke_env, text=True)
                   dependencies = dict(line.strip().split(' => ', 1) for line in linked.splitlines() if ' => ' in line)
                   for library in ('libicui18n.so.73', 'libicuuc.so.73', 'libicudata.so.73'):
@@ -434,7 +450,7 @@ jobs:
                       assert pathlib.Path(resolved).resolve().is_relative_to(installer_root.resolve()), f'{library} resolves outside the installer: {resolved}'
               else:
                   smoke_env.pop('QT_QPA_PLATFORM', None)
-              subprocess.run([str(executables[0]), '--smoke-test'], env=smoke_env, check=True, timeout=30)
+              subprocess.run(smoke_command, env=smoke_env, check=True, timeout=30)
               print('Relocated Qt module installer loaded its QML successfully.')
           finally:
               shutil.rmtree(root)

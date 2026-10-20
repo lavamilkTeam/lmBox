@@ -172,6 +172,7 @@ class Results:
             if not self.process:
                 executable = Path(self.r.paraview_executable or "")
                 candidates = [
+                    *([Path(self.r.pvpython_executable)] if self.r.pvpython_executable else []),
                     executable.parent / "pvpython",
                     executable.parent.parent / "bin/pvpython",
                 ]

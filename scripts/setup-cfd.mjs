@@ -75,13 +75,43 @@ function prepareSource() {
   writeFileSync(join(tools, 'source-manifest.json'), `${JSON.stringify({ schemaVersion: 1, repository, commit, licenseFile: 'source/LICENSE', sourceUnmodified: true }, null, 2)}\n`)
 }
 
+let configuringBundle = false
 try {
   if (process.argv[2] === '--source-only') {
     prepareSource()
     console.log('Prepared pinned CfdOF source and license for module packaging; no runtime was configured.')
     process.exit(0)
   }
-  if (process.argv.length > 2) throw new Error('Expected no arguments or --source-only')
+  const localBundle = join(tools, 'bundle')
+  const bundled = process.argv[2] === '--bundle' ? process.argv[3]
+    : process.env.LMBOX_CFD_BUNDLE || (existsSync(join(localBundle, 'bundle.json')) ? localBundle : undefined)
+  if (bundled) {
+    configuringBundle = true
+    if (process.argv.length > 2 && (process.argv[2] !== '--bundle' || process.argv.length !== 4)) throw new Error('Expected --bundle DIRECTORY')
+    const bundle = resolve(bundled)
+    run(process.env.LMBOX_PACKAGE_PYTHON || 'python3', ['scripts/bundle-cfd-runtime.py', 'check', bundle], { timeout: 600_000 })
+    const manifest = JSON.parse(readFileSync(join(bundle, 'bundle.json'), 'utf8'))
+    const entries = { pythonExecutable: 'freecad/bin/python3', pvpythonExecutable: 'paraview/bin/vtkpython', openfoamDirectory: 'openfoam' }
+    if (manifest.schemaVersion !== 1 || manifest.target !== `${process.platform}-${process.arch}` ||
+        Object.entries(entries).some(([key, value]) => manifest.entrypoints?.[key] !== value)) throw new Error('CFD 运行库版本、平台或入口不匹配。')
+    if (process.platform === 'darwin') {
+      const currentMacOS = run('/usr/bin/sw_vers', ['-productVersion'], { env: { ...process.env, SYSTEM_VERSION_COMPAT: '0' } })
+      const [minimum, installed] = [manifest.minimumMacOS, currentMacOS].map(value => {
+        if (typeof value !== 'string' || !/^\d+(?:\.\d+){0,2}$/.test(value)) throw new Error('无法确认 CFD 运行库所需的 macOS 版本。')
+        const parts = value.split('.').map(Number)
+        return [parts[0], parts[1] || 0, parts[2] || 0]
+      })
+      const difference = minimum.findIndex((part, index) => part !== installed[index])
+      if (difference !== -1 && minimum[difference] > installed[difference]) throw new Error(`CFD 运行库需要 macOS ${manifest.minimumMacOS} 或更新版本。`)
+    }
+    const paths = Object.fromEntries(Object.entries(entries).map(([key, value]) => [key, join(bundle, value)]))
+    if (!probePython(paths.pythonExecutable) || !existsSync(paths.pvpythonExecutable) || !existsSync(join(paths.openfoamDirectory, 'etc/bashrc'))) throw new Error('CFD 运行库缺少可用的 FreeCAD、VTK Python 或 OpenFOAM。')
+    prepareSource()
+    writeFileSync(join(tools, 'runtime.json'), JSON.stringify({ schemaVersion: 1, sourceCommit: commit, upstreamPath: upstream, ...paths }, null, 2) + '\n', { mode: 0o600 })
+    console.log('已配置包内 FreeCAD、VTK 与 OpenFOAM：.tools/cfd/runtime.json')
+    process.exit(0)
+  }
+  if (process.argv.length > 2) throw new Error('Expected no arguments, --source-only, or --bundle DIRECTORY')
   const pythonExecutable = pythonCandidates().find(probePython)
   if (!pythonExecutable) throw new Error('未找到可用的 FreeCAD Python。请安装 FreeCAD，或设置 LMBOX_FREECAD_PYTHON / LMBOX_FREECAD_ROOT 后重试。')
   prepareSource()
@@ -101,6 +131,10 @@ try {
   console.log('CFD 运行环境已配置：.tools/cfd/runtime.json；原版源及许可证保存在 .tools/cfd/source。')
   if (!dockerExecutable) console.log('未检测到 Docker；网格和求解前需要配置可用的 OpenFOAM 运行环境。')
 } catch (error) {
+  if (configuringBundle) {
+    try { rmSync(join(tools, 'runtime.json'), { force: true }) }
+    catch (cleanupError) { console.error(`无法清除失效的 CFD 运行配置：${cleanupError.message}`) }
+  }
   console.error(`CFD 环境配置失败：${error.message}`)
   process.exitCode = 1
 }

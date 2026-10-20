@@ -1,6 +1,7 @@
 import copy
 import io
 import json
+import math
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -155,7 +156,14 @@ def test_grid_cells_receive_rounding_and_base_export_contains_slot(data):
     opt = data["settings"]["design"]["optimization"]
     opt.update(grid=True, gridCell=0.5, gridWeb=0.2, rounding=0.05)
     mesh, _ = build(data)
-    assert all(len(r) > 5 for r in mesh.objects[0]["rings"])
+    cells = mesh.objects[0]["rings"]
+    assert len(cells) == 8
+    assert all(len(r) > 5 for r in cells)
+    # Each 0.35 x 0.4 mm cell loses all four corners, including internal grid corners.
+    expected_area = 0.35 * 0.4 - (4 - math.pi) * 0.05**2
+    assert [Polygon(r).area for r in cells] == pytest.approx(
+        [expected_area] * 8, abs=4e-6
+    )
     opt.update(grid=False, rounding=0)
     design = data["settings"]["design"]
     design.update(kind="base", slotWidth=1, chamfer=0.2)
@@ -164,6 +172,24 @@ def test_grid_cells_receive_rounding_and_base_export_contains_slot(data):
     assert len(mesh.contours) == 1
     assert summary["holeCount"] == 0
     assert summary["algorithmVersion"] == "0.2.4"
+
+
+@pytest.mark.parametrize("local", [False, True])
+def test_grid_rejects_rounding_larger_than_cell(data, local):
+    opt = {
+        **data["settings"]["design"]["optimization"],
+        "grid": True,
+        "gridCell": 0.5,
+        "gridWeb": 0.2,
+        "rounding": 0.25,
+    }
+    if local:
+        data["edits"][0]["optimization"] = opt
+    else:
+        data["settings"]["design"]["optimization"] = opt
+    # The radius fits the source pad, but cannot fit the resulting grid cells.
+    with pytest.raises(ValueError, match="半径过大"):
+        build(data)
 
 
 def test_each_corner_can_choose_round_or_chamfer(data):

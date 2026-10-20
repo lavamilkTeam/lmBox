@@ -136,6 +136,17 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │       │   └── lib/
 │       ├── engineering-shell/
 │       └── installer-welcome/
+├── runtime/
+│   ├── agent-runtime.md
+│   ├── freecad/
+│   ├── paraview/
+│   ├── cfdof/
+│   └── openfoam/
+│       ├── OpenFOAM-v2306.tar.gz
+│       ├── COPYING
+│       ├── case-map.json
+│       ├── source/
+│       └── source.json
 ├── src-fortran/
 │   ├── agent-fortran.md
 │   └── modules/
@@ -185,6 +196,8 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   └── fixtures/
 ├── scripts/
 │   ├── AGENTS.md
+│   ├── cfd-runtime/
+│   │   └── agent-python-cfd-runtime.md
 │   └── agent-javascript.md
 ├── tests/
 │   └── agent-frontend-tests.md

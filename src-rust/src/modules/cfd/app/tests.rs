@@ -26,11 +26,15 @@ fn backend() -> (tempfile::TempDir, CfdBackend) {
     fs::create_dir_all(engine.join("lmbox_geometry")).unwrap();
     fs::write(engine.join("lmbox_geometry/__init__.py"), "").unwrap();
     fs::write(engine.join("lmbox_geometry/cfd_worker.py"), r#"
-import sys,json,pathlib,time
+import sys,json,pathlib,time,os
 session=pathlib.Path(sys.argv[sys.argv.index('--session')+1])
 for line in sys.stdin:
- r=json.loads(line); op=r['operation']; state={'objects':[], 'dialogs':[{'id':'chooser','fileDialog':{'mode':'openFile'}}], 'lastAction':{'requestId':r['id']}}
+ r=json.loads(line); op=r['operation']; state={'objects':[], 'dialogs':[{'id':'chooser','fileDialog':{'mode':'openFile'}}], 'lastAction':{'requestId':r['id']}, 'workerArguments':sys.argv[1:]}
  if op=='command' and r['payload']['commandId']=='exit': break
+ if op=='command' and r['payload']['commandId']=='disconnect':
+  os.close(sys.stdout.fileno())
+  sys.stdin.read()
+  break
  if op=='command' and r['payload']['commandId']=='hang':
   pathlib.Path(__file__).with_name('pending').write_text('pending')
   time.sleep(60)
@@ -52,6 +56,60 @@ for line in sys.stdin:
     fs::write(&config, serde_json::to_vec(&json!({"schemaVersion":1,"sourceCommit":"a90f60c2313ceba09c236c81f0693d93357d1614", "pythonExecutable":String::from_utf8(python.stdout).unwrap().trim(),"upstreamPath":upstream})).unwrap()).unwrap();
     let backend = CfdBackend::new(config, engine);
     (directory, backend)
+}
+
+#[test]
+fn forwards_local_runtime_paths_and_rejects_ambiguous_solver_config() {
+    let (directory, backend) = backend();
+    let config_path = directory.path().join("runtime.json");
+    let mut config: serde_json::Value =
+        serde_json::from_slice(&fs::read(&config_path).unwrap()).unwrap();
+    let foam = directory.path().join("runtime/openfoam");
+    let reader = directory.path().join("runtime/vtkpython");
+    fs::create_dir_all(foam.join("etc")).unwrap();
+    fs::write(foam.join("etc/bashrc"), "# fixture").unwrap();
+    fs::write(&reader, "# fixture").unwrap();
+    config["openfoamDirectory"] = json!(foam);
+    config["pvpythonExecutable"] = json!(reader);
+    fs::write(&config_path, serde_json::to_vec(&config).unwrap()).unwrap();
+    let response = backend.request(request("local", "start", 0, CfdOperation::Initialize));
+    assert!(response.ok, "{:?}", response.error);
+    let arguments = response.state.unwrap()["workerArguments"]
+        .as_array()
+        .unwrap()
+        .clone();
+    for (flag, value) in [
+        ("--openfoam-directory", &foam),
+        ("--pvpython-executable", &reader),
+    ] {
+        let index = arguments.iter().position(|item| item == flag).unwrap();
+        assert_eq!(arguments[index + 1], json!(value));
+    }
+    assert!(!arguments.iter().any(|item| item == "--docker-image"));
+    backend.close_all();
+    config["dockerImage"] = json!("fixture");
+    fs::write(&config_path, serde_json::to_vec(&config).unwrap()).unwrap();
+    let invalid = CfdBackend::new(&config_path, directory.path().join("engine"));
+    assert_eq!(
+        invalid
+            .request(request("ambiguous", "start", 0, CfdOperation::Initialize))
+            .error
+            .unwrap()
+            .code,
+        "runtime_config"
+    );
+    config.as_object_mut().unwrap().remove("dockerImage");
+    fs::remove_file(&reader).unwrap();
+    fs::write(&config_path, serde_json::to_vec(&config).unwrap()).unwrap();
+    let missing = CfdBackend::new(&config_path, directory.path().join("engine"));
+    assert_eq!(
+        missing
+            .request(request("missing", "start", 0, CfdOperation::Initialize))
+            .error
+            .unwrap()
+            .code,
+        "runtime_unavailable"
+    );
 }
 
 #[test]
@@ -163,6 +221,15 @@ fn missing_runtime_is_a_descriptive_failure() {
 
 #[test]
 fn dead_worker_is_not_reported_busy_or_silently_reinitialized() {
+    assert_disconnected_worker_stays_stopped("exit");
+}
+
+#[test]
+fn disconnected_worker_stays_stopped_while_process_is_still_alive() {
+    assert_disconnected_worker_stays_stopped("disconnect");
+}
+
+fn assert_disconnected_worker_stays_stopped(command: &str) {
     let (_directory, backend) = backend();
     assert!(
         backend
@@ -170,7 +237,7 @@ fn dead_worker_is_not_reported_busy_or_silently_reinitialized() {
             .ok
     );
     let mut action = request("p", "exit", 1, CfdOperation::Command);
-    action.payload.insert("commandId".into(), json!("exit"));
+    action.payload.insert("commandId".into(), json!(command));
     let stopped = backend.request(action);
     assert_eq!(stopped.error.unwrap().code, "worker_stopped");
     assert_eq!(stopped.state.as_ref().unwrap()["busy"], false);
@@ -178,6 +245,13 @@ fn dead_worker_is_not_reported_busy_or_silently_reinitialized() {
         stopped.state.as_ref().unwrap()["pendingAction"],
         serde_json::Value::Null
     );
+    for id in ["after-stop", "still-stopped"] {
+        let response = backend.request(request("p", id, 1, CfdOperation::Poll));
+        assert!(!response.ok);
+        assert_eq!(response.request_id, id);
+        assert_eq!(response.revision, 1);
+        assert_eq!(response.error.unwrap().code, "worker_stopped");
+    }
     assert_eq!(
         backend
             .request(request("p", "reconnect", 1, CfdOperation::Initialize))

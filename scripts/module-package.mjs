@@ -151,7 +151,7 @@ async function libraries(directory) {
     while (pending.length) {
       const library = pending.shift(); if (done.has(library)) continue; done.add(library)
       const dependencies = windows
-        ? [...run(process.env.OBJDUMP || 'objdump', ['-p', library], { capture: true }).matchAll(/DLL Name:\s*(\S+)/g)].map(match => match[1])
+        ? JSON.parse(run(process.execPath, [join(root, 'scripts/module-pe-imports.mjs'), library], { capture: true }))
         : run('ldd', [library], { capture: true }).split('\n').map(line => line.trim().split(/\s+/)[0])
       for (const dependency of dependencies) {
         if (!/^lib(?:gfortran|quadmath|gcc_s|stdc\+\+|winpthread)/i.test(dependency)) continue
@@ -241,12 +241,27 @@ try {
   await copy(join(root, 'engine/src/lmbox_geometry/cfd_worker.py'), join(stage, 'cfd/engine/src/lmbox_geometry/cfd_worker.py'))
   await copy(join(root, 'engine/src/lmbox_geometry/__init__.py'), join(stage, 'cfd/engine/src/lmbox_geometry/__init__.py'))
   await copy(join(root, 'contracts/schemas'), join(stage, 'cfd/contracts/schemas'))
+  const localCfdBundle = join(root, '.tools/cfd/bundle')
+  const cfdBundle = process.env.LMBOX_CFD_BUNDLE || (await exists(join(localCfdBundle, 'bundle.json')) ? localCfdBundle : undefined)
+  if (cfdBundle) {
+    const bundle = resolve(cfdBundle)
+    const manifest = JSON.parse(await readFile(join(bundle, 'bundle.json'), 'utf8'))
+    if (manifest.schemaVersion !== 1 || manifest.target !== target) throw new Error('CFD runtime bundle platform does not match this release')
+    const bundlePython = process.env.LMBOX_PACKAGE_PYTHON || join(root, 'engine/.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
+    run(bundlePython, ['scripts/bundle-cfd-runtime.py', 'check', bundle])
+    const packagedBundle = join(stage, 'cfd/native')
+    // A verified bundle is immutable: source-copy filters would invalidate its inventory.
+    await cp(bundle, packagedBundle, { recursive: true, verbatimSymlinks: true })
+    run(bundlePython, ['scripts/bundle-cfd-runtime.py', 'check', packagedBundle])
+  }
   const python = process.env.LMBOX_PACKAGE_PYTHON || join(root, 'engine/.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
   const packages = []
   for (const id of files.keys()) {
     const kind = id === 'base' ? 'base' : ids.includes(id) ? 'module' : 'runtime'
     const folder = join(stage, id)
-    await writeFile(join(folder, 'package.json'), JSON.stringify({ schemaVersion: 1, id, version, target, kind, dependencies: [...dependencies.get(id)] }) + '\n')
+    await writeFile(join(folder, 'package.json'), JSON.stringify({ schemaVersion: 1, id, version, target, kind, dependencies: [...dependencies.get(id)],
+      ...(id === 'cfd' && cfdBundle ? { bundledCfdRuntime: true } : {}),
+    }) + '\n')
     const file = `lmbox-${id}-${version}-${target}.zip`
     const { unpackedSize } = JSON.parse(run(python, ['scripts/module-archive.py', folder, join(output, file)], { capture: true }))
     const zipPath = join(output, file)

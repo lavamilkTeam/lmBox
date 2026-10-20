@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://gitlab.com/openfoam/core/openfoam.git",
+  "ref": "OpenFOAM-v2306",
+  "commit": "a6e826bd55d5ce93d94d18fbd96c27ee7d90aeeb",
+  "archive": "OpenFOAM-v2306.tar.gz",
+  "sha256": "fb0160013e57c8344e594448c5f1e4b4062526e80c701cb84da72dc4dff444ec",
+  "licenseFile": "COPYING",
+  "format": "git-archive-tar-gzip",
+  "prefix": "OpenFOAM-v2306/",
+  "requiresCaseSensitiveExtraction": true,
+  "preparedDirectory": "source",
+  "caseMap": "case-map.json",
+  "preparedPathsRequireCaseSensitiveFilesystem": false,
+  "optionalSubmodulesIncluded": false
+}

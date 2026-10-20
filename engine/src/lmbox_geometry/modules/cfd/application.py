@@ -241,6 +241,9 @@ def run_worker(
     docker_executable="docker",
     paraview_executable=None,
     container_name=None,
+    *,
+    pvpython_executable=None,
+    openfoam_directory=None,
 ):
     """Run one trusted-host configured session using framed stdin/stdout JSON."""
     protocol = os.fdopen(os.dup(sys.stdout.fileno()), "w", buffering=1, encoding="utf-8")
@@ -256,7 +259,15 @@ def run_worker(
         protocol.flush()
 
     runtime = Runtime(
-        upstream, session, docker_image, docker_executable, log, paraview_executable, container_name
+        upstream,
+        session,
+        docker_image,
+        docker_executable,
+        log,
+        paraview_executable,
+        container_name,
+        pvpython_executable=pvpython_executable,
+        openfoam_directory=openfoam_directory,
     )
     coordinator = Session(runtime, respond, log, logs)
     requests = queue.Queue(maxsize=64)

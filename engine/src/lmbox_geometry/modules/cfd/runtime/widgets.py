@@ -63,6 +63,14 @@ class Widgets:
             return None
         if isinstance(widget, self.q.QDialogButtonBox):
             return None
+        if (
+            self.r.pvpython_executable
+            and not self.r.paraview_executable
+            and isinstance(widget, self.q.QAbstractButton)
+            and "paraview" in widget.objectName().lower()
+        ):
+            widget.setEnabled(False)
+            widget.setToolTip("此运行库未包含 ParaView 桌面程序，请使用内置结果视图。")
         self.count += 1
         q = self.q
         node = {
@@ -509,6 +517,7 @@ class Widgets:
                 dialog.setDirectory(str(path.parent))
                 dialog.selectFile(str(path))
             if payload.get("trustedHostSelection") is True:
+
                 def accept_selection():
                     try:
                         dialog.selectFile(str(path))

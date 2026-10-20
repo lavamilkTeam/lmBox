@@ -10,6 +10,10 @@ Rust 拥有工程与输入版本、可信运行时配置、文件暂存、进程
 
 CAD 边离散化失败时仅省略该预览边，标记几何快照为截断并记录对象/边标识；原生 CAD 与求解输入不变，其他几何及会话状态仍可读取。
 
-验证运行 `npm run check:geometry`。原生能力另用可信 FreeCAD Python 从 `-m lmbox_geometry.cfd_worker` 公开入口执行 JSONL 测试；测试必须使用临时配置/源码/文档并明确关闭进程。需要原生 GUI 框架的测试不能用普通 CPython 或模拟成功替代。OpenFOAM/cfMesh/HiSA/ParaView 版本与安装归宿主配置，不从 Python 包依赖推断可用。
+验证运行 `npm run check:geometry`。原生能力另用可信 FreeCAD Python 从 `-m lmbox_geometry.cfd_worker` 公开入口执行 JSONL 测试；测试必须使用临时配置/源码/文档并明确关闭进程。需要原生 GUI 框架的测试不能用普通 CPython 或模拟成功替代。OpenFOAM/cfMesh/HiSA/ParaView 版本与安装归可信运行配置，不从 Python 包依赖推断可用。
 
-`runtime/results.py` 在会话受控 output 内发现原生算例，异步调用宿主已配置 ParaView 的 pvpython；私有 `field_extract.py` 使用 VTK 读取重建或并行结果、壁面与截面场、真实 U 积分流线和采样矢量，不重写 CFD 求解器。提取不阻塞 Qt 停止操作，超时/关闭回收进程；输入指纹变化丢弃迟到结果。结果坐标为米，CAD 预览为毫米，转换仅用于显示。进度读取原生进程与日志，不以计时器估算百分比。
+`runtime/results.py` 在会话受控 output 内发现原生算例，优先调用 `--pvpython-executable` 指定的 VTK Python，兼容从 `--paraview-executable` 查找 pvpython；私有 `field_extract.py` 使用 VTK 读取重建或并行结果、壁面与截面场、真实 U 积分流线和采样矢量，不重写 CFD 求解器。提取不阻塞 Qt 停止操作，超时/关闭回收进程；输入指纹变化丢弃迟到结果。结果坐标为米，CAD 预览为毫米，转换仅用于显示。进度读取原生进程与日志，不以计时器估算百分比。
+
+`--openfoam-directory` 将可信包内目录写入当前会话的 CfdOF `InstallationPath`，必须含 `etc/bashrc`，不能与 Docker 同时配置。仅加载包内 OpenFOAM 配置，并通过 `LMBOX_OPENFOAM_USER_DIR` 指定会话内用户目录。每个会话仍使用独立偏好，不修改用户 FreeCAD 环境；VTK 解释器与完整 ParaView GUI 入口分别配置。
+
+仅配置 VTK Python 时，原生 ParaView 桌面按钮禁用，启动适配返回明确不可用信息，不自动发现或启动宿主 ParaView；内置结果视图继续使用 VTK。

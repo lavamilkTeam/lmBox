@@ -36,6 +36,8 @@ pub(in crate::modules::cfd) struct RuntimeConfig {
     docker_executable: Option<PathBuf>,
     docker_image: Option<String>,
     paraview_executable: Option<PathBuf>,
+    pvpython_executable: Option<PathBuf>,
+    openfoam_directory: Option<PathBuf>,
 }
 
 impl RuntimeConfig {
@@ -71,6 +73,26 @@ impl RuntimeConfig {
                 "FreeCAD Python 或 CfdOF 源文件缺失，请重新运行 setup:cfd。",
             ));
         }
+        if config
+            .pvpython_executable
+            .as_ref()
+            .is_some_and(|p| !p.is_absolute() || !p.is_file())
+            || config
+                .openfoam_directory
+                .as_ref()
+                .is_some_and(|p| !p.is_absolute() || !p.join("etc/bashrc").is_file())
+        {
+            return Err(failure(
+                "runtime_unavailable",
+                "CFD 的 pvpython 或 OpenFOAM 运行库缺失。",
+            ));
+        }
+        if config.openfoam_directory.is_some() && config.docker_image.is_some() {
+            return Err(failure(
+                "runtime_config",
+                "CFD 不能同时配置本地 OpenFOAM 和 Docker 求解环境。",
+            ));
+        }
         Ok(config)
     }
 }
@@ -85,6 +107,7 @@ pub(in crate::modules::cfd) struct Worker {
     directory: TempDir,
     sequence: u64,
     started: bool,
+    disconnected: bool,
     stopped: bool,
     cancellation: Arc<AtomicBool>,
 }
@@ -139,6 +162,12 @@ impl Worker {
         }
         if let Some(value) = config.paraview_executable {
             command.arg("--paraview-executable").arg(value);
+        }
+        if let Some(value) = config.pvpython_executable {
+            command.arg("--pvpython-executable").arg(value);
+        }
+        if let Some(value) = config.openfoam_directory {
+            command.arg("--openfoam-directory").arg(value);
         }
         #[cfg(unix)]
         {
@@ -216,6 +245,7 @@ impl Worker {
             container_name,
             sequence: 0,
             started: false,
+            disconnected: false,
             stopped: false,
             cancellation,
         })
@@ -227,6 +257,9 @@ impl Worker {
         payload: Value,
         request_id: &str,
     ) -> Result<Value, WorkerError> {
+        if self.disconnected {
+            return Err(self.stopped_error());
+        }
         self.sequence += 1;
         let id = format!("{request_id}:{}", self.sequence);
         let message = serde_json::to_vec(&json!({"id":id,"operation":operation,"payload":payload}))
@@ -238,16 +271,16 @@ impl Worker {
             .stdin
             .as_ref()
             .ok_or_else(|| failure("worker_closed", "CFD 会话已关闭。"))?;
-        stdin.try_send(message).map_err(|e| match e {
-            mpsc::TrySendError::Disconnected(_) => self.with_logs(
-                "worker_stopped",
-                "CFD 工作进程已退出，未保存的原生文档无法恢复。请关闭会话后重新初始化。",
-            ),
-            mpsc::TrySendError::Full(_) => failure(
-                "worker_busy",
-                "CFD 工作进程正在接收上一条操作，请稍后重试。",
-            ),
-        })?;
+        match stdin.try_send(message) {
+            Ok(()) => {}
+            Err(mpsc::TrySendError::Disconnected(_)) => return Err(self.stopped_error()),
+            Err(mpsc::TrySendError::Full(_)) => {
+                return Err(failure(
+                    "worker_busy",
+                    "CFD 工作进程正在接收上一条操作，请稍后重试。",
+                ))
+            }
+        }
         let duration = if self.started {
             Duration::from_secs(30)
         } else {
@@ -297,18 +330,23 @@ impl Worker {
                         "CFD 工作进程尚未回应，可继续查询状态或关闭会话。",
                     ))
                 }
-                Err(mpsc::RecvTimeoutError::Disconnected) => {
-                    return Err(self.with_logs(
-                        "worker_stopped",
-                        "CFD 工作进程已退出，未保存的原生文档无法恢复。请关闭会话后重新初始化。",
-                    ))
-                }
+                Err(mpsc::RecvTimeoutError::Disconnected) => return Err(self.stopped_error()),
             }
         }
     }
 
     pub(in crate::modules::cfd) fn is_running(&mut self) -> bool {
-        matches!(self.child.try_wait(), Ok(None))
+        !self.disconnected && !self.stopped && matches!(self.child.try_wait(), Ok(None))
+    }
+
+    fn stopped_error(&mut self) -> WorkerError {
+        // Pipe EOF can arrive before the OS reports process exit. The session
+        // cannot recover its protocol channel while the child finishes cleanup.
+        self.disconnected = true;
+        self.with_logs(
+            "worker_stopped",
+            "CFD 工作进程已退出，未保存的原生文档无法恢复。请关闭会话后重新初始化。",
+        )
     }
 
     pub(in crate::modules::cfd) fn stage_import(

@@ -23,7 +23,11 @@ pub fn backend(app: &tauri::App) -> Result<Arc<AiBackend>, String> {
                     ".tools/ai/venv/bin/python"
                 })
             });
+        let node = std::env::var_os("LMBOX_AGENT_NODE")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from(if cfg!(windows) { "node.exe" } else { "node" }));
         AiBackend::new(python, repository.join("engine/src"), tasks)
+            .with_agent_worker(node, repository.join("agent/dist/worker.js"))
     } else {
         #[cfg(not(feature = "modular"))]
         let adjacent = std::env::current_exe()
@@ -48,6 +52,12 @@ pub fn backend(app: &tauri::App) -> Result<Arc<AiBackend>, String> {
                 "lmbox-ai"
             }),
             tasks,
+        )
+        .with_agent_worker(
+            resource
+                .join("agent")
+                .join(if cfg!(windows) { "node.exe" } else { "node" }),
+            resource.join("agent/dist/worker.js"),
         )
     };
     Ok(Arc::new(backend))

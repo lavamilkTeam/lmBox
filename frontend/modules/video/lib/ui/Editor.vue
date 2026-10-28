@@ -31,7 +31,7 @@ function choiceChanged(field: VideoField, value: unknown) { if (active.value && 
 function showValue(value: unknown): string | number { return typeof value === 'string' || typeof value === 'number' ? value : value === undefined ? '' : JSON.stringify(value) }
 </script>
 <template>
-  <main class="video-workspace" aria-label="AI 视频工作流">
+  <main class="video-workspace" aria-label="ComfyUI">
     <div class="video-body">
       <aside class="video-library" aria-label="视频节点库">
         <div class="video-panel-heading">
@@ -55,7 +55,7 @@ function showValue(value: unknown): string | number { return typeof value === 's
             </Popover>
           </div>
         </div>
-        <input ref="file" type="file" accept=".json,application/json" hidden aria-label="选择视频工作流文件" @change="importFile">
+        <input ref="file" type="file" accept=".json,application/json" hidden aria-label="选择ComfyUI文件" @change="importFile">
         <Input v-model="search" aria-label="搜索视频节点" placeholder="搜索节点" />
         <div class="video-catalog">
           <Button v-for="entry in visibleCatalog" :key="entry.type" variant="ghost" class="video-catalog-item" :disabled="locked" :title="`${entry.category} / ${entry.type}`" @click="add(entry.type)">{{ entry.title }}</Button>

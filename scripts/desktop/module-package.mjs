@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process'
 import { dirname, join, resolve, basename, delimiter } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const root = fileURLToPath(new URL('../', import.meta.url))
+const root = fileURLToPath(new URL('../../', import.meta.url))
 const version = JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version
 const target = `${process.platform}-${process.arch}`
 const build = join(root, '.tools/modules')
@@ -151,7 +151,7 @@ async function libraries(directory) {
     while (pending.length) {
       const library = pending.shift(); if (done.has(library)) continue; done.add(library)
       const dependencies = windows
-        ? JSON.parse(run(process.execPath, [join(root, 'scripts/module-pe-imports.mjs'), library], { capture: true }))
+        ? JSON.parse(run(process.execPath, [join(root, 'scripts/desktop/module-pe-imports.mjs'), library], { capture: true }))
         : run('ldd', [library], { capture: true }).split('\n').map(line => line.trim().split(/\s+/)[0])
       for (const dependency of dependencies) {
         if (!/^lib(?:gfortran|quadmath|gcc_s|stdc\+\+|winpthread)/i.test(dependency)) continue

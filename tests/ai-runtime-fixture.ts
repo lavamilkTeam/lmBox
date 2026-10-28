@@ -6,10 +6,12 @@ import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import type { Page } from '@playwright/test'
 
-/** Real Rust/Python execution with only external model providers replaced by labelled fixtures. */
+/** Real Rust/Node Agent and Python video execution; only external providers are fixtures. */
 export async function aiRuntimeFixture(page: Page) {
   const directory = await mkdtemp(join(tmpdir(), 'lmbox-ai-e2e-'))
   let completions = 0, submissions = 0, cancellations = 0, cancelled = false, slow = false
+  let workspaceChecks = 0, slowAgent = false, agentAborts = 0
+  let agentIdentity: { projectId: string; inputRevision: number } | undefined
   const videoBytes = Buffer.from('LMBOX VIDEO PROVIDER FIXTURE - NOT A REAL VIDEO')
   const metadata = {
     FixturePrompt: { display_name: '测试提示词', category: 'Fixture', input: { required: { text: ['STRING', { default: 'Fixture video' }] } }, output: ['STRING'], output_name: ['text'] },
@@ -44,7 +46,29 @@ export async function aiRuntimeFixture(page: Page) {
       else if (url.pathname === '/v1/models') data = { data: [{ id: 'fixture-agent-model' }] }
       else if (url.pathname === '/v1/chat/completions') {
         assert.equal(body.model, 'fixture-agent-model'); completions++
+        if (slowAgent) {
+          res.once('close', () => { agentAborts++ })
+          return
+        }
         const currentPrompt = body.messages.findLast((message: { role: string }) => message.role === 'user')?.content ?? ''
+        if (currentPrompt === 'Fixture: inspect the Rust workspace.') {
+          assert.deepEqual(body.tools.map((tool: { function: { name: string } }) => tool.function.name).sort(), ['calculate', 'list_files', 'read_file', 'workspace_info', 'write_file'])
+          const result = body.messages.find((message: { role: string; tool_call_id?: string }) => message.role === 'tool' && message.tool_call_id === 'fixture-workspace')
+          if (result) {
+            const value = JSON.parse(result.content)
+            assert.equal(value.ok, true)
+            assert.equal(value.result.projectId, agentIdentity?.projectId)
+            assert.equal(value.result.inputRevision, agentIdentity?.inputRevision)
+            assert.equal(value.result.capability, 'agent')
+            assert.ok(value.result.tools.includes('workspace_info'))
+            workspaceChecks++
+          }
+          const message = result
+            ? { role: 'assistant', content: 'Fixture verified: Rust returned the current project and input revision.' }
+            : { role: 'assistant', content: null, tool_calls: [{ id: 'fixture-workspace', type: 'function', function: { name: 'workspace_info', arguments: '{}' } }] }
+          data = { choices: [{ finish_reason: result ? 'stop' : 'tool_calls', message }] }
+          res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(data)); return
+        }
         if (currentPrompt.includes('Fixture follow-up')) {
           assert.ok(body.messages.some((message: { role: string; content: string }) => message.role === 'assistant' && message.content === 'Fixture task complete: answer.txt contains 42.'))
           assert.ok(body.messages.some((message: { role: string; content: string }) => message.role === 'user' && message.content.includes('Fixture: write 42')))
@@ -62,7 +86,7 @@ export async function aiRuntimeFixture(page: Page) {
   await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve) })
   const address = server.address() as { port: number }
   const python = resolve('.tools/ai/venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
-  const child = spawn(resolve('src-rust/target/debug', process.platform === 'win32' ? 'ai.exe' : 'ai'), [python, resolve('engine/src'), directory], { stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, LMBOX_COMFYUI_URL: `http://127.0.0.1:${address.port}`, LMBOX_COMFYUI_API_KEY: '', LMBOX_COMFY_NODE_CREDENTIALS: '{}', LMBOX_COMFY_PARTNER_API_KEY: 'fixture-partner-key', LMBOX_AGENT_BASE_URL: `http://127.0.0.1:${address.port}/v1`, LMBOX_AGENT_MODEL: 'fixture-agent-model', LMBOX_AGENT_API_KEY: '', LANGSMITH_TRACING: 'false', LANGCHAIN_TRACING_V2: 'false' } })
+  const child = spawn(resolve('src-rust/target/debug', process.platform === 'win32' ? 'ai.exe' : 'ai'), [python, resolve('engine/src'), directory, process.execPath, resolve('agent/dist/worker.js')], { stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, LMBOX_COMFYUI_URL: `http://127.0.0.1:${address.port}`, LMBOX_COMFYUI_API_KEY: '', LMBOX_COMFY_NODE_CREDENTIALS: '{}', LMBOX_COMFY_PARTNER_API_KEY: 'fixture-partner-key', LMBOX_AGENT_BASE_URL: `http://127.0.0.1:${address.port}/v1`, LMBOX_AGENT_MODEL: 'fixture-agent-model', LMBOX_AGENT_API_KEY: '', LANGSMITH_TRACING: 'false', LANGCHAIN_TRACING_V2: 'false' } })
   let buffer = ''
   const pending = new Map<string, { resolve: (value: unknown) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>()
   child.stdin.on('error', () => {}); child.stderr.resume(); child.stdout.setEncoding('utf8')
@@ -77,6 +101,9 @@ export async function aiRuntimeFixture(page: Page) {
   child.once('close', () => { for (const waiter of pending.values()) { clearTimeout(waiter.timer); waiter.reject(new Error('Fixture AI process exited')) }; pending.clear() })
   await page.route('**/api/ai', async route => {
     const request = route.request().postDataJSON()
+    if (request.capability === 'agent' && request.operation === 'start') {
+      agentIdentity = { projectId: request.projectId, inputRevision: request.inputRevision }
+    }
     const key = `${request.projectId}:${request.requestId}`
     try {
       const result = await new Promise((resolve, reject) => {
@@ -88,8 +115,9 @@ export async function aiRuntimeFixture(page: Page) {
   })
   return {
     videoBytes,
-    counts: () => ({ completions, submissions, cancellations }),
+    counts: () => ({ completions, submissions, cancellations, workspaceChecks, agentAborts }),
     slowVideo: () => { slow = true },
+    slowAgent: () => { slowAgent = true },
     async close() {
       child.stdin.end()
       const timer = setTimeout(() => child.kill('SIGKILL'), 30000)

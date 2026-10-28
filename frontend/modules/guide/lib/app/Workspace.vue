@@ -27,6 +27,7 @@ function open(id: string) {
   <FlowWorkspace>
     <FlowLibrary :tools="tools" @add="add" />
     <FlowCanvas ref="canvas" :nodes="nodes" :edges="flow.edges" @add="add" @move="flow.move"
+      empty-title="拖入左侧模块，搭建工作与仿真流程" empty-description="也可以与 Agent 聊聊，让它帮你规划下一步"
       @connect="connect" @remove-node="flow.removeNode" @remove-edge="flow.removeEdge" @open="open" />
   </FlowWorkspace>
 </template>

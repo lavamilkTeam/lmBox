@@ -44,7 +44,7 @@ function finish(id: string, input: string) { if (source.value) { emit('connect',
 function setZoom(value: number) { zoom.value = Math.min(1.5, Math.max(0.5, Math.round(value * 10) / 10)) }
 </script>
 <template>
-  <section class="video-board" aria-label="视频工作流画布" @keydown.esc="source = null">
+  <section class="video-board" aria-label="ComfyUI画布" @keydown.esc="source = null">
     <div ref="viewport" class="video-viewport" @pointermove="move">
       <div :style="{ width: `${width * zoom}px`, height: `${height * zoom}px` }">
         <div class="video-surface" :style="{ width: `${width}px`, height: `${height}px`, transform: `scale(${zoom})` }" @click.self="source = null">

@@ -1,5 +1,7 @@
 # Python 工作 Agent 模块
 
+此实现保留用于旧 worker 入口及兼容测试。lmBox 开发与桌面宿主的默认 Agent 已接入 [TypeScript ConeCode worker](../../../../../agent/agent-typescript.md)，任务与工具权限由 Rust 管理。
+
 `__init__.py` 仅公开 `execute(request, workspace, cancel, progress, context=None)`；`application.py` 协调模型、工具和文件，`features` 提供有界算术，`runtime` 私有适配 LangGraph、兼容 Chat Completions 的 HTTP 提供方和作业文件。第三方状态图不跨公共边界，模块不导入视频或其他业务实现。
 
 Agent extra 固定 LangGraph 版本并要求 Python 3.10+；几何基础环境继续支持 Python 3.9。缺失依赖、模型或连接返回明确失败。配置来自宿主环境：`LMBOX_AGENT_BASE_URL`、`LMBOX_AGENT_MODEL`、`LMBOX_AGENT_API_KEY`；兼容本地服务可以不设密钥。inspect 通过 models API 验证模型可用性，不产生推理请求。

@@ -8,6 +8,8 @@
 
 只构建、定位工具链与固定资源；WASM 绑定和 Python bundle 为生成产物，不手改。WASM 绑定输出到 `frontend/platform/desktop/lib/generated/`。固定绑定/依赖版本与源码一致；搬移 worker 后检查真实请求、模型和 STL，不创建另一套协议。
 
+主应用 Vite 构建将账户提供方图标的 `LICENSE`、`NOTICE` 输出到 `licenses/account-provider-icons-*.txt`，桌面与云网页复用同一构建规则。
+
 ## 验证
 
-按实际改动运行对应 npm 脚本；发布资源边界运行 `node --test scripts/release-assets.check.mjs`。跨语言/打包同时执行涉及端的模块检查。
+按实际改动运行对应 npm 脚本；发布资源边界运行 `node --test scripts/desktop/release-assets.check.mjs`。跨语言/打包同时执行涉及端的模块检查。

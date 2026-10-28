@@ -1,8 +1,10 @@
-//! The only Python process boundary for AI jobs; all paths originate at the host.
+//! Host-configured Python/Node process boundary and bounded JSONL tool transport.
+use super::tools::Tools;
 use crate::contracts::ai::{AiCapability, AiError, AiOperation, AiRequest};
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::{
+    collections::HashSet,
     io::{BufRead, BufReader, Read, Write},
     path::{Path, PathBuf},
     process::{Command, Stdio},
@@ -35,6 +37,7 @@ pub(super) struct ContextMessage {
 pub(super) enum Worker {
     Source { python: PathBuf, engine: PathBuf },
     Bundled(PathBuf),
+    Node { node: PathBuf, entry: PathBuf },
 }
 
 impl Worker {
@@ -48,6 +51,16 @@ impl Worker {
                 command
             }
             Self::Bundled(worker) => Command::new(worker),
+            Self::Node { node, entry } => {
+                // This is a trusted application worker, not an OS sandbox.
+                // Model actions are limited by the host's tools RPC catalog.
+                let mut command = Command::new(node);
+                command
+                    .arg(entry)
+                    .env_remove("NODE_OPTIONS")
+                    .env_remove("NODE_PATH");
+                command
+            }
         }
     }
 
@@ -62,6 +75,20 @@ impl Worker {
         if cancelled.load(Ordering::Acquire) {
             return Err(AiError::new("cancelled", "任务已取消。"));
         }
+        let is_node = matches!(self, Self::Node { .. });
+        let mut tools = if is_node && request.operation == AiOperation::Start {
+            Some(Tools::new(request)?)
+        } else {
+            None
+        };
+        let mut tool_ids = HashSet::new();
+        let tool_limit = request
+            .payload
+            .get("maxSteps")
+            .and_then(Value::as_u64)
+            .unwrap_or(8)
+            .min(32)
+            * 8;
         let mut child = self
             .command()
             .current_dir(workspace)
@@ -72,7 +99,7 @@ impl Worker {
             .map_err(|_| {
                 AiError::new(
                     "runtime_unavailable",
-                    "AI Python 执行环境不可用，请配置 AI 运行环境。",
+                    "AI 执行环境不可用，请配置对应运行环境。",
                 )
             })?;
         let mut stdin = child.stdin.take().expect("piped stdin");
@@ -83,19 +110,19 @@ impl Worker {
         } else {
             json!({"request":request,"workspace":workspace,"context":context})
         };
-        let (control, controls) = mpsc::sync_channel::<()>(1);
+        let (control, controls) = mpsc::sync_channel::<Value>(16);
         let writer = std::thread::spawn(move || {
             if serde_json::to_writer(&mut stdin, &envelope).is_err()
                 || stdin.write_all(b"\n").and_then(|_| stdin.flush()).is_err()
             {
                 return;
             }
-            if controls.recv().is_ok() {
-                let _ = stdin
-                    .write_all(b"{\"type\":\"cancel\"}\n")
-                    .and_then(|_| stdin.flush());
-                // Keep stdin open until the owner ends the cancellation grace period.
-                let _ = controls.recv();
+            for frame in controls {
+                if serde_json::to_writer(&mut stdin, &frame).is_err()
+                    || stdin.write_all(b"\n").and_then(|_| stdin.flush()).is_err()
+                {
+                    return;
+                }
             }
         });
         let (sender, frames) = mpsc::sync_channel::<Result<Vec<u8>, ()>>(16);
@@ -144,7 +171,7 @@ impl Worker {
         let outcome = loop {
             timed_out |= started.elapsed() >= timeout;
             if (cancelled.load(Ordering::Acquire) || timed_out) && cancel_started.is_none() {
-                let _ = control.try_send(());
+                let _ = control.try_send(json!({"type":"cancel"}));
                 cancel_started = Some(Instant::now());
             }
             if cancel_started.is_some_and(|instant: Instant| instant.elapsed() >= cancel_grace) {
@@ -179,6 +206,38 @@ impl Worker {
                         break Err(protocol_error());
                     };
                     match frame["type"].as_str() {
+                        Some("tool")
+                            if tools.is_some() && request.capability == AiCapability::Agent =>
+                        {
+                            if cancel_started.is_some() {
+                                continue;
+                            }
+                            let (Some(id), Some(name), Some(arguments)) = (
+                                frame["id"]
+                                    .as_str()
+                                    .filter(|id| !id.is_empty() && id.len() <= 128),
+                                frame["name"].as_str().filter(|name| name.len() <= 128),
+                                frame.get("arguments").filter(|args| args.is_object()),
+                            ) else {
+                                break Err(protocol_error());
+                            };
+                            if frame.as_object().is_none_or(|object| object.len() != 4)
+                                || tool_ids.len() as u64 >= tool_limit
+                                || !tool_ids.insert(id.to_owned())
+                            {
+                                break Err(protocol_error());
+                            }
+                            let data = tools
+                                .as_mut()
+                                .expect("guarded tools")
+                                .invoke(name, arguments);
+                            if control
+                                .try_send(json!({"type":"tool_result", "id":id, "data":data}))
+                                .is_err()
+                            {
+                                break Err(protocol_error());
+                            }
+                        }
                         Some("progress") => {
                             let Some(message) =
                                 frame["message"].as_str().filter(|s| s.len() <= 4096)
@@ -233,6 +292,15 @@ impl Worker {
         let _ = writer.join();
         let _ = reader.join();
         let _ = stderr_reader.join();
+        let outcome = outcome.and_then(|data| {
+            if is_node && (cancelled.load(Ordering::Acquire) || timed_out) {
+                return Err(AiError::new("cancelled", "任务已取消。"));
+            }
+            match tools {
+                Some(tools) => tools.finish(workspace, data),
+                None => Ok(data),
+            }
+        });
         outcome.map_err(|error| {
             if timed_out && error.code == "cancellation_unconfirmed" {
                 AiError::new("worker_timeout_unconfirmed", "AI 执行超过两小时等待时限，远端视频任务可能仍在运行，取消状态未确认，请检查 ComfyUI 队列。")

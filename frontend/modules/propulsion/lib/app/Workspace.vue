@@ -49,7 +49,7 @@ async function exportResult() {
 </script>
 <template>
   <div class="propulsion-workspace">
-    <header class="design-header"><div><h1>{{ tool === 'nozzle' ? '喷管初步设计' : '喷注器水力设计' }}</h1><div v-if="tool === 'injector'" class="subtitle">INJECTOR HYDRAULIC DESIGN</div></div>
+    <header class="design-header"><div><h1>{{ tool === 'nozzle' ? '喷管初步设计' : '喷注器设计' }}</h1><div v-if="tool === 'injector'" class="subtitle">INJECTOR HYDRAULIC DESIGN</div></div>
       <div class="design-actions"><Button variant="outline" size="sm" :disabled="!current || saving" @click="exportResult"><Download :size="14" />导出结果</Button>
         <Button v-if="session.pending" variant="outline" size="sm" @click="cancel()"><Square :size="12" />停止等待</Button>
         <Button size="sm" type="submit" :form="`${tool}-form`" :disabled="!!session.pending"><Play :size="13" />{{ session.pending ? '计算中…' : '开始计算' }}</Button>

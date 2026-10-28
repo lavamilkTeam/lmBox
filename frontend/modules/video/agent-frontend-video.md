@@ -1,4 +1,4 @@
-# 前端：AI 视频工作流
+# 前端：ComfyUI
 
 先读 [前端结构](../../agent-frontend.md)。模块入口 `index.ts` 只公开 `VideoWorkspace`；模块不导入其他业务模块。
 

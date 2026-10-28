@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import test from 'node:test'
 
 const script = fileURLToPath(new URL('./release-assets.mjs', import.meta.url))
-const version = JSON.parse(readFileSync(new URL('../package.json', import.meta.url))).version
+const version = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url))).version
 const sourceSha = 'a'.repeat(40)
 const run = (...args) => spawnSync(process.execPath, [script, ...args], {
   encoding: 'utf8', env: { ...process.env, GITHUB_SHA: sourceSha },
@@ -280,7 +280,7 @@ test('archive adapter preserves executable modes and internal links, rejecting e
   chmodSync(join(source, 'worker'), 0o755)
   symlinkSync('worker', join(source, 'worker-link'))
   const python = process.platform === 'win32' ? 'python' : 'python3'
-  const adapter = fileURLToPath(new URL('./module-archive.py', import.meta.url))
+  const adapter = fileURLToPath(new URL('../module-archive.py', import.meta.url))
   const archive = join(path, 'module.zip')
   pass(spawnSync(python, [adapter, source, archive], { encoding: 'utf8' }))
   const checked = spawnSync(python, ['-c', 'import stat,sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); assert z.getinfo("worker").external_attr >> 16 & 0o777 == 0o755; assert stat.S_ISLNK(z.getinfo("worker-link").external_attr >> 16); assert z.read("worker-link") == b"worker"', archive], { encoding: 'utf8' })

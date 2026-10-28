@@ -5,7 +5,7 @@ import { cpSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync }
 import { basename, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const root = fileURLToPath(new URL('../', import.meta.url))
+const root = fileURLToPath(new URL('../../', import.meta.url))
 const version = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version
 const formats = {
   'windows-x64': ['.exe'],

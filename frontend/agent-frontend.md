@@ -26,6 +26,7 @@
 | `frontend/app/features/workspace-tabs` | [工作区页签功能](app/features/workspace-tabs/agent-frontend-workspace-tabs.md) |
 | `frontend/features/help-dialog` | [公共说明弹窗功能](features/help-dialog/agent-frontend-help-dialog.md) |
 | `frontend/ui/help-dialog` | [说明弹窗外观](ui/help-dialog/agent-frontend-help-dialog.md) |
+| `frontend/ui/account-dialog` | [登录与注册弹窗](ui/account-dialog/agent-frontend-account-dialog.md) |
 | `frontend/ui/logic-circuit-tutorial-gifs` | [逻辑门教学动画](ui/logic-circuit-tutorial-gifs/agent-frontend-logic-tutorials.md) |
 | `frontend/ui/installer-welcome` | [安装欢迎页](ui/installer-welcome/agent-frontend-installer-welcome.md) |
 | `frontend/ui/flow-editor` | [共享列表与节点画布](ui/flow-editor/agent-frontend-flow-editor.md) |
@@ -33,8 +34,8 @@
 | `frontend/modules/digital-logic/lib/features/circuit-editing` | [电路编辑功能](modules/digital-logic/lib/features/circuit-editing/agent-frontend-circuit-editing.md) |
 | `frontend/modules/digital-logic/lib/features/circuit-simulation` | [电路仿真协调](modules/digital-logic/lib/features/circuit-simulation/agent-frontend-circuit-simulation.md) |
 | `frontend/modules/guide` | [引导模块](modules/guide/agent-frontend-guide.md) |
-| `frontend/modules/video` | [视频工作流](modules/video/agent-frontend-video.md) |
-| `frontend/modules/agent` | [AI 工作助手](modules/agent/agent-frontend-agent.md) |
+| `frontend/modules/video` | [ComfyUI](modules/video/agent-frontend-video.md) |
+| `frontend/modules/agent` | [Agent](modules/agent/agent-frontend-agent.md) |
 | `frontend/modules/cfd` | [流体分析模块](modules/cfd/agent-frontend-cfd.md) |
 | `frontend/modules/propulsion` | [推进设计模块](modules/propulsion/agent-frontend-propulsion.md) |
 | `frontend/ui/engineering-shell` | [工程工具箱](ui/engineering-shell/agent-frontend-engineering-shell.md) |

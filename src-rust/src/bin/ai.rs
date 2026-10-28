@@ -17,7 +17,7 @@ fn main() {
     const LIMIT: usize = 4 * 1024 * 1024;
     let mut args = std::env::args_os().skip(1);
     let Some(python) = args.next().map(PathBuf::from) else {
-        eprintln!("Usage: ai <python> <engine-source> <task-directory>");
+        eprintln!("Usage: ai <python> <engine-source> <task-directory> [<node> <agent-entry>]");
         return;
     };
     let Some(engine) = args.next().map(PathBuf::from) else {
@@ -28,7 +28,18 @@ fn main() {
         eprintln!("Missing task directory");
         return;
     };
-    let backend = Arc::new(AiBackend::new(python, engine, root));
+    let mut backend = AiBackend::new(python, engine, root);
+    match (args.next(), args.next(), args.next()) {
+        (Some(node), Some(entry), None) => {
+            backend = backend.with_agent_worker(node.into(), entry.into());
+        }
+        (None, None, None) => (),
+        _ => {
+            eprintln!("Agent runtime requires both Node.js and its entry path.");
+            return;
+        }
+    }
+    let backend = Arc::new(backend);
     let queued = Arc::new(AtomicUsize::new(0));
     let (sender, requests) = mpsc::sync_channel::<Vec<u8>>(32);
     let reader_backend = Arc::clone(&backend);

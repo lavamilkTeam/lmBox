@@ -1,6 +1,6 @@
 # CFD 原生运行库构建
 
-先读[构建工具说明](../agent-javascript.md)、[运行时源码](../../runtime/agent-runtime.md)和[模块打包](../agent-javascript-modules.md)。本模块只管理第三方构建、依赖收集、加载路径与产物验证，不实现 CAD、网格或求解算法。组件命令与总包命令是 CLI 公开入口，内部文件不供业务模块导入。
+先读[构建工具说明](../agent-javascript.md)、[运行时源码](../../runtime/agent-runtime.md)和[模块打包](../desktop/agent-javascript-modules.md)。本模块只管理第三方构建、依赖收集、加载路径与产物验证，不实现 CAD、网格或求解算法。组件命令与总包命令是 CLI 公开入口，内部文件不供业务模块导入。
 
 当前构建配置支持 macOS arm64。源码来自 `runtime/` 固定版本；构建、SDK、安装产物分别放 `.tools/cfd/build`、`.tools/cfd/deps`、`.tools/cfd/install`。不修改系统安装或覆盖用户应用。FreeCAD、OpenFOAM、VTK 从源码编译；Python、Qt、OCCT 等依赖的二进制来源必须在组件清单中如实记录，不声称全部依赖都经过本项目源码编译。
 

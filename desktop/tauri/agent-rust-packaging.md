@@ -14,7 +14,7 @@
 
 - 打包引擎只从应用资源目录或可执行程序相邻的固定 `geometry/` 目录定位，复用 `app::build_bundled_preview` 的参数校验、JSONL、60 秒超时及产物限制。PyInstaller 使用目录模式。
 
-所有 npm 命令在仓库根目录运行。`scripts/desktop.mjs` 使用 Tauri CLI 的 `TAURI_APP_PATH` 与 `TAURI_FRONTEND_PATH` 显式定位宿主和前端；转发 CLI 参数，不依赖默认的目录发现规则。
+所有 npm 命令在仓库根目录运行。`scripts/desktop/build.mjs` 使用 Tauri CLI 的 `TAURI_APP_PATH` 与 `TAURI_FRONTEND_PATH` 显式定位宿主和前端；转发 CLI 参数，不依赖默认的目录发现规则。构建和归档入口见[桌面构建适配](../../scripts/desktop/agent-javascript-desktop.md)。
 
 1. 首次运行 `npm run setup:wasm` 与 `npm run setup:geometry`。
 2. 运行 `npm run build:wasm`、`npm run build:worker`、`npm run check:worker`。
@@ -24,7 +24,7 @@
 `tests/packaged_worker.rs` 使用本目录的打包资源验证真实协议与取消；核心的任务生命周期和源码 Python 集成测试保留在 `src-rust/tests/`。`npm run check:worker` 把引擎移出源码目录验证模型与 STL。CI 的 Linux、Windows、macOS 矩阵必须全部成功，编译不代表三平台 GUI 操作已验证。
 
 - 三平台 CI 生成 Windows x64 NSIS、macOS arm64 DMG、Linux x64 deb/AppImage，资源按既有映射打包，不新增计算协议。
-- 版本标签发布复用完整 CI，打包上传由 `.github/workflows/` 与 `scripts/release-assets.mjs` 负责。前端、核心、宿主和 Tauri 配置的版本必须一致；来源提交、SHA-256 与质量门禁通过后才发布 Release。
+- 版本标签发布复用完整 CI，打包上传由 `.github/workflows/` 与 `scripts/desktop/release-assets.mjs` 负责。前端、核心、宿主和 Tauri 配置的版本必须一致；来源提交、SHA-256 与质量门禁通过后才发布 Release。
 - macOS 仅使用 ad-hoc 签名，不等同 Apple 开发者签名或公证；Windows 发布者签名、Intel macOS 和软件内自动更新不在当前范围。
 - 发布方式及限制见 [质量规范](../../.github/QUALITY.md#versioned-releases)。推送仍须当次明确授权。
 
@@ -32,6 +32,6 @@
 
 全部矩阵与质量门禁须成功；本地检查不代表实际发布完成。
 
-AI 使用独立 `resources/lmbox-ai → ai` 目录。先运行 `npm run setup:ai`、`npm run build:ai-worker`、`npm run check:ai-worker`；资源搬移后以明确的本地模型夹具验证 LangGraph、工具和文本产物。AI 凭据从宿主环境读取，不打入安装器。视频预览只允许应用自身与 Blob 媒体来源。
+AI 使用独立 `resources/lmbox-ai → ai` 目录。先运行 `npm run setup:ai`、`npm run build:ai-worker`、`npm run check:ai-worker`；目录同时包含 Python worker 与 `agent/` Node runtime；资源搬移后以明确的本地模型夹具分别验证旧 LangGraph 兼容链路和 ConeCode → Rust 工具 → 文本产物链路。AI 凭据从宿主环境读取，不打入安装器。视频预览只允许应用自身与 Blob 媒体来源。
 
-模块 ZIP 分发使用独立 `modular` 构建和 `tauri.modules.conf.json`，基础包只包含宿主与基础 UI，资源从安装快照读取；原有整包配置保持独立。构建、发布配置及平台运行库约束见[模块构建](../../scripts/agent-javascript-modules.md)，加载边界见[模块适配](src/agent-rust-modules.md)。
+模块 ZIP 分发使用独立 `modular` 构建和 `tauri.modules.conf.json`，基础包只包含宿主与基础 UI，资源从安装快照读取；原有整包配置保持独立。构建、发布配置及平台运行库约束见[模块构建](../../scripts/desktop/agent-javascript-modules.md)，加载边界见[模块适配](src/agent-rust-modules.md)。

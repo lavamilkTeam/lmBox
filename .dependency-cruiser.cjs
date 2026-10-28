@@ -10,6 +10,13 @@ const publicEntries = (root, label) => [
 ];
 module.exports = {
   forbidden: [
+    rule('web-agent-private-transport', { pathNot: '^scripts/web-agent/' }, { path: '^scripts/web-agent/lib/' }),
+    rule('web-agent-tests-public-api', { path: '^scripts/web-agent/tests/' }, { path: '^scripts/web-agent/lib/' }),
+    rule('agent-no-frontend-or-build-dependencies', { path: '^agent/' }, { path: '^frontend/|^scripts/' }),
+    rule('agent-private-implementation', { pathNot: '^agent/' }, { path: '^agent/(lib|tests)/' }),
+    rule('agent-tests-public-api', { path: '^agent/tests/' }, { path: '^agent/lib/' }),
+    rule('agent-not-in-browser', { path: '^frontend/' }, { path: '^agent/' }),
+    rule('agent-no-electron-or-ui', { path: '^agent/' }, { path: '(^|/)(electron|react|react-dom|zustand)(/|$)' }),
     rule('tauri-only-in-desktop-platform', { pathNot: '^frontend/platform/desktop/' }, { path: '(^|/)@tauri-apps/' }),
     rule('contracts-independent', { path: '^frontend/contracts/' }, { path: '^frontend/(app|modules|platform|ui|features)/' }),
     rule('contracts-public-entrypoint', { pathNot: '^frontend/contracts/' }, { path: '^frontend/contracts/', pathNot: '^frontend/contracts/index\\.ts$' }),

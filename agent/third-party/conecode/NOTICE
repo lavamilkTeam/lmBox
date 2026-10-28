@@ -1,0 +1,36 @@
+ConeCode 2.4.8 — MIT License
+
+Source: the supplied conecode.zip archive, package.json version 2.4.8.
+The original copyright and permission notice are preserved verbatim in LICENSE.
+
+Adapted code:
+- lib/conecode/wire.ts cleanMessages: src/core/providers/openai.adapter.ts,
+  OpenAIAdapter.cleanMessages (lines 21–48).
+- lib/conecode/wire.ts CompletionAccumulator: the SSE accumulation and
+  finalization in src/core/providers/openai.adapter.ts (lines 136–243).
+- lib/conecode/wire.ts extractToolCalls: OpenAI branch and identifier handling
+  in src/stores/chat.store.ts (lines 1017–1078).
+- lib/conecode/wire.ts toOpenAITools: src/core/tools/definitions.ts (714–719).
+- lib/application.ts executeAgent: bounded model/tool/model iteration and
+  one-result-per-call history from runHeadlessAgent in src/stores/chat.store.ts
+  (1915–2015), with the main loop's per-task history isolation.
+
+Adaptations: Electron IPC, React/Zustand state, UI, default external services,
+filesystem access and desktop tool catalog are removed. The host injects tool
+execution; Rust enforces capability and workspace boundaries. Strict payload
+validation, explicit size/step limits, sanitized errors, cancellation and JSONL
+transport are maintained by lmBox. The initial adapter supports only compatible
+OpenAI Chat Completions. It does not implement the full ConeCode application,
+RSI, MCP, sub-agents, desktop automation or vendor-specific providers.
+
+Upstream SHA-256:
+src/core/providers/openai.adapter.ts
+e6d2dde69d0b674e85f0a6553987018cb6a827dcec2e330f4c8e70d2f63491e6
+src/core/providers/base.adapter.ts
+33af228274f2ff0c19adcd90449b9cc3ba98772649e8e217ac9ff3b47a3c21ff
+src/core/tools/definitions.ts
+c6057504447863047514af6ecbf0f8faca1331c7b0b71ec1c658a7eb17b9542c
+src/stores/chat.store.ts
+e24d7968b0e29b21f2494b65a78b48ca9a3f5e03ce5e4f0247bfd14d6b225219
+LICENSE
+1e68367026a372c74b95617de00ac63b298e5d642420298a96740904ce38ef9e

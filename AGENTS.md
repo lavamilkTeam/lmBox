@@ -159,6 +159,11 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── platform/
 │   ├── contracts/
 │   └── ui/
+│       ├── account-dialog/
+│       │   ├── index.ts
+│       │   ├── agent-frontend-account-dialog.md
+│       │   └── lib/
+│       │       └── assets/
 │       ├── logic-circuit-tutorial-gifs/
 │       │   ├── index.ts
 │       │   └── agent-frontend-logic-tutorials.md
@@ -176,6 +181,13 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │       │   └── lib/
 │       ├── engineering-shell/
 │       └── installer-welcome/
+├── agent/
+│   ├── index.ts
+│   ├── worker.ts
+│   ├── agent-typescript.md
+│   ├── lib/
+│   ├── tests/
+│   └── third-party/
 ├── runtime/
 │   ├── agent-runtime.md
 │   ├── freecad/
@@ -238,6 +250,28 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   └── fixtures/
 ├── scripts/
 │   ├── AGENTS.md
+│   ├── desktop/
+│   │   ├── build.mjs
+│   │   ├── archive.mjs
+│   │   ├── installer.mjs
+│   │   ├── module-package.mjs
+│   │   ├── module-pe-imports.mjs
+│   │   ├── release-assets.mjs
+│   │   ├── release-assets.check.mjs
+│   │   ├── agent-javascript-desktop.md
+│   │   ├── agent-javascript-installer.md
+│   │   ├── agent-javascript-modules.md
+│   │   └── agent-javascript-release-assets.md
+│   ├── web-agent/
+│   │   ├── build.mjs
+│   │   ├── server.mjs
+│   │   ├── package.check.mjs
+│   │   ├── lib/
+│   │   ├── tests/
+│   │   └── agent-javascript-web-agent.md
+│   ├── cloud/
+│   │   ├── build.mjs
+│   │   └── agent-javascript-cloud.md
 │   ├── cfd-runtime/
 │   │   └── agent-python-cfd-runtime.md
 │   └── agent-javascript.md

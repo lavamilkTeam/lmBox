@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
 import { existsSync } from 'node:fs'
 
-const root = fileURLToPath(new URL('../', import.meta.url))
+const root = fileURLToPath(new URL('../../', import.meta.url))
 const source = join(root, 'desktop', 'installer')
 const build = join(root, '.tools', 'installer-qt')
 const output = join(root, 'dist-installer-qt')
@@ -17,7 +17,7 @@ function run(command, args, capture = false) {
   return result.stdout?.trim()
 }
 
-run(process.execPath, ['scripts/module-package.mjs', 'prepare'])
+run(process.execPath, ['scripts/desktop/module-package.mjs', 'prepare'])
 const moduleManager = join(root, 'desktop', 'modules', 'target', 'release', process.platform === 'win32' ? 'lmbox-module-manager.exe' : 'lmbox-module-manager')
 const qtPrefix = process.env.QTDIR || run(process.env.QMAKE || 'qmake', ['-query', 'QT_INSTALL_PREFIX'], true)
 const cmake = process.env.CMAKE || 'cmake'

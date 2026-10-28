@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-cloud/
 dist-installer/
 dist-installer-qt/
 test-results/
@@ -37,3 +38,6 @@ desktop/tauri/resources/
 dist-modules/
 dist-cfd-runtime/
 desktop/modules/target/
+
+# Agent web deployment output
+dist-web-agent/

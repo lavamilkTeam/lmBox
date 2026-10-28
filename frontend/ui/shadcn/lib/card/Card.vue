@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from "vue"
 import { cn } from "../utils"
+import { cardVariants } from "./variants"
+import type { CardVariants } from "./variants"
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   class?: HTMLAttributes["class"]
-}>()
+  variant?: CardVariants["variant"]
+}>(), { variant: 'default' })
 </script>
 
 <template>
   <div
     data-slot="card"
+    :data-variant="variant"
     :class="
       cn(
-        'bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm',
+        cardVariants({ variant }),
         props.class,
       )
     "

@@ -6,7 +6,7 @@ defineProps<{ disabled: boolean; running: boolean; pending: boolean }>()
 const emit = defineEmits<{ stop: [] }>()
 </script>
 <template>
-  <Button :type="running ? 'button' : 'submit'" :disabled="disabled" size="icon" :aria-label="running ? '取消任务' : '发送消息'" @click="running && emit('stop')">
+  <Button :type="running ? 'button' : 'submit'" :disabled="disabled" size="icon" class="rounded-full" :aria-label="running ? '取消任务' : '发送消息'" @click="running && emit('stop')">
     <Loader2Icon v-if="pending" :size="16" class="animate-spin" /><SquareIcon v-else-if="running" :size="15" /><ArrowUpIcon v-else :size="18" />
   </Button>
 </template>

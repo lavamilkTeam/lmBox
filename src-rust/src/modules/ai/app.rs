@@ -46,6 +46,7 @@ struct Shared {
 /// Hosts supply trusted runtime paths. Each accepted job owns an isolated workspace.
 pub struct AiBackend {
     worker: Worker,
+    agent_worker: Option<Worker>,
     root: PathBuf,
     shared: Arc<Shared>,
 }
@@ -57,6 +58,7 @@ impl AiBackend {
                 python,
                 engine: absolute(engine),
             },
+            agent_worker: None,
             root: absolute(root),
             shared: Arc::default(),
         }
@@ -65,8 +67,25 @@ impl AiBackend {
     pub fn bundled(worker: PathBuf, root: PathBuf) -> Self {
         Self {
             worker: Worker::Bundled(absolute(worker)),
+            agent_worker: None,
             root: absolute(root),
             shared: Arc::default(),
+        }
+    }
+
+    /// Select a host-configured Node.js worker for Agent tasks only.
+    pub fn with_agent_worker(mut self, node: PathBuf, entry: PathBuf) -> Self {
+        self.agent_worker = Some(Worker::Node {
+            node,
+            entry: absolute(entry),
+        });
+        self
+    }
+
+    fn worker(&self, capability: AiCapability) -> &Worker {
+        match (capability, &self.agent_worker) {
+            (AiCapability::Agent, Some(worker)) => worker,
+            _ => &self.worker,
         }
     }
 
@@ -180,7 +199,7 @@ impl AiBackend {
             cancelled: Arc::clone(&cancelled),
         });
         let shared = Arc::clone(&self.shared);
-        let worker = self.worker.clone();
+        let worker = self.worker(request.capability).clone();
         let request = request.clone();
         let task_id = job_id.clone();
         let spawn = std::thread::Builder::new()
@@ -261,7 +280,7 @@ impl AiBackend {
             state.active.insert(token.clone(), Arc::clone(&cancelled));
         }
         let outcome = self
-            .worker
+            .worker(request.capability)
             .run(request, workspace.path(), &[], &cancelled, |_| {})
             .and_then(|value| {
                 let valid = value["configured"].is_boolean()

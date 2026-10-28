@@ -1,16 +1,18 @@
 # 模块 ZIP 发布构建
 
-先读[构建工具说明](agent-javascript.md)、[安装管理边界](../desktop/modules/agent-rust.md)与[桌面打包](../desktop/tauri/agent-rust-packaging.md)。`module-package.mjs` 只组装构建产物、划分资源归属并签名；`module-archive.py` 是保留权限和符号链接的 ZIP 文件适配，不包含安装业务或计算算法。
+先读[构建工具说明](../agent-javascript.md)、[安装管理边界](../../desktop/modules/agent-rust.md)与[桌面打包](../../desktop/tauri/agent-rust-packaging.md)。`module-package.mjs` 只组装构建产物、划分资源归属并签名；`module-archive.py` 是保留权限和符号链接的 ZIP 文件适配，不包含安装业务或计算算法。
 
 ## 入口与产物
 
 - `npm run modules:prepare`：准备签名配置并编译原生安装管理程序；Qt 构建自动调用。
 - `npm run modules:package`：构建前端 manifest、启用桌面 `modular` 特性构建基础程序，再创建模块 ZIP 和签名目录。
 - `npm run modules:archive`：对已经构建的模块版主程序与运行库创建 ZIP。
-- `node scripts/module-package.mjs installer-archive`：将已部署的 Qt 下载安装器单独归档，并记录其校验值。
-- `node scripts/module-package.mjs plan-ui MANIFEST DIST`：输出 Vite 资源归属及依赖规划，不构建或生成密钥。
+- `node scripts/desktop/module-package.mjs installer-archive`：将已部署的 Qt 下载安装器单独归档，并记录其校验值。
+- `node scripts/desktop/module-package.mjs plan-ui MANIFEST DIST`：输出 Vite 资源归属及依赖规划，不构建或生成密钥。
 
-输入须先准备真实运行库：`build:worker`、`build:ai-worker`、`build:backend` 和 `setup:cfd`。CI 通过 `setup-cfd.mjs --source-only` 只获取固定源版本。缺少产物明确失败，不生成占位包或读取本机 CFD runtime.json 进入发布包。CFD ZIP 包含原版 CfdOF、许可证和本项目适配器；存在 `.tools/cfd/bundle/bundle.json` 时，默认验证并复制该平台的裁剪运行库到 `cfd/native`，`LMBOX_CFD_BUNDLE` 可覆盖输入位置，验证失败不回退宿主。构建与验证见[原生运行库](cfd-runtime/agent-python-cfd-runtime.md)。没有该输入时仍生成依赖宿主环境的适配器包，不能宣称含原生求解环境。
+`ai-runtime/ai/agent` 随共用 AI 包包含 ConeCode worker、当前目标的 Node 运行时及原许可证；不包含上游 Electron、依赖目录或凭据。
+
+输入须先准备真实运行库：`build:worker`、`build:ai-worker`、`build:backend` 和 `setup:cfd`。CI 通过 `setup-cfd.mjs --source-only` 只获取固定源版本。缺少产物明确失败，不生成占位包或读取本机 CFD runtime.json 进入发布包。CFD ZIP 包含原版 CfdOF、许可证和本项目适配器；存在 `.tools/cfd/bundle/bundle.json` 时，默认验证并复制该平台的裁剪运行库到 `cfd/native`，`LMBOX_CFD_BUNDLE` 可覆盖输入位置，验证失败不回退宿主。构建与验证见[原生运行库](../cfd-runtime/agent-python-cfd-runtime.md)。没有该输入时仍生成依赖宿主环境的适配器包，不能宣称含原生求解环境。
 
 每个平台输出到 `dist-modules/<系统>-<架构>/`，包括基础包、stencil/cfd/nozzle/video/agent 五个功能包、ui-runtime/propulsion-runtime/ai-runtime 三个共用包，共九个模块 ZIP。injector 暂不发布。原生下载安装器另为一个 ZIP，包含 Qt 与安装管理程序，不包含可选功能资源。发布时上传三平台完整 ZIP 集和对应签名 catalog，安装器仅下载所选功能的依赖闭包。
 
@@ -37,4 +39,4 @@ Windows PE 探测由同模块进程适配 `module-pe-imports.mjs` 逐行读取 `
 
 ## 验证
 
-执行 `npm run check`、安装管理 crate 的 fmt/Clippy/tests、Qt 打包与 QML 检查，以及 `node --test scripts/release-assets.check.mjs`。CI 桌面矩阵构建并解压真实模块 ZIP，将 geometry/AI worker 和 Fortran 测试指向搬移后的资源，并运行归档安装器的 `--smoke-test`；Windows 求解测试清除编译器 PATH。发布流程同时保留整包安装器和模块下载安装器，三平台完整发布集通过门禁后才上传；本地通过不代表远端构建或发布完成。
+执行 `npm run check`、安装管理 crate 的 fmt/Clippy/tests、Qt 打包与 QML 检查，以及 `node --test scripts/desktop/release-assets.check.mjs`。CI 桌面矩阵构建并解压真实模块 ZIP，将 geometry/AI worker 和 Fortran 测试指向搬移后的资源，并运行归档安装器的 `--smoke-test`；Windows 求解测试清除编译器 PATH。发布流程同时保留整包安装器和模块下载安装器，三平台完整发布集通过门禁后才上传；本地通过不代表远端构建或发布完成。

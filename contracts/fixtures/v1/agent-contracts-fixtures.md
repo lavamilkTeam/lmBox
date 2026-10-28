@@ -31,3 +31,5 @@ CEA 的 `cea-rocket-request.json` / `cea-hp-request.json` 供原生后端与 CLI
 `cfd-request.json` 是 CFD 会话初始化请求；`cfd-initialized-response.json` 来自真实空文档初始化快照，身份已换成中性示例，不包含伪造几何或仿真结果。
 
 `ai-request.json` 与 `ai-continuation-request.json` 分别验证独立 Agent 任务及可选父任务标识。后者只展示请求格式，父任务的归属、成功状态和历史上限另由 Rust 公共入口测试验证。
+
+`digital-logic-request.json` 是可辨识的协议示例，包含高阻态输入和未连线字符显示；Rust 协议测试用其初始化真实逻辑会话，并对实际响应执行 schema 校验，不代表外部硬件测量。

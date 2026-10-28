@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { guideTools, useGuideFlow } from '../domain/flow'
-import { GuideLibrary, FlowCanvas } from '../ui'
+import { FlowLibrary, FlowCanvas, FlowWorkspace } from '../../../../ui/flow-editor'
 import { useNotification } from '../../../../ui/theme'
-import '../ui/workspace.css'
 const props = defineProps<{ installedIds?: string[] | null }>()
 const tools = computed(() => guideTools.map(tool => ({ ...tool, available: tool.available && (!props.installedIds || props.installedIds.includes(tool.id)) })))
 const emit = defineEmits<{ open: [id: string] }>()
@@ -25,9 +24,10 @@ function open(id: string) {
 }
 </script>
 <template>
-  <main class="guide-workspace">
-    <GuideLibrary :tools="tools" @add="add" />
+  <FlowWorkspace>
+    <FlowLibrary :tools="tools" @add="add" />
     <FlowCanvas ref="canvas" :nodes="nodes" :edges="flow.edges" @add="add" @move="flow.move"
+      empty-title="拖入左侧模块，搭建工作与仿真流程" empty-description="也可以与 Agent 聊聊，让它帮你规划下一步"
       @connect="connect" @remove-node="flow.removeNode" @remove-edge="flow.removeEdge" @open="open" />
-  </main>
+  </FlowWorkspace>
 </template>

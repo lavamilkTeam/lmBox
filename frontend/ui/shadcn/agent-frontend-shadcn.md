@@ -6,9 +6,13 @@
 
 卡片按实际使用公开 `Card`、`CardHeader`、`CardTitle` 和 `CardFooter`；沿用官方实现，类名通过 `cn` 合并。业务节点的定位、尺寸和拖动行为由所属模块 UI 负责，不进入共享卡片。
 
+`Card` 的 `variant` 默认保持描边外观；`floating` 提供无描边、柔和悬浮阴影，并在内部控件聚焦时加深阴影。变体定义留在私有 `lib/card/variants.ts`，调用方通过现有公开 `Card` 入口复用，尺寸、定位和业务交互由调用方负责。
+
 应用与安装器的 Vite 构建均复制本目录 `LICENSE`、`NOTICE` 到发布资源中；修改来源声明时保持两种产物一致。
 
 表单使用 `modelValue`，展开类控件使用 `open`；`Slider` 值为数组。保留原语的键盘、焦点管理和禁用行为。`Input` 额外公开 `input` 元素与 `focus()`；文件选择仍可使用原生隐藏 input。业务确认通过 `AlertDialog` 的受控状态和事件组合，不在共享 UI 执行业务动作。
+
+`DialogContent` 内置关闭按钮复用 Reka `DialogClose` 和 Lucide `X`，焦点标识使用 `focus-visible`；鼠标打开后的自动聚焦不显示焦点圈，键盘操作保留可见焦点。
 
 `Tooltip` 的 `role="tooltip"` 与描述 ID 放在可见浮层，触发器引用该 ID；隐藏 Reka 的重复文本节点。定位、悬停容错区域、开关时机与 Escape 仍由原语维护。
 

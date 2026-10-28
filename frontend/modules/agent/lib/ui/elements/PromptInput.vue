@@ -3,4 +3,4 @@
 import { Card } from '../../../../../ui/shadcn'
 const emit = defineEmits<{ submit: [] }>()
 </script>
-<template><form class="agent-composer" @submit.prevent="emit('submit')"><Card class="agent-composer-card"><slot /></Card></form></template>
+<template><form class="agent-composer" @submit.prevent="emit('submit')"><Card variant="floating" class="agent-composer-card"><slot /></Card></form></template>

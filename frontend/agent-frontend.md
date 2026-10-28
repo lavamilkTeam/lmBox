@@ -10,6 +10,7 @@
 
 - 平台 `app → modules/<name>/index.ts、ui`；当前钢网模块通过动态 import 加载。
 - 平台页签功能位于 `app/features/workspace-tabs`，通过公开入口供 App 组装；跨模块关闭操作由 App 注入，feature 不导入领域模块、平台适配或 UI。
+- 公共交互功能位于 `features/<name>`，由 app 通过公开入口组装，独立于领域模块、UI、平台和应用层；各公共 feature 互不依赖。UI、domain、platform 和 contracts 不反向依赖公共 feature。
 - 领域模块互不导入，也不反向依赖平台 app；模块外禁止访问 `lib/` 和测试目录。
 - 模块内部 `app → features/domain/ui`，也可使用共享 platform/ui/contracts；feature 之间不直接依赖。
 - 模块 `domain → contracts` 及必要状态库，不依赖外部适配、UI、feature 或 app。Pinia store 使用领域前缀；钢网使用 `stencil-project`。
@@ -23,10 +24,18 @@
 | --- | --- |
 | `frontend/app` | [平台组装](app/agent-frontend-app.md) |
 | `frontend/app/features/workspace-tabs` | [工作区页签功能](app/features/workspace-tabs/agent-frontend-workspace-tabs.md) |
+| `frontend/features/help-dialog` | [公共说明弹窗功能](features/help-dialog/agent-frontend-help-dialog.md) |
+| `frontend/ui/help-dialog` | [说明弹窗外观](ui/help-dialog/agent-frontend-help-dialog.md) |
+| `frontend/ui/account-dialog` | [登录与注册弹窗](ui/account-dialog/agent-frontend-account-dialog.md) |
+| `frontend/ui/logic-circuit-tutorial-gifs` | [逻辑门教学动画](ui/logic-circuit-tutorial-gifs/agent-frontend-logic-tutorials.md) |
 | `frontend/ui/installer-welcome` | [安装欢迎页](ui/installer-welcome/agent-frontend-installer-welcome.md) |
+| `frontend/ui/flow-editor` | [共享列表与节点画布](ui/flow-editor/agent-frontend-flow-editor.md) |
+| `frontend/modules/digital-logic` | [数字逻辑编辑模块](modules/digital-logic/agent-frontend-digital-logic.md) |
+| `frontend/modules/digital-logic/lib/features/circuit-editing` | [电路编辑功能](modules/digital-logic/lib/features/circuit-editing/agent-frontend-circuit-editing.md) |
+| `frontend/modules/digital-logic/lib/features/circuit-simulation` | [电路仿真协调](modules/digital-logic/lib/features/circuit-simulation/agent-frontend-circuit-simulation.md) |
 | `frontend/modules/guide` | [引导模块](modules/guide/agent-frontend-guide.md) |
-| `frontend/modules/video` | [视频工作流](modules/video/agent-frontend-video.md) |
-| `frontend/modules/agent` | [AI 工作助手](modules/agent/agent-frontend-agent.md) |
+| `frontend/modules/video` | [ComfyUI](modules/video/agent-frontend-video.md) |
+| `frontend/modules/agent` | [Agent](modules/agent/agent-frontend-agent.md) |
 | `frontend/modules/cfd` | [流体分析模块](modules/cfd/agent-frontend-cfd.md) |
 | `frontend/modules/propulsion` | [推进设计模块](modules/propulsion/agent-frontend-propulsion.md) |
 | `frontend/ui/engineering-shell` | [工程工具箱](ui/engineering-shell/agent-frontend-engineering-shell.md) |

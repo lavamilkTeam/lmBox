@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "digital-logic-request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "projectId", "requestId", "inputRevision", "command"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "projectId": { "$ref": "#/$defs/id" },
+    "requestId": { "$ref": "#/$defs/id" },
+    "inputRevision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "command": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["type", "nodes", "edges", "values"],
+          "properties": {
+            "type": { "const": "load" },
+            "nodes": { "type": "array", "maxItems": 512, "items": { "$ref": "#/$defs/node" } },
+            "edges": { "type": "array", "maxItems": 4096, "items": { "$ref": "#/$defs/edge" } },
+            "values": { "type": "object", "maxProperties": 512, "propertyNames": { "$ref": "#/$defs/id" }, "additionalProperties": { "$ref": "#/$defs/signal" } }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["type", "nodeId", "value"],
+          "properties": { "type": { "const": "set_input" }, "nodeId": { "$ref": "#/$defs/id" }, "value": { "enum": ["0", "1"] } }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["type", "ticks"],
+          "properties": { "type": { "const": "step" }, "ticks": { "type": "integer", "minimum": 1, "maximum": 1000 } }
+        },
+        { "type": "object", "additionalProperties": false, "required": ["type"], "properties": { "type": { "const": "reset" } } }
+      ]
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" },
+    "signal": { "enum": ["0", "1", "X", "Z"] },
+    "node": {
+      "type": "object", "additionalProperties": false, "required": ["id", "kind"],
+      "properties": { "id": { "$ref": "#/$defs/id" }, "kind": { "enum": ["and", "or", "not", "nand", "nor", "xor", "xnor", "buf", "input", "clock", "dff", "probe", "hd44780"] } }
+    },
+    "edge": {
+      "type": "object", "additionalProperties": false, "required": ["id", "source", "target", "targetPort"],
+      "properties": { "id": { "$ref": "#/$defs/id" }, "source": { "$ref": "#/$defs/id" }, "target": { "$ref": "#/$defs/id" }, "targetPort": { "type": "string", "pattern": "^[A-Za-z0-9_/-]{1,128}$" } }
+    }
+  }
+}

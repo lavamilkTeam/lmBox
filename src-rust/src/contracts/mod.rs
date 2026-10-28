@@ -18,3 +18,9 @@ pub mod ai;
 pub mod cfd;
 pub mod propulsion;
 pub mod thermochemistry;
+
+mod digital_logic;
+pub use digital_logic::{
+    LogicCommand, LogicDiagnostic, LogicDisplay, LogicEdge, LogicNode, LogicNodeKind, LogicRequest,
+    LogicResponse, LogicSignal,
+};

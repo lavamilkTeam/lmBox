@@ -37,7 +37,7 @@ function attach(event: Event) {
 function submit() { if (canSubmit.value) emit('run') }
 </script>
 <template>
-  <main class="agent-workspace" aria-label="AI 工作助手">
+  <main class="agent-workspace" aria-label="Agent">
     <div class="agent-content">
       <section class="agent-chat" :class="{ 'agent-chat-empty': !turns.length }" aria-label="Agent 执行结果">
         <Conversation v-if="turns.length" :follow-key="followKey">

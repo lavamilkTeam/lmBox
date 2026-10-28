@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "projectId": "logic-example",
+  "requestId": "load-example",
+  "inputRevision": 1,
+  "command": {
+    "type": "load",
+    "nodes": [
+      { "id": "input-a", "kind": "input" },
+      { "id": "display-a", "kind": "hd44780" }
+    ],
+    "edges": [],
+    "values": { "input-a": "Z" }
+  }
+}

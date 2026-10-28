@@ -15,6 +15,7 @@ export function aiApi(): Plugin {
   if (existsSync(config)) loadEnvFile(config)
   const binary = join(root, `src-rust/target/debug/ai${process.platform === 'win32' ? '.exe' : ''}`)
   const python = process.env.LMBOX_AI_PYTHON || join(root, '.tools/ai/venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
+  const agent = join(root, 'agent/dist/worker.js')
   let child: ReturnType<typeof spawn> | undefined
   let buffer = ''
   const pending = new Map<string, { resolve: (value: unknown) => void; reject: () => void; timer: ReturnType<typeof setTimeout> }>()
@@ -32,8 +33,8 @@ export function aiApi(): Plugin {
   function start() {
     if (child) return child
     if (!existsSync(binary)) throw new Error('AI 服务尚未构建，请运行 npm run build:ai。')
-    if (!existsSync(python)) throw new Error('AI 运行环境尚未配置，请运行 npm run setup:ai。')
-    const running = spawn(binary, [python, join(root, 'engine/src'), join(root, '.tools/ai/jobs')], { cwd: root, stdio: ['pipe', 'pipe', 'pipe'] })
+    if (!existsSync(agent)) throw new Error('Agent 尚未构建，请运行 npm run build:agent。')
+    const running = spawn(binary, [python, join(root, 'engine/src'), join(root, '.tools/ai/jobs'), process.execPath, agent], { cwd: root, stdio: ['pipe', 'pipe', 'pipe'] })
     child = running
     running.stdin!.on('error', () => {})
     running.stderr!.resume()

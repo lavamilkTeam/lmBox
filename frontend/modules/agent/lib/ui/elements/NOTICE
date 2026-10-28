@@ -16,7 +16,7 @@ lmBox modifications:
 - Existing shadcn-vue public imports, controlled props/slots/events and local styles.
 - Removed AI SDK types and transport assumptions, Markdown providers, external
   scroll runtime, automatic input clearing and browser/file I/O from components.
-- Added native Vue follow-scroll behavior, real task status and plain-text output.
+- Added native Vue follow-scroll behavior real task status and plain-text output.
 - Execution.vue displays actual task progress; it does not infer tool results.
 
 UPSTREAM-LICENSE retains the original upstream copyright/license notice.

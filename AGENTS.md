@@ -79,6 +79,11 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── agent-frontend.md
 │   ├── main.ts
 │   ├── installer.ts
+│   ├── features/
+│   │   └── help-dialog/
+│   │       ├── index.ts
+│   │       ├── agent-frontend-help-dialog.md
+│   │       └── lib/
 │   ├── app/
 │   │   ├── module-entries/
 │   │   └── features/
@@ -101,8 +106,32 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   │   │   ├── agent-frontend-guide.md
 │   │   │   └── lib/
 │   │   │       ├── app/
+│   │   │       └── domain/
+│   │   ├── digital-logic/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-digital-logic.md
+│   │   │   └── lib/
+│   │   │       ├── app/
 │   │   │       ├── domain/
+│   │   │       ├── features/
+│   │   │       │   ├── circuit-simulation/
+│   │   │       │   │   ├── index.ts
+│   │   │       │   │   ├── agent-frontend-circuit-simulation.md
+│   │   │       │   │   ├── lib/
+│   │   │       │   │   └── tests/
+│   │   │       │   └── circuit-editing/
+│   │   │       │       ├── index.ts
+│   │   │       │       ├── agent-frontend-circuit-editing.md
+│   │   │       │       ├── lib/
+│   │   │       │       └── tests/
 │   │   │       └── ui/
+│   │   │           ├── CircuitSymbol.vue
+│   │   │           ├── symbols.ts
+│   │   │           └── assets/
+│   │   │               ├── ansi/
+│   │   │               ├── hd44780.svg
+│   │   │               ├── sources.json
+│   │   │               └── NOTICE.txt
 │   │   ├── cfd/
 │   │   │   ├── index.ts
 │   │   │   ├── agent-frontend-cfd.md
@@ -130,12 +159,35 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── platform/
 │   ├── contracts/
 │   └── ui/
+│       ├── account-dialog/
+│       │   ├── index.ts
+│       │   ├── agent-frontend-account-dialog.md
+│       │   └── lib/
+│       │       └── assets/
+│       ├── logic-circuit-tutorial-gifs/
+│       │   ├── index.ts
+│       │   └── agent-frontend-logic-tutorials.md
+│       ├── help-dialog/
+│       │   ├── index.ts
+│       │   ├── agent-frontend-help-dialog.md
+│       │   └── lib/
+│       ├── flow-editor/
+│       │   ├── index.ts
+│       │   ├── agent-frontend-flow-editor.md
+│       │   └── lib/
 │       ├── shadcn/
 │       │   ├── index.ts
 │       │   ├── agent-frontend-shadcn.md
 │       │   └── lib/
 │       ├── engineering-shell/
 │       └── installer-welcome/
+├── agent/
+│   ├── index.ts
+│   ├── worker.ts
+│   ├── agent-typescript.md
+│   ├── lib/
+│   ├── tests/
+│   └── third-party/
 ├── runtime/
 │   ├── agent-runtime.md
 │   ├── freecad/
@@ -160,6 +212,8 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   └── src/
 │       └── modules/
 │           ├── ai/
+│           ├── digital_logic/
+│           │   └── agent-rust-digital-logic.md
 │           ├── cfd/
 │           ├── stencil/
 │           └── propulsion/
@@ -196,6 +250,28 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   └── fixtures/
 ├── scripts/
 │   ├── AGENTS.md
+│   ├── desktop/
+│   │   ├── build.mjs
+│   │   ├── archive.mjs
+│   │   ├── installer.mjs
+│   │   ├── module-package.mjs
+│   │   ├── module-pe-imports.mjs
+│   │   ├── release-assets.mjs
+│   │   ├── release-assets.check.mjs
+│   │   ├── agent-javascript-desktop.md
+│   │   ├── agent-javascript-installer.md
+│   │   ├── agent-javascript-modules.md
+│   │   └── agent-javascript-release-assets.md
+│   ├── web-agent/
+│   │   ├── build.mjs
+│   │   ├── server.mjs
+│   │   ├── package.check.mjs
+│   │   ├── lib/
+│   │   ├── tests/
+│   │   └── agent-javascript-web-agent.md
+│   ├── cloud/
+│   │   ├── build.mjs
+│   │   └── agent-javascript-cloud.md
 │   ├── cfd-runtime/
 │   │   └── agent-python-cfd-runtime.md
 │   └── agent-javascript.md

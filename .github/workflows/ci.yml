@@ -62,6 +62,26 @@ jobs:
           npm run build:backend
       - name: Check boundaries, unit tests, types, build and browser behavior
         run: npm run check
+      - name: Build and exercise the Agent web package
+        run: |
+          npm run web:agent:package
+          npm run check:web-agent:package
+      - name: Upload the Agent web package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: agent-web-linux-x64
+          path: dist-web-agent/*.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build the cloud web package
+        run: npm run cloud:package
+      - name: Upload the cloud web package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: cloud-web
+          path: dist-cloud/*.tar.gz
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload browser diagnostics
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -81,6 +101,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.11'
@@ -105,7 +128,7 @@ jobs:
         run: |
           cargo fmt --manifest-path src-rust/Cargo.toml --check
           cargo clippy --manifest-path src-rust/Cargo.toml --locked --all-targets -- -D warnings
-      - name: Test parsing, contracts, cancellation and Python integration
+      - name: Test parsing, contracts, cancellation and Python/Node integration
         run: cargo test --manifest-path src-rust/Cargo.toml --locked
 
   geometry:
@@ -160,7 +183,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Test release artifact validation
-        run: node --test scripts/release-assets.check.mjs
+        run: node --test scripts/desktop/release-assets.check.mjs
       - name: Validate case-safe OpenFOAM source preparation
         run: |
           python -B scripts/prepare-openfoam-source.check.py -v
@@ -283,7 +306,7 @@ jobs:
         run: |
           npm run check:worker -- desktop/tauri/target/release/geometry
           npm run check:ai-worker -- desktop/tauri/target/release/ai
-          node scripts/archive-desktop.mjs
+          npm run desktop:archive
       - name: Upload executable and bundled runtime
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -297,7 +320,7 @@ jobs:
         env:
           RELEASE_PLATFORM: ${{ matrix.platform }}
         shell: bash
-        run: node scripts/release-assets.mjs collect "$RELEASE_PLATFORM" desktop/tauri/target/release/bundle .tools/release-assets
+        run: node scripts/desktop/release-assets.mjs collect "$RELEASE_PLATFORM" desktop/tauri/target/release/bundle .tools/release-assets
       - name: Upload installers for release
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -369,14 +392,14 @@ jobs:
         run: |
           npm run modules:package
           npm run installer:package
-          node scripts/module-package.mjs installer-archive
+          node scripts/desktop/module-package.mjs installer-archive
       - name: Validate and exercise the archived module release set
         env:
           RELEASE_PLATFORM: ${{ matrix.platform }}
         shell: bash
         run: |
           module_target="$(node -p 'process.platform + "-" + process.arch')"
-          node scripts/release-assets.mjs collect-modules "$RELEASE_PLATFORM" "dist-modules/$module_target" .tools/module-release-assets
+          node scripts/desktop/release-assets.mjs collect-modules "$RELEASE_PLATFORM" "dist-modules/$module_target" .tools/module-release-assets
           python - <<'PY'
           import glob, json, pathlib, shutil, subprocess, tempfile, zipfile, os, stat, sys
           root = pathlib.Path(tempfile.mkdtemp(prefix='lmbox-modules-relocated-'))

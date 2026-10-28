@@ -16,6 +16,9 @@ contracts/
 │       └── agent-contracts-fixtures.md
 ├── schemas/
 │   ├── v1/
+│   │   ├── agent-contracts-digital-logic.md
+│   │   ├── digital-logic-request.schema.json
+│   │   ├── digital-logic-response.schema.json
 │   │   ├── agent-contracts-ai.md
 │   │   ├── ai-request.schema.json
 │   │   ├── ai-response.schema.json

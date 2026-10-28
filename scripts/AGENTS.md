@@ -9,20 +9,40 @@
 <!-- agent-directory:start -->
 ```text
 scripts/
+├── desktop/
+│   ├── build.mjs
+│   ├── archive.mjs
+│   ├── installer.mjs
+│   ├── module-package.mjs
+│   ├── module-pe-imports.mjs
+│   ├── release-assets.mjs
+│   ├── release-assets.check.mjs
+│   ├── agent-javascript-desktop.md
+│   ├── agent-javascript-installer.md
+│   ├── agent-javascript-modules.md
+│   └── agent-javascript-release-assets.md
+├── web-agent/
+│   ├── build.mjs
+│   ├── server.mjs
+│   ├── package.check.mjs
+│   ├── lib/
+│   ├── tests/
+│   └── agent-javascript-web-agent.md
+├── cloud/
+│   ├── build.mjs
+│   └── agent-javascript-cloud.md
 ├── cfd-runtime/
 │   └── agent-python-cfd-runtime.md
+├── build-agent.mjs
+├── check-agent-worker.mjs
 ├── agent-javascript-ai.md
-├── agent-javascript-modules.md
-├── agent-javascript-installer.md
 ├── agent-javascript-build.md
 ├── agent-javascript-cfd.md
 ├── agent-javascript-cfd-api.md
 ├── agent-javascript-cea.md
-├── agent-javascript-desktop.md
 ├── agent-javascript-propulsion-api.md
 ├── agent-javascript-preview-api.md
 ├── agent-javascript-propulsion.md
-├── agent-javascript-release-assets.md
 └── agent-javascript.md
 ```
 <!-- agent-directory:end -->

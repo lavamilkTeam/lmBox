@@ -21,3 +21,5 @@
 `cfd.ts` 手工映射 CFD 会话、原生控件与几何投影；Rust 版本和请求身份按共享 CFD 协议匹配，翻译不改变原生选项值。
 
 `ai.ts` 手工映射[AI v1 协议](../../contracts/schemas/v1/agent-contracts-ai.md)，只定义任务、节点与产物数据，不携带 ComfyUI 对象或提供商凭据。
+
+`digital-logic.ts` 手工映射[数字逻辑 v1 协议](../../contracts/schemas/v1/agent-contracts-digital-logic.md)，定义有限命令、四态信号和字符显示数据；计算及会话状态属于 Rust，Worker 生命周期属于平台适配。

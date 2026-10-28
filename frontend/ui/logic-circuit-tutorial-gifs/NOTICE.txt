@@ -1,0 +1,22 @@
+Logic circuit tutorial GIFs
+
+and-truth-table.gif, or-truth-table.gif, not-truth-table.gif,
+nand-truth-table.gif, nor-truth-table.gif, xor-truth-table.gif,
+xnor-truth-table.gif, and buf-truth-table.gif are teaching animations
+derived from the project's existing ANSI logic gate SVG symbols.
+
+Original symbols: ../../modules/digital-logic/lib/ui/assets/ansi/
+Source records: ../../modules/digital-logic/lib/ui/assets/sources.json
+Original permissions: ../../modules/digital-logic/lib/ui/assets/NOTICE.txt
+
+The original symbols are public domain. AND, OR, NOT, NAND, NOR, XOR,
+and XNOR are by jjbeard; the buffer is by Inductiveload, with file
+history crediting original jjbeard. Original SVGs are unchanged.
+The repository license applies to the added teaching presentation.
+
+Each 800 x 640 animation loops through every binary input combination
+in ascending order, holding each state for 1400 milliseconds. Green
+lamps represent 1, gray lamps represent 0, and the active truth-table
+row is highlighted. NOT and BUF have two states; the other gates have
+four states. These are truth-table illustrations, not circuit simulation
+results or propagation-delay measurements.

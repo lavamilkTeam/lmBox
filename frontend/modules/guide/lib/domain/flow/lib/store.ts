@@ -3,11 +3,12 @@ import { ref } from 'vue'
 
 export const guideTools = [
   { id: 'stencil', label: '钢网设计与制造', category: '电子电气', description: '从图层导入到钢网建模与制造', kind: 'electrical', available: true },
+  { id: 'digital-logic', label: '数字逻辑仿真', category: '电子电气', description: '逻辑门与数字逻辑电路仿真', kind: 'electrical', available: true },
   { id: 'equilibrium', label: '化学平衡分析', category: '热化学', description: '组织热化学与平衡分析流程', kind: 'chemistry', available: false },
   { id: 'cfd', label: '流体力学', category: '流体与动力', description: '几何导入、网格、流动物理模型与求解', kind: 'fluid', available: true },
   { id: 'nozzle', label: '喷管初步设计', category: '流体与动力', description: '喷管轮廓、尺寸与性能计算', kind: 'fluid', available: true },
-  { id: 'video', label: '视频工作流', category: 'AI', description: '云端模型视频生成工作流', kind: 'ai', available: true },
-  { id: 'agent', label: 'AI 工作助手', category: 'AI', description: '工具调用与工作文件处理', kind: 'ai', available: true },
+  { id: 'video', label: 'ComfyUI', category: 'AI', description: '云端模型视频生成工作流', kind: 'ai', available: true },
+  { id: 'agent', label: 'Agent', category: 'AI', description: '工具调用与工作文件处理', kind: 'ai', available: true },
 ] as const
 
 interface FlowNode { id: string; toolId: string; x: number; y: number }

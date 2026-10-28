@@ -16,7 +16,7 @@ Python 接收 Rust 已解析 IR，负责几何、补偿、轮廓、实体网格�
 
 `cfd_worker → modules/cfd 的公开入口 → application → runtime`；CFD 的 FreeCAD、Qt、Docker 和原生文件适配全部归私有 `runtime`，不向共享协议暴露第三方对象。
 
-`ai_worker → modules/video 或 modules/agent 的公开入口 → application → features/runtime → contracts`；独立 AI JSONL 进程每次执行一个作业，Rust 管任务身份、状态、取消及工作目录。视频与 Agent 不互相导入；ComfyUI、LangGraph、HTTP 和文件对象留在各自私有适配层。AI extra 的 Python 3.10+ 要求不改变基础几何环境的 Python 3.9 支持。
+`ai_worker → modules/video 或 modules/agent 的公开入口 → application → features/runtime → contracts`；独立 AI JSONL 进程每次执行一个作业，Rust 管任务身份、状态、取消及工作目录。开发与桌面宿主默认将 Agent 路由到独立 [TypeScript worker](../agent/agent-typescript.md)，本 Python Agent 保留供旧入口与兼容回归使用。视频与 Agent 不互相导入；ComfyUI、LangGraph、HTTP 和文件对象留在各自私有适配层。AI extra 的 Python 3.10+ 要求不改变基础几何环境的 Python 3.9 支持。
 
 ## 模块索引
 

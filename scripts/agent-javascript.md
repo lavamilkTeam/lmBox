@@ -4,18 +4,20 @@
 
 | 脚本范围 | 必读说明 |
 | --- | --- |
-| `module-package.mjs/module-archive.py` | [模块 ZIP 发布构建](agent-javascript-modules.md) |
-| `installer.mjs`、根 `vite.installer.config.ts` | [安装页面构建](agent-javascript-installer.md) |
+| `desktop/module-package.mjs`、`desktop/module-pe-imports.mjs`、`module-archive.py` | [模块 ZIP 发布构建](desktop/agent-javascript-modules.md) |
+| `desktop/installer.mjs`、根 `vite.installer.config.ts` | [安装页面构建](desktop/agent-javascript-installer.md) |
 | `setup-cfd.mjs`、`prepare-openfoam-source.py/prepare-openfoam-source.check.py` | [CFD 环境准备](agent-javascript-cfd.md) |
 | `bundle-cfd-runtime.py`、`check-cfd-runtime.py`、`cfd-runtime/` | [CFD 原生构建与裁剪](cfd-runtime/agent-python-cfd-runtime.md) |
 | `build-propulsion.mjs` | [推进设计构建](agent-javascript-propulsion.md) |
 | `build-cea.mjs` | [CEA 构建](agent-javascript-cea.md) |
 | `build-wasm/build-worker/check-worker/geometry-env` | [构建与引擎环境](agent-javascript-build.md) |
-| `ai-api.ts`、`ai-env.mjs`、`build-ai-worker.mjs` | [AI 传输与环境](agent-javascript-ai.md) |
+| `ai-api.ts`、`ai-env.mjs`、`build-ai-worker.mjs`、`build-agent.mjs`、`check-agent-worker.mjs` | [AI 传输与环境](agent-javascript-ai.md) |
 | `cfd-api.ts` | [CFD 开发传输](agent-javascript-cfd-api.md) |
 | `propulsion-api.ts` | [推进计算开发适配](agent-javascript-propulsion-api.md) |
 | `preview-api.ts` | [开发计算适配](agent-javascript-preview-api.md) |
-| `desktop.mjs/archive-desktop.mjs` | [桌面构建适配](agent-javascript-desktop.md) |
-| `release-assets.mjs/release-assets.check.mjs` | [发布产物校验](agent-javascript-release-assets.md) |
+| `desktop/build.mjs`、`desktop/archive.mjs` | [桌面程序构建与归档](desktop/agent-javascript-desktop.md) |
+| `web-agent/build.mjs`、`web-agent/server.mjs` | [Agent 网页发布](web-agent/agent-javascript-web-agent.md) |
+| `cloud/build.mjs` | [云网页构建与打包](cloud/agent-javascript-cloud.md) |
+| `desktop/release-assets.mjs`、`desktop/release-assets.check.mjs` | [桌面发布产物校验](desktop/agent-javascript-release-assets.md) |
 
 只修改实际受影响脚本模块说明；调用链和外部接口变化还需同步涉及语言的适配说明。

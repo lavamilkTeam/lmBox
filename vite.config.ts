@@ -18,6 +18,10 @@ export default defineConfig({
         this.emitFile({ type: 'asset', fileName: `licenses/ai-elements-vue-${name}.txt`,
           source: readFileSync(new URL(`./frontend/modules/agent/lib/ui/elements/${name}`, import.meta.url), 'utf8') })
       }
+      for (const name of ['LICENSE', 'NOTICE']) {
+        this.emitFile({ type: 'asset', fileName: `licenses/account-provider-icons-${name}.txt`,
+          source: readFileSync(new URL(`./frontend/ui/account-dialog/lib/assets/${name}`, import.meta.url), 'utf8') })
+      }
     },
   }],
   build: { manifest: true },

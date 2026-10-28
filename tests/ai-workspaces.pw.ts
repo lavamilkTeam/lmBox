@@ -3,11 +3,80 @@ import { readFile } from 'node:fs/promises'
 import { selectWorkspace } from './workspace-navigation'
 import { aiRuntimeFixture } from './ai-runtime-fixture'
 
+test('ConeCode Node agent calls the Rust workspace tool with the current task identity', async ({ page }) => {
+  const runtime = await aiRuntimeFixture(page)
+  try {
+    await page.goto('/')
+    await selectWorkspace(page, 'Agent')
+    await expect(page.getByText('fixture-agent-model', { exact: true })).toBeVisible({ timeout: 20000 })
+    await page.getByLabel('Agent 任务', { exact: true }).fill('Fixture: inspect the Rust workspace.')
+    await page.getByRole('button', { name: '发送消息', exact: true }).click()
+    await expect(page.getByLabel('助手回复 1', { exact: true })).toContainText('Rust returned the current project and input revision.', { timeout: 20000 })
+    expect(runtime.counts().workspaceChecks).toBe(1)
+    expect(runtime.counts().completions).toBe(2)
+  } finally { await runtime.close() }
+})
+
+test('cancelling a ConeCode Agent task aborts its in-flight model request', async ({ page }) => {
+  const runtime = await aiRuntimeFixture(page)
+  runtime.slowAgent()
+  try {
+    await page.goto('/')
+    await selectWorkspace(page, 'Agent')
+    await expect(page.getByText('fixture-agent-model', { exact: true })).toBeVisible({ timeout: 20000 })
+    await page.getByLabel('Agent 任务', { exact: true }).fill('Fixture: wait for model cancellation.')
+    await page.getByRole('button', { name: '发送消息', exact: true }).click()
+    await expect.poll(() => runtime.counts().completions).toBe(1)
+    await page.getByRole('button', { name: '取消任务', exact: true }).click()
+    await expect(page.getByText('已取消', { exact: true })).toBeVisible({ timeout: 15000 })
+    await expect.poll(() => runtime.counts().agentAborts).toBe(1)
+    await expect(page.getByLabel('助手回复 1', { exact: true })).toHaveCount(0)
+  } finally { await runtime.close() }
+})
+
+test('docked AI shares the Agent conversation across workspaces and full view', async ({ page }, testInfo) => {
+  test.setTimeout(60000)
+  const runtime = await aiRuntimeFixture(page)
+  try {
+    await page.goto('/')
+    const assistant = page.getByRole('region', { name: 'AI 助手', exact: true })
+    await expect(assistant).toBeVisible()
+    await expect(assistant.getByText('fixture-agent-model', { exact: true })).toBeVisible({ timeout: 20000 })
+    await assistant.getByLabel('Agent 任务', { exact: true }).fill('Fixture: write 42 to answer.txt.')
+    await assistant.getByRole('button', { name: '发送消息', exact: true }).click()
+    await expect(assistant.getByLabel('助手回复 1', { exact: true })).toContainText('answer.txt contains 42', { timeout: 20000 })
+    const canvas = await page.getByLabel('流程画布', { exact: true }).boundingBox()
+    const panel = await assistant.boundingBox()
+    expect(canvas!.x + canvas!.width).toBeLessThanOrEqual(panel!.x)
+    await assistant.getByLabel('Agent 任务', { exact: true }).fill('Fixture follow-up:')
+    await page.getByRole('tab', { name: '功能库', exact: true }).click()
+    await expect(assistant.getByLabel('Agent 任务', { exact: true })).toHaveValue('Fixture follow-up:')
+    await assistant.getByRole('button', { name: '对话设置', exact: true }).click()
+    await expect(assistant.getByRole('complementary', { name: '对话设置面板', exact: true })).toBeVisible()
+    await assistant.getByRole('button', { name: '关闭对话设置', exact: true }).click()
+    await page.screenshot({ path: testInfo.outputPath('docked-ai.png') })
+    await assistant.getByRole('button', { name: '展开到 Agent 工作区', exact: true }).click()
+    await expect(assistant).toHaveCount(0)
+    await expect(page.getByRole('tab', { name: 'Agent', exact: true })).toHaveAttribute('data-state', 'active')
+    await expect(page.getByLabel('Agent 任务', { exact: true })).toHaveValue('Fixture follow-up:')
+    await page.getByLabel('Agent 任务', { exact: true }).press('Enter')
+    await expect(page.getByLabel('助手回复 2', { exact: true })).toContainText('previous answer was 42', { timeout: 20000 })
+    expect(runtime.counts().completions).toBe(3)
+    await page.getByRole('tab', { name: '开始', exact: true }).click()
+    await expect(assistant.getByLabel('助手回复 2', { exact: true })).toContainText('previous answer was 42')
+    await expect(assistant.getByLabel('助手回复 2', { exact: true })).toBeInViewport()
+    await page.setViewportSize({ width: 390, height: 844 })
+    await expect(assistant.getByLabel('Agent 任务', { exact: true })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.screenshot({ path: testInfo.outputPath('docked-ai-mobile.png') })
+  } finally { await runtime.close() }
+})
+
 test('video canvas executes a provider workflow through real Rust and Python, saves output and preserves draft', async ({ page }, testInfo) => {
   const runtime = await aiRuntimeFixture(page)
   try {
     await page.goto('/')
-    await selectWorkspace(page, '视频工作流')
+    await selectWorkspace(page, 'ComfyUI')
     await expect(page.getByRole('button', { name: '测试提示词', exact: true })).toBeVisible()
     await page.getByRole('button', { name: '测试提示词', exact: true }).click()
     await page.getByRole('button', { name: '测试云端视频', exact: true }).click()
@@ -29,8 +98,8 @@ test('video canvas executes a provider workflow through real Rust and Python, sa
     expect(await readFile(await (await output).path())).toEqual(runtime.videoBytes)
     expect(runtime.counts().submissions).toBe(1)
     await page.screenshot({ path: testInfo.outputPath('video-workflow.png') })
-    await selectWorkspace(page, 'AI 工作助手')
-    await selectWorkspace(page, '视频工作流')
+    await selectWorkspace(page, 'Agent')
+    await selectWorkspace(page, 'ComfyUI')
     await expect(page.locator('[data-node-id]')).toHaveCount(2)
   } finally { await runtime.close() }
 })
@@ -40,7 +109,7 @@ test('Agent conversation carries trusted history, preserves old downloads, and s
   const runtime = await aiRuntimeFixture(page)
   try {
     await page.goto('/')
-    await selectWorkspace(page, 'AI 工作助手')
+    await selectWorkspace(page, 'Agent')
     await expect(page.getByText('fixture-agent-model', { exact: true })).toBeVisible({ timeout: 20000 })
     await page.getByLabel('Agent 任务', { exact: true }).fill('Fixture: write 42 to answer.txt.')
     await page.evaluate(() => {
@@ -103,15 +172,15 @@ test('video cancellation is scoped to its provider job and a draft survives work
   const runtime = await aiRuntimeFixture(page); runtime.slowVideo()
   try {
     await page.goto('/')
-    await selectWorkspace(page, '视频工作流')
+    await selectWorkspace(page, 'ComfyUI')
     await page.getByRole('button', { name: '测试提示词', exact: true }).click()
     await page.getByRole('button', { name: '测试云端视频', exact: true }).click()
     await page.getByRole('button', { name: '节点 1 输出 text', exact: true }).click()
     await page.getByRole('button', { name: '节点 2 输入 prompt', exact: true }).click()
     await page.getByRole('button', { name: '生成视频', exact: true }).click()
     await expect.poll(() => runtime.counts().submissions).toBe(1)
-    await selectWorkspace(page, 'AI 工作助手')
-    await selectWorkspace(page, '视频工作流')
+    await selectWorkspace(page, 'Agent')
+    await selectWorkspace(page, 'ComfyUI')
     await page.getByRole('button', { name: '取消任务', exact: true }).click()
     await expect(page.getByText('已取消', { exact: true })).toBeVisible({ timeout: 15000 })
     expect(runtime.counts().cancellations).toBe(1)

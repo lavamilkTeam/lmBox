@@ -3,9 +3,11 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { AiRequest } from '../../../../contracts'
 import { AiRequestNotSentError, aiRequest, getAiProjectId, getAiRequestId, readAiTextFiles, saveAiArtifact, saveTextFile } from '../../../../platform/desktop'
 import { useAgentSession } from '../domain/session'
-import { AgentWorkspaceView } from '../ui'
+import { AgentPanel, AgentWorkspaceView } from '../ui'
 import type { AgentTurnView } from '../ui'
 import '../ui/workspace.css'
+withDefaults(defineProps<{ sidebar?: boolean }>(), { sidebar: false })
+const emit = defineEmits<{ expand: [] }>()
 const session = useAgentSession()
 session.initialize(getAiProjectId('agent'), getAiRequestId())
 const artifactBusy = ref(false), attaching = ref(false)
@@ -69,6 +71,8 @@ onMounted(() => { active = true; void runRequest('inspect'); schedule() })
 onUnmounted(() => { active = false; if (timer) clearTimeout(timer) })
 </script>
 <template>
-  <AgentWorkspaceView :prompt="session.prompt" :max-steps="session.maxSteps" :files="session.files.map(file => ({ name: file.name, size: file.content.length }))" :configured="session.configured" :inspecting="session.inspecting" :model="session.model" :tools="session.tools" :locked="session.locked" :pending="session.pending" :unconfirmed="session.unconfirmed" :error="session.error" :connection-error="session.connectionError" :turns="turns" :artifact-busy="artifactBusy"
-    :attaching="attaching" @prompt="session.setPrompt" @max-steps="session.setMaxSteps" @files="attach" @remove-file="session.removeFile" @inspect="runRequest('inspect')" @run="start" @recover="session.unconfirmed && runRequest('start')" @cancel="cancel" @new-conversation="newConversation" @download="download" @export-answer="exportAnswer" />
+  <AgentPanel :sidebar="sidebar" @expand="emit('expand')">
+    <AgentWorkspaceView :prompt="session.prompt" :max-steps="session.maxSteps" :files="session.files.map(file => ({ name: file.name, size: file.content.length }))" :configured="session.configured" :inspecting="session.inspecting" :model="session.model" :tools="session.tools" :locked="session.locked" :pending="session.pending" :unconfirmed="session.unconfirmed" :error="session.error" :connection-error="session.connectionError" :turns="turns" :artifact-busy="artifactBusy"
+      :attaching="attaching" @prompt="session.setPrompt" @max-steps="session.setMaxSteps" @files="attach" @remove-file="session.removeFile" @inspect="runRequest('inspect')" @run="start" @recover="session.unconfirmed && runRequest('start')" @cancel="cancel" @new-conversation="newConversation" @download="download" @export-answer="exportAnswer" />
+  </AgentPanel>
 </template>

@@ -13,6 +13,6 @@
 
 素材复用 `frontend/ui/installer-welcome/lib/assets` 的 GIF、静止帧及字体；这是构建时静态资源输入，不导入前端实现。Qt 使用 TTF 子集，Web 使用同源 WOFF2；许可证随资源及分发目录保留。
 
-构建入口见[安装构建说明](../../scripts/agent-javascript-installer.md)。验证 `npm run installer:package`、`cmake --build .tools/installer-qt --target all_qmllint`，并实际打开打包程序检查显示、动画及关闭。跨平台源码不等于 Windows/Linux 打包或 GUI 已验证。
+构建入口见[安装构建说明](../../scripts/desktop/agent-javascript-installer.md)。验证 `npm run installer:package`、`cmake --build .tools/installer-qt --target all_qmllint`，并实际打开打包程序检查显示、动画及关闭。跨平台源码不等于 Windows/Linux 打包或 GUI 已验证。
 
 `--smoke-test` 在真实加载 QML 根界面后退出，根对象不存在时返回失败；CI 将安装器解压到新目录，清除外部 Qt/QML 搜索路径后检查部署依赖，Linux 使用 Xvfb 加载包内 `xcb` 平台插件。该检查不代表交互和动画已通过人工验收。

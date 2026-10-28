@@ -361,15 +361,10 @@ fn retired_requests_cannot_generate_again_after_artifact_eviction() {
 #[test]
 #[cfg(unix)]
 fn bundled_runtime_runs_without_python_module_arguments() {
-    use std::os::unix::fs::PermissionsExt;
     let root = tempfile::tempdir().unwrap();
-    let worker = root.path().join("fixture-worker");
-    std::fs::copy(
-        fixture_engine().join("lmbox_geometry/ai_worker.py"),
-        &worker,
-    )
-    .unwrap();
-    std::fs::set_permissions(&worker, std::fs::Permissions::from_mode(0o700)).unwrap();
+    // Execute the checked-in fixture with its executable Git mode. Temporary
+    // directories are task data, and runners need not allow executing them.
+    let worker = fixture_engine().join("lmbox_geometry/ai_worker.py");
     let backend = AiBackend::bundled(worker, root.path().join("jobs"));
     let response = backend.request(request("inspect", "fixture", 0, json!({})));
     assert!(response.ok, "{:?}", response.error);

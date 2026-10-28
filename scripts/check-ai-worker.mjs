@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import { createServer } from 'node:http'
 import { cp, mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -61,3 +61,7 @@ try {
   await new Promise(resolve => server.close(resolve))
   await rm(temporary, { recursive: true, force: true })
 }
+
+const conecode = spawnSync(process.execPath, [join(root, 'scripts/check-agent-worker.mjs'), source], { cwd: root, stdio: 'inherit' })
+if (conecode.error) throw conecode.error
+if (conecode.status !== 0) process.exit(conecode.status ?? 1)

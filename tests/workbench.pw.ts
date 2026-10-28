@@ -143,7 +143,7 @@ D12*
 X0Y0D03*
 X8000000Y0D03*
 M02*`
-  await page.locator('input[type=file]').setInputFiles({
+  await page.getByLabel('选择 Gerber 文件', { exact: true }).setInputFiles({
     name: 'mask-window.gtp', mimeType: 'application/octet-stream', buffer: Buffer.from(gerber),
   })
   await expect(page.locator('.document-tab.active')).toContainText('mask-window.gtp')

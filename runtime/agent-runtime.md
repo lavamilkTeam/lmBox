@@ -17,6 +17,6 @@ OpenFOAM 原始归档含仅大小写不同的路径。`openfoam/OpenFOAM-v2306.t
 
 生成源码可存放在大小写不敏感的文件系统。`PDRFoam/flamePropagationWithObstacles` 教程执行时仍需要同时写入物理意义不同的 `B` 和 `b` 场；其 `Allrun` 在大小写敏感的算例目录还原场文件名，否则在求解前明确失败。源码改名不代表所有求解器运行数据都已消除大小写要求。
 
-FreeCAD 按现有 CfdOF 控制器保留 GUI 核心、所需工作台及 Qt/PySide 依赖，通过构建选项和动态库闭包排除未用部分。后处理从 ParaView 的固定 VTK 源码构建读取与过滤模块，不包含 Qt、ParaView GUI 或服务端通信。Qt、Python 等配套库的来源和保留项记录于组件清单。适配行为见 [Python CFD 模块](../engine/src/lmbox_geometry/modules/cfd/agent-python-cfd.md)，分发行为见 [模块打包](../scripts/agent-javascript-modules.md)。
+FreeCAD 按现有 CfdOF 控制器保留 GUI 核心、所需工作台及 Qt/PySide 依赖，通过构建选项和动态库闭包排除未用部分。后处理从 ParaView 的固定 VTK 源码构建读取与过滤模块，不包含 Qt、ParaView GUI 或服务端通信。Qt、Python 等配套库的来源和保留项记录于组件清单。适配行为见 [Python CFD 模块](../engine/src/lmbox_geometry/modules/cfd/agent-python-cfd.md)，分发行为见 [模块打包](../scripts/desktop/agent-javascript-modules.md)。
 
 源码更新检查 gitlink、递归子模块状态、许可证及 OpenFOAM 归档哈希，并确认归档中的全部 Git blob、文件权限和符号链接与固定提交一致。生成目录使用 `python3 scripts/prepare-openfoam-source.py --check` 验证文件、权限、链接与映射；此校验要求干净的生成树，编译产生的文件或链接会被报告为额外路径。根检查使用 `npm run check`；上游原生编译、搬移验证和真实仿真须分别执行，不能由源码或前端检查替代。

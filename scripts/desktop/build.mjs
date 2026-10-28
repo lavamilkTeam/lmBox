@@ -1,0 +1,21 @@
+// Resolve both project roots explicitly so Tauri stays outside the Rust core.
+import cli from '@tauri-apps/cli'
+import { fileURLToPath } from 'node:url'
+import { existsSync } from 'node:fs'
+import { loadEnvFile } from 'node:process'
+import { join } from 'node:path'
+
+const root = fileURLToPath(new URL('../../', import.meta.url))
+const aiConfig = join(root, '.tools/ai/runtime.env')
+if (existsSync(aiConfig)) loadEnvFile(aiConfig)
+process.env.TAURI_FRONTEND_PATH = root
+process.env.LMBOX_AGENT_NODE ||= process.execPath
+process.env.TAURI_APP_PATH = fileURLToPath(new URL('../../desktop/tauri/', import.meta.url))
+process.chdir(root)
+
+try {
+  await cli.run(process.argv.slice(2), 'node scripts/desktop/build.mjs')
+} catch (error) {
+  cli.logError(error.message)
+  process.exitCode = 1
+}

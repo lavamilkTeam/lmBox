@@ -1,14 +1,17 @@
-# 前端：AI 工作助手
+# 前端：Agent
 
 先读 [前端结构](../../agent-frontend.md)。模块入口 `index.ts` 只公开 `AgentWorkspace`；不导入视频或其他业务模块。
+
+`AgentWorkspace` 接收可选 `sidebar` 属性，默认使用完整工作区；侧栏模式通过 `expand` 事件请求应用打开 Agent 页签。两种布局复用同一会话与请求协调，应用一次只挂载其中一种。`lib/ui/AgentPanel.vue` 只提供右侧固定栏的标题和展开操作；不覆盖画布，不持有独立任务状态。
 
 ## 职责与依赖
 
 - `lib/app` 协调连接检查、文本附件、执行、状态轮询、取消和结果保存；所有文件与通信操作通过 [平台公开接口](../../platform/desktop/agent-frontend-desktop.md)。
 - `lib/domain/session/index.ts` 公开会话 store，保存输入草稿、步骤预算、附件、发送轮次及各轮任务身份和结果；不读取本地文件或访问网络。
 - `lib/ui/index.ts` 公开模块内部 props/emits 视图；控件复用 [shadcn-vue](../../ui/shadcn/agent-frontend-shadcn.md)，只展示实际连接、任务记录、文本和产物，不执行工具调用。
+- 消息输入区复用共享 `Card` 的 `floating` 变体；无描边与阴影由共享 UI 维护，侧栏外框使用无描边的普通布局，模块只控制内容尺寸。
 - `lib/ui/elements` 按需迁入 AI Elements Vue 的消息、对话、输入区和执行记录外观；保持私有，只使用本项目 shadcn 公开入口。固定来源及修改记录见 [NOTICE](lib/ui/elements/NOTICE)，保留原版权声明及 Apache 2.0 全文，随主应用构建发布。组件不含 AI SDK 传输、Markdown 执行、文件读取或凭据；纯文本回答由 Vue 转义。
-- 请求和结果使用 [AI 协议映射](../../contracts/agent-frontend-contracts.md)。Agent 模型、工具范围和执行循环由后端定义，界面不能直接获得或设置密钥。
+- 请求和结果使用 [AI 协议映射](../../contracts/agent-frontend-contracts.md)。Agent 模型与执行循环由独立 [TypeScript Agent](../../../agent/agent-typescript.md) 执行，Rust 负责工具范围、任务状态与产物；界面不能直接获得或设置密钥。
 
 ## 会话约束
 

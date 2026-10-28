@@ -12,4 +12,4 @@
 
 ## 验证
 
-按实际改动运行对应 npm 脚本；发布资源边界运行 `node --test scripts/release-assets.check.mjs`。跨语言/打包同时执行涉及端的模块检查。
+按实际改动运行对应 npm 脚本；发布资源边界运行 `node --test scripts/desktop/release-assets.check.mjs`。跨语言/打包同时执行涉及端的模块检查。

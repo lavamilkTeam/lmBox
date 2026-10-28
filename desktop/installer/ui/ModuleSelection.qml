@@ -27,8 +27,8 @@ Popup {
             { id: "injector", title: "喷注器设计（暂未开放）", available: false }
         ] },
         { id: "ai", title: "AI", modules: [
-            { id: "video", title: "视频工作流" },
-            { id: "agent", title: "AI 工作助手" }
+            { id: "video", title: "ComfyUI" },
+            { id: "agent", title: "Agent" }
         ] }
     ]
     function available(modules) {

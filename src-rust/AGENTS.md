@@ -19,6 +19,8 @@ src-rust/
 │   ├── modules/
 │   │   ├── ai/
 │   │   │   └── agent-rust-ai.md
+│   │   ├── digital_logic/
+│   │   │   └── agent-rust-digital-logic.md
 │   │   ├── cfd/
 │   │   │   ├── app/
 │   │   │   ├── runtime/

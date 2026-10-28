@@ -42,7 +42,9 @@ async function expectCursor(screen: Locator, row: number, column: number) {
 }
 
 test('real Rust LCD accepts four-bit UI writes and renders rows, cursor, display control and clear', async ({ page }, testInfo) => {
-  test.setTimeout(60000)
+  // Hundreds of real pin toggles share this total budget on software-rendered CI.
+  // Keep normal per-action/expect deadlines and every bus/display assertion.
+  test.setTimeout(120000)
   await page.setViewportSize({ width: 1920, height: 1100 })
   const workers: string[] = [], errors: string[] = []
   page.on('worker', worker => workers.push(worker.url()))

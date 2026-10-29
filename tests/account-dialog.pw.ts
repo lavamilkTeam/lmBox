@@ -1,3 +1,4 @@
+import { openWorkbench } from './workspace-navigation'
 import { test, expect } from '@playwright/test'
 
 test('account dialog validates registration and never treats an unavailable account service as success', async ({ page }) => {
@@ -5,7 +6,7 @@ test('account dialog validates registration and never treats an unavailable acco
   page.on('request', request => {
     if (request.postData()?.includes('dialog-test@example.com')) transmittedCredentials.push(request.url())
   })
-  await page.goto('/')
+  await openWorkbench(page)
   await page.getByRole('button', { name: '请登陆', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: '账户', exact: true })
   for (const provider of ['微信', 'QQ', 'GitHub']) {
@@ -46,7 +47,7 @@ test('account dialog validates registration and never treats an unavailable acco
 
 test('account dialog fits a narrow viewport, clears closed drafts and returns keyboard focus', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 640 })
-  await page.goto('/')
+  await openWorkbench(page)
   const trigger = page.getByRole('button', { name: '请登陆', exact: true })
   await trigger.focus()
   await page.keyboard.press('Enter')

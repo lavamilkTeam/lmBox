@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue'
-import { defineStore } from 'pinia'
+import { defineStore, type Pinia } from 'pinia'
 import type { AiJob, AiRequest, AiResponse } from '../../../../../../contracts'
 
 interface AgentTurn {
@@ -12,7 +12,7 @@ interface AgentTurn {
   error: string
 }
 
-export const useAgentSession = defineStore('agent-session', () => {
+function createSessionState() {
   const projectId = ref(''), revision = ref(0), prompt = ref(''), maxSteps = ref(8)
   const files = ref<Array<{ name: string; content: string }>>([])
   const configured = ref(false), inspecting = ref(false), model = ref(''), tools = ref<string[]>([])
@@ -122,4 +122,9 @@ export const useAgentSession = defineStore('agent-session', () => {
     turn.error = message; error.value = message
   }
   return { projectId, revision, prompt, maxSteps, files, configured, inspecting, model, tools, turns, activeTurnId, pending, unconfirmed, job, error, connectionError, locked, completedCount, initialize, setPrompt, setMaxSteps, addFiles, removeFile, newConversation, validate, request, artifactRequest, answer, accept, fail }
-})
+}
+
+/** Each chat owns its request sequence, draft and trusted task chain. */
+export function useAgentSession(id = 'default', pinia?: Pinia) {
+  return defineStore(`agent-session-${id}`, createSessionState)(pinia)
+}

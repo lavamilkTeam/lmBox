@@ -5,6 +5,9 @@ import { useNotification } from '../ui/theme'
 import { AppTheme } from '../ui/theme'
 import { EngineeringShell, ToolLibrary } from '../ui/engineering-shell'
 import { AccountDialog } from '../ui/account-dialog'
+import { Button } from '../ui/shadcn'
+import { ExperienceModeDialog } from '../ui/experience-mode'
+import { useExperienceMode } from '../features/experience-mode'
 import { useWorkspaceTabs } from './features/workspace-tabs'
 const GuideWorkspace = defineAsyncComponent(() => import('../modules/guide').then(module => module.GuideWorkspace))
 const DigitalLogicWorkspace = defineAsyncComponent(() => import('../modules/digital-logic').then(module => module.DigitalLogicWorkspace))
@@ -24,6 +27,10 @@ const tools = ref([
 ])
 const notification = useNotification()
 const accountError = ref('')
+// No account session adapter is connected yet; this host currently runs as a guest.
+const accountStatus = ref<'unknown' | 'guest' | 'authenticated'>('guest')
+const experience = useExperienceMode(accountStatus)
+const { mode: experienceMode, open: experienceOpen } = experience
 function accountProviderUnavailable(request: { provider: 'wechat' | 'qq' | 'github'; action: 'login' | 'bind' }) {
   const provider = { wechat: '微信', qq: 'QQ', github: 'GitHub' }[request.provider]
   accountError.value = `${provider} 授权服务尚未接入，暂时无法${request.action === 'login' ? '登录' : '绑定'}。`
@@ -57,10 +64,30 @@ function openInstalledTool(id: string) {
   if (tools.value.some(tool => tool.id === id && tool.available)) openTool(id)
   else notification.warning('该模块尚未安装，请在安装器中添加。')
 }
+let advancedTab = 'guide'
+function selectExperience(mode: 'agent' | 'advanced') {
+  if (mode === 'agent' && !agentAvailable.value) return
+  if (mode === 'agent') {
+    if (experienceMode.value !== 'agent') advancedTab = active.value
+    openTool('agent')
+  } else if (experienceMode.value === 'agent') {
+    selectTab(tabs.value.some(tab => tab.id === advancedTab) ? advancedTab : 'guide')
+  }
+  experience.select(mode)
+}
+function selectVisibleTab(id: string) {
+  selectTab(id)
+  if (experienceMode.value === 'agent' && active.value !== 'agent') experience.select('advanced')
+}
+function closeVisibleTab(id: string) {
+  closeTab(id)
+  if (experienceMode.value === 'agent' && active.value !== 'agent') experience.select('advanced')
+}
 </script>
 <template>
-  <AppTheme><EngineeringShell :active="active" :tabs="tabs" :close-confirmation="closeConfirmation" @select="selectTab" @close="closeTab" @confirm-close="confirmClose" @cancel-close="cancelClose">
-    <template #account><AccountDialog :error="accountError" @reset="accountError = ''" @submit="request => accountError = `统一账户服务尚未接入，暂时无法${request.mode === 'login' ? '登录' : '注册'}。`" @request-code="accountError = '邮箱验证码服务尚未接入，暂时无法发送。'" @provider-action="accountProviderUnavailable" /></template>
+  <AppTheme>
+  <EngineeringShell :active="active" :tabs="tabs" :flush-content="active === 'agent'" :close-confirmation="closeConfirmation" @select="selectVisibleTab" @close="closeVisibleTab" @confirm-close="confirmClose" @cancel-close="cancelClose">
+    <template #account><Button variant="ghost" @click="experience.setOpen(true)">切换模式</Button><AccountDialog :error="accountError" @reset="accountError = ''" @submit="request => accountError = `统一账户服务尚未接入，暂时无法${request.mode === 'login' ? '登录' : '注册'}。`" @request-code="accountError = '邮箱验证码服务尚未接入，暂时无法发送。'" @provider-action="accountProviderUnavailable" /></template>
     <GuideWorkspace v-if="active === 'guide' && availabilityReady" :installed-ids="installedIds" @open="openInstalledTool" />
     <ToolLibrary v-else-if="active === 'library'" :tools="tools" @open="openInstalledTool" />
     <StencilWorkspace v-else-if="active === 'stencil'" />
@@ -69,7 +96,8 @@ function openInstalledTool(id: string) {
     <VideoWorkspace v-else-if="active === 'video'" />
     <AgentWorkspace v-else-if="active === 'agent'" />
     <NozzleWorkspace v-else-if="active === 'nozzle'" />
-    <template v-if="agentAvailable && active !== 'agent'" #assistant><AgentWorkspace sidebar @expand="openInstalledTool('agent')" /></template>
+    <template v-if="experienceMode !== 'agent' && agentAvailable && active !== 'agent'" #assistant><AgentWorkspace sidebar @expand="openInstalledTool('agent')" /></template>
   </EngineeringShell>
+  <ExperienceModeDialog :open="experienceOpen" :agent-available="agentAvailable" @update:open="experience.setOpen" @select="selectExperience" />
   </AppTheme>
 </template>

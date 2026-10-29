@@ -20,4 +20,6 @@ Agent 已安装且可用时，其他页签通过工程壳层的 `assistant` 插�
 
 通过壳层 `account` 插槽挂载 [账户弹窗](../ui/account-dialog/agent-frontend-account-dialog.md)。应用接收登录/注册提交、邮箱验证码请求及第三方登录/可选绑定动作，并提供错误状态；统一账户服务尚未接入时仅显示不可用错误，不发送凭据或模拟成功。
 
+完整应用当前按访客启动，通过 [使用方式 feature](../features/experience-mode/agent-frontend-experience-mode.md) 自动打开双卡片选择。两种模式复用同一工程壳层，保留顶部页签、模式切换和账户入口。轻松模式打开或选中 Agent 页签，主体只挂载完整 Agent；切回专业模式恢复先前的工作区，选择其他页签或关闭活动 Agent 页签也回到专业模式。工作区页签与领域会话留在现有所有者，不因布局切换清空。Agent 未安装时禁用轻松模式。弹窗归 [使用方式 UI](../ui/experience-mode/agent-frontend-experience-mode.md)。真实账户会话尚未接入，不能声称已检测云端登录；使用方式不决定存储位置，数据边界与后续接入见 [云端与本地数据](../../docs/cloud-local-data.md)。
+
 Agent 网页专用入口 `WebAgent.vue` 只通过公开入口组装 Agent 与共享主题，不引用整包功能目录；打包和服务边界见 [Agent 网页发布](../../scripts/web-agent/agent-javascript-web-agent.md)。

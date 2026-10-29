@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { PaperclipIcon, Settings2Icon, SquarePenIcon, XIcon } from '@lucide/vue'
+import { PaperclipIcon, SquarePenIcon, XIcon } from '@lucide/vue'
 import { Badge, Button, Input, Label } from '../../../../ui/shadcn'
 import Conversation from './elements/Conversation.vue'
 import ConversationContent from './elements/ConversationContent.vue'
@@ -10,6 +10,7 @@ import PromptInput from './elements/PromptInput.vue'
 import PromptInputTextarea from './elements/PromptInputTextarea.vue'
 import PromptInputSubmit from './elements/PromptInputSubmit.vue'
 import Execution from './elements/Execution.vue'
+import ModelPicker from './ModelPicker.vue'
 import type { AgentFileView, AgentTurnView } from './types'
 
 const props = defineProps<{
@@ -74,9 +75,9 @@ function submit() { if (canSubmit.value) emit('run') }
             <div class="agent-composer-controls">
               <Button type="button" variant="ghost" size="icon-sm" :disabled="locked || attaching" aria-label="添加文本文件" @click="fileInput?.click()"><PaperclipIcon :size="17" /></Button>
               <input ref="fileInput" type="file" multiple accept=".txt,.md,.csv,.json,.yaml,.yml,.xml,.log,.py,.js,.ts,.rs,.html,.css" hidden aria-label="选择 Agent 文本文件" @change="attach">
-              <Button type="button" variant="ghost" size="icon-sm" aria-label="对话设置" title="对话设置" :aria-expanded="settingsOpen" aria-controls="agent-settings" @click="settingsOpen = !settingsOpen"><Settings2Icon :size="16" /></Button>
-              <div class="agent-model"><span v-if="attaching" role="status">读取附件中</span><Button v-else type="button" variant="ghost" size="sm" class="agent-model-button" :title="model || '模型设置'" @click="settingsOpen = true">{{ model || '模型' }}</Button></div>
-              <Button v-if="turns.length || prompt || files.length" type="button" variant="ghost" size="icon-sm" :disabled="locked" aria-label="新对话" title="新对话" @click="emit('newConversation')"><SquarePenIcon :size="16" /></Button>
+              <ModelPicker :locked="locked" @settings="settingsOpen = true" />
+              <div class="agent-composer-status"><span v-if="attaching" role="status">读取附件中</span></div>
+              <Button v-if="turns.length || prompt || files.length" type="button" variant="ghost" size="icon-sm" :disabled="locked || attaching" aria-label="新对话" title="新对话" @click="emit('newConversation')"><SquarePenIcon :size="16" /></Button>
               <Button v-if="unconfirmed" type="button" variant="outline" size="sm" @click="emit('recover')">确认任务状态</Button>
               <PromptInputSubmit v-else :running="locked" :pending="pending" :disabled="locked ? pending : !canSubmit" @stop="emit('cancel')" />
             </div>

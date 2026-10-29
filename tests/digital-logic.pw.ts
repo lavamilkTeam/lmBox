@@ -1,5 +1,5 @@
 import { test, expect, type Locator, type Page } from '@playwright/test'
-import { selectWorkspace } from './workspace-navigation'
+import { selectWorkspace, openWorkbench, chooseProfessionalMode } from './workspace-navigation'
 
 async function pinCenter(pin: Locator) {
   const bounds = (await pin.boundingBox())!
@@ -41,7 +41,7 @@ async function expectAttachedWire(wire: Locator, output: Locator, input: Locator
 test('logic page uses searchable gate library and real symbols with one or two input ports', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '数字逻辑仿真')
   const library = page.getByRole('navigation', { name: '电路元件库' })
   await expect(library.getByRole('button', { name: /^添加/ })).toHaveCount(13)
@@ -64,7 +64,7 @@ test('logic page uses searchable gate library and real symbols with one or two i
 })
 
 test('gate help opens independently of adding gates and restores keyboard focus', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '数字逻辑仿真')
   const library = page.getByRole('navigation', { name: '电路元件库' })
   await expect(library.getByRole('button', { name: /说明$/ })).toHaveCount(13)
@@ -102,7 +102,7 @@ test('gate help loads only the matching tutorial animation and removes it on clo
   page.on('request', request => {
     if (request.resourceType() === 'image' && request.url().includes('-truth-table')) requests.push(request.url())
   })
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '数字逻辑仿真')
   expect(requests).toEqual([])
   const gates = [
@@ -127,7 +127,7 @@ test('gate help loads only the matching tutorial animation and removes it on clo
 })
 
 test('zoomed drag, named-input wiring, validation, keyboard movement and deletion edit one circuit', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '数字逻辑仿真')
   await page.getByRole('button', { name: '添加非门 NOT', exact: true }).click()
   await page.getByRole('button', { name: '缩小画布' }).click()
@@ -167,7 +167,7 @@ test('zoomed drag, named-input wiring, validation, keyboard movement and deletio
 })
 
 test('terminal dragging connects symbol pins and keeps wire ends attached after moving and zooming', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '数字逻辑仿真')
   await page.getByRole('button', { name: '添加与门 AND', exact: true }).click()
   const canvas = page.getByLabel('逻辑电路画布', { exact: true })
@@ -216,7 +216,7 @@ test('terminal dragging connects symbol pins and keeps wire ends attached after 
 })
 
 test('connecting nearby pins aligns only the target and draws a short horizontal wire', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '数字逻辑仿真')
   await page.getByRole('button', { name: '添加非门 NOT', exact: true }).click()
   await page.getByRole('button', { name: '添加与门 AND', exact: true }).click()
@@ -246,7 +246,7 @@ test('connecting nearby pins aligns only the target and draws a short horizontal
 })
 
 test('connected gates snap by canvas distance while dragging either end and remain movable at reduced zoom', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '数字逻辑仿真')
   await page.getByRole('button', { name: '添加与门 AND', exact: true }).click()
   await page.getByRole('button', { name: '添加非门 NOT', exact: true }).click()
@@ -298,7 +298,7 @@ test('connected gates snap by canvas distance while dragging either end and rema
 })
 
 test('HD44780 exposes aligned digital inputs and keeps top-entry wires attached through move, zoom and deletion', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '数字逻辑仿真')
   const label = '字符屏 HD44780'
   await page.getByRole('button', { name: '添加与门 AND', exact: true }).click()
@@ -369,7 +369,7 @@ test('HD44780 exposes aligned digital inputs and keeps top-entry wires attached 
 })
 
 test('guide and circuit drafts stay separate through tab switching, closing and compact layout', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await page.getByRole('button', { name: '添加数字逻辑仿真', exact: true }).click()
   await page.getByRole('button', { name: '打开数字逻辑仿真', exact: true }).click()
   await page.getByRole('button', { name: '添加与门 AND', exact: true }).click()
@@ -390,12 +390,13 @@ test('guide and circuit drafts stay separate through tab switching, closing and 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: test.info().outputPath('digital-logic-compact.png') })
   await page.reload()
+  await chooseProfessionalMode(page)
   await selectWorkspace(page, '数字逻辑仿真')
   await expect(page.getByRole('article')).toHaveCount(0)
 })
 
 test('imports a named circuit, fits its full extent and simulates its real signals', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '数字逻辑仿真')
   const document = { schemaVersion: 1, nodes: [
     { id: 'source', gateId: 'input', label: 'RESET', x: 24, y: 24 },

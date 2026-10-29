@@ -25,6 +25,8 @@
 | `frontend/app` | [平台组装](app/agent-frontend-app.md) |
 | `frontend/app/features/workspace-tabs` | [工作区页签功能](app/features/workspace-tabs/agent-frontend-workspace-tabs.md) |
 | `frontend/features/help-dialog` | [公共说明弹窗功能](features/help-dialog/agent-frontend-help-dialog.md) |
+| `frontend/features/experience-mode` | [使用方式选择功能](features/experience-mode/agent-frontend-experience-mode.md) |
+| `frontend/ui/experience-mode` | [使用方式选择外观](ui/experience-mode/agent-frontend-experience-mode.md) |
 | `frontend/ui/help-dialog` | [说明弹窗外观](ui/help-dialog/agent-frontend-help-dialog.md) |
 | `frontend/ui/account-dialog` | [登录与注册弹窗](ui/account-dialog/agent-frontend-account-dialog.md) |
 | `frontend/ui/logic-circuit-tutorial-gifs` | [逻辑门教学动画](ui/logic-circuit-tutorial-gifs/agent-frontend-logic-tutorials.md) |

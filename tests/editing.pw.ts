@@ -1,4 +1,4 @@
-import { selectWorkspace } from './workspace-navigation'
+import { selectWorkspace, openWorkbench } from './workspace-navigation'
 import { test, expect } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { zipSync, strToU8 } from 'fflate'
@@ -6,7 +6,7 @@ const paste=readFileSync('src-rust/tests/fixtures/basic.gbr')
 const outline=strToU8('%FSLAX34Y34*%\n%MOMM*%\n%ADD10C,0.1*%\nD10*\nX0Y0D02*\nX100000Y0D01*\nX100000Y100000D01*\nX0Y100000D01*\nX0Y0D01*\nM02*')
 async function ready(page:import('@playwright/test').Page) {await expect(page.getByRole('button',{name:'STL',exact:true})).toBeEnabled({timeout:20000})}
 async function open(page:import('@playwright/test').Page) {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'editor.zip',mimeType:'application/zip',buffer:Buffer.from(zipSync({'TopPaste.GTP':paste,'Board.GKO':outline}))})
   await ready(page)
@@ -293,7 +293,7 @@ test('XY mode and thickness taper can be applied and disabled independently',asy
 })
 
 test('rounded pads have continuously sloping sides instead of a centre shoulder',async({page})=>{
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   const pads='%FSLAX34Y34*%\n%MOMM*%\n%ADD10O,1X3*%\nD10*\n'+
     Array.from({length:7},(_,i)=>`X${i*18000}Y0D03*`).join('\n')+'\nM02*'

@@ -3,7 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { Button, Tabs, TabsContent, TabsList, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from '../../shadcn'
 import WorkspaceTab from './WorkspaceTab.vue'
 import './workspace-tabs.css'
-const props = defineProps<{ active: string; tabs: { id: string; label: string; fixed?: boolean }[]; closeConfirmation?: { label: string; pending: boolean; error: string } }>()
+const props = defineProps<{ active: string; tabs: { id: string; label: string; fixed?: boolean }[]; flushContent?: boolean; closeConfirmation?: { label: string; pending: boolean; error: string } }>()
 const emit = defineEmits<{ select: [id: string]; close: [id: string]; confirmClose: []; cancelClose: [] }>()
 const bar = ref<HTMLElement>()
 const fixedTabs = computed(() => props.tabs.filter(tab => tab.fixed))
@@ -41,7 +41,7 @@ watch(() => props.active, () => {
     </header>
     <div class="engineering-body" :class="{ 'has-assistant': !!$slots.assistant }">
       <div class="engineering-main">
-        <TabsContent v-for="tab in tabs" :key="tab.id" :value="tab.id" class="engineering-content">
+        <TabsContent v-for="tab in tabs" :key="tab.id" :value="tab.id" class="engineering-content" :class="{ 'is-flush': flushContent }">
           <div class="engineering-content-inner"><slot v-if="active === tab.id" /></div>
         </TabsContent>
       </div>

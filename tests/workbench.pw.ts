@@ -1,4 +1,4 @@
-import { selectWorkspace } from './workspace-navigation'
+import { selectWorkspace, openWorkbench } from './workspace-navigation'
 import { test, expect } from '@playwright/test'
 import { zipSync, strToU8 } from 'fflate'
 import { readFileSync } from 'node:fs'
@@ -6,7 +6,7 @@ const gerber=readFileSync('src-rust/tests/fixtures/basic.gbr')
 const outline=strToU8('%FSLAX34Y34*%\n%MOMM*%\n%ADD10C,0.1*%\nD10*\nX0Y0D02*\nX100000Y0D01*\nX100000Y100000D01*\nX0Y100000D01*\nX0Y0D01*\nM02*')
 
 test('import tooltip appears beside its button, dismisses and preserves file selection', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   const button = page.getByRole('button', { name: '导入文件', exact: true })
   const tooltip = page.getByRole('tooltip', { name: '导入', exact: true })
@@ -32,7 +32,7 @@ test('import tooltip appears beside its button, dismisses and preserves file sel
 
 test('views switch with matching settings and an interactive 3D model', async ({ page }) => {
   const errors: string[]=[];page.on('pageerror',e=>errors.push(e.message))
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   await expect(page.locator('.panel-heading')).toContainText('2D 图层参数')
   await page.getByRole('button',{name:'3D 模型',exact:true}).click()
@@ -48,7 +48,7 @@ test('views switch with matching settings and an interactive 3D model', async ({
 })
 
 test('ZIP import and per-tab state remain independent', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   await page.getByRole('button',{name:'3D 模型',exact:true}).click()
   await page.getByLabel('模板厚度',{exact:true}).fill('0.35')
@@ -69,7 +69,7 @@ test('ZIP import and per-tab state remain independent', async ({ page }) => {
 })
 
 test('parameter export preserves values and logs can be collapsed and cleared', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   const button = page.getByRole('button', { name: '导出参数', exact: true })
   const tooltip = page.getByRole('tooltip', { name: '导出', exact: true })
@@ -96,7 +96,7 @@ test('parameter export preserves values and logs can be collapsed and cleared', 
 
 test('empty workspace, invalid file, and compact window are usable', async ({ page }) => {
   await page.setViewportSize({width:1024,height:700})
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   await page.getByRole('button',{name:'关闭 示例板 · 100 × 100',exact:true}).click()
   await expect(page.getByRole('heading',{name:'导入gerber'})).toBeVisible()
@@ -108,7 +108,7 @@ test('empty workspace, invalid file, and compact window are usable', async ({ pa
 })
 
 test('sample IR is rendered after reopening from either empty state', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   await expect(page.locator('.ir-layer path')).toHaveCount(124)
   await page.getByRole('button',{name:'关闭 示例板 · 100 × 100',exact:true}).click()
@@ -123,7 +123,7 @@ test('sample IR is rendered after reopening from either empty state', async ({ p
 })
 
 test('IR masks preserve drawing order, transparency and local macro holes', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   // Enter through real file import so the module's private store stays private.
   const gerber = `%FSLAX46Y46*%
@@ -170,7 +170,7 @@ M02*`
 
 test('real ZIP layers switch, mirror and retain the document view at narrow widths', async ({page}) => {
   await page.setViewportSize({width:760,height:940})
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   const zip=zipSync({'TopPaste.GTP':gerber,'BottomPaste.GBP':readFileSync('src-rust/tests/fixtures/inches.gbr'),'Board.GKO':outline})
   await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'layers.zip',mimeType:'application/zip',buffer:Buffer.from(zip)})
@@ -198,7 +198,7 @@ test('real ZIP layers switch, mirror and retain the document view at narrow widt
 })
 
 test('bad layers report a located error while valid layers remain selectable', async ({page}) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   const zip=zipSync({'TopPaste.GTP':gerber,'bad.gbr':strToU8('%FSLAX34Y34*%\n%ZZ*%')})
   await page.getByLabel('选择 Gerber 文件').setInputFiles({name:'mixed.zip',mimeType:'application/zip',buffer:Buffer.from(zip)})
@@ -215,7 +215,7 @@ test('bad layers report a located error while valid layers remain selectable', a
 
 
 test('imported Gerber builds an actual 3D stencil and rebuilds thickness', async ({page}) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   await page.getByLabel('选择 Gerber 文件').setInputFiles('src-rust/tests/fixtures/demo.gbr')
   await expect(page.locator('.viewport-status')).toContainText('124 个图形对象')
@@ -240,7 +240,7 @@ test('imported Gerber builds an actual 3D stencil and rebuilds thickness', async
 })
 
 test('3D build failure is actionable and can retry without sample geometry',async({page})=>{
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   await page.getByLabel('选择 Gerber 文件').setInputFiles('src-rust/tests/fixtures/demo.gbr')
   await expect(page.locator('.viewport-status')).toContainText('124 个图形对象')

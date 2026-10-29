@@ -1,5 +1,14 @@
 import { expect, type Page } from '@playwright/test'
 
+export async function chooseProfessionalMode(page: Page) {
+  await page.getByRole('dialog', { name: '选择使用方式' }).getByRole('button', { name: '专业模式', exact: true }).click()
+}
+
+export async function openWorkbench(page: Page) {
+  await page.goto('/')
+  await chooseProfessionalMode(page)
+}
+
 export async function selectWorkspace(page: Page, label: string) {
   const tabs = page.getByRole('tablist', { name: '工作区页签' })
   await expect(tabs).toBeVisible()

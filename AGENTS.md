@@ -72,6 +72,7 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 ├── AGENTS.md
 ├── installer.html
 ├── vite.installer.config.ts
+├── vitest.config.ts
 ├── src/
 │   ├── AGENTS.md
 │   └── agent-frontend.md
@@ -280,6 +281,8 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── web-agent/
 │   │   ├── build.mjs
 │   │   ├── server.mjs
+│   │   ├── runtime.mjs
+│   │   ├── Dockerfile
 │   │   ├── package.check.mjs
 │   │   ├── lib/
 │   │   ├── tests/

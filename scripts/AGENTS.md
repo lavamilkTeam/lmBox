@@ -24,6 +24,8 @@ scripts/
 ├── web-agent/
 │   ├── build.mjs
 │   ├── server.mjs
+│   ├── runtime.mjs
+│   ├── Dockerfile
 │   ├── package.check.mjs
 │   ├── lib/
 │   ├── tests/

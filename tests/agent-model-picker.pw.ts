@@ -1,0 +1,32 @@
+import { expect, test } from '@playwright/test'
+import { openWorkbench, selectWorkspace } from './workspace-navigation'
+
+test('model icon opens a compact picker and retains settings access and keyboard focus', async ({ page }) => {
+  await openWorkbench(page)
+  await selectWorkspace(page, 'Agent')
+  const trigger = page.getByRole('button', { name: '选择模型', exact: true })
+  const picker = page.getByRole('dialog', { name: '选择模型', exact: true })
+  await trigger.focus()
+  await trigger.press('Enter')
+  await expect(picker).toBeVisible()
+  await expect(picker.getByRole('button', { name: 'Auto', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(picker.getByRole('button', { name: 'GPT-6 Astra', exact: true })).toBeDisabled()
+  await page.keyboard.press('Escape')
+  await expect(picker).toBeHidden()
+  await expect(trigger).toBeFocused()
+  await trigger.click()
+  await picker.getByRole('button', { name: 'Auto', exact: true }).click()
+  await expect(picker).toBeHidden()
+  await trigger.click()
+  await picker.getByRole('button', { name: '对话设置', exact: true }).click()
+  await expect(picker).toBeHidden()
+  await expect(page.getByRole('complementary', { name: '对话设置面板', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '关闭对话设置', exact: true }).click()
+  await page.setViewportSize({ width: 390, height: 844 })
+  await trigger.click()
+  const bounds = (await picker.boundingBox())!
+  expect(bounds.x).toBeGreaterThanOrEqual(0)
+  expect(bounds.y).toBeGreaterThanOrEqual(0)
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual(390)
+  expect(bounds.y + bounds.height).toBeLessThanOrEqual(844)
+})

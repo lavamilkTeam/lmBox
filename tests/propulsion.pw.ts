@@ -1,4 +1,4 @@
-import { selectWorkspace } from './workspace-navigation'
+import { selectWorkspace, openWorkbench } from './workspace-navigation'
 import { expect, test, type Page } from '@playwright/test'
 async function open(page: Page, label: string) {
   await selectWorkspace(page, label)
@@ -13,7 +13,7 @@ async function compute(page: Page, result: string) {
   await expect(page.getByTestId(result)).toBeVisible({ timeout: 30000 })
 }
 test('real nozzle solver renders cone and bell, invalidates edits and exports matching results', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await open(page, '喷管初步设计')
   await expect(page.getByRole('button', { name: '导出结果' })).toBeDisabled()
   await compute(page, 'nozzle-results')
@@ -80,7 +80,7 @@ test('unreleased injector public module rejects stale responses and reports serv
 })
 
 test('returning to the stencil module preserves an intentionally empty workspace', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '钢网设计与制造')
   await page.getByRole('button', { name: '关闭 示例板 · 100 × 100' }).click()
   await open(page, '喷管初步设计')
@@ -91,7 +91,7 @@ test('returning to the stencil module preserves an intentionally empty workspace
 
 
 test('combined drawing supports three convergents and exports dimensioned SVG and millimetre DXF', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await open(page, '喷管初步设计')
   for (const type of ['锥形＋圆弧过渡', '双圆弧型', '平滑曲线（三次 Bézier）']) {
     await select(page, '收敛段型式', type)

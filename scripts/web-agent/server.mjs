@@ -4,6 +4,8 @@ import { readFile, realpath } from 'node:fs/promises'
 import { resolve, sep, extname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createTransport } from './lib/transport.mjs'
+import { createCloudTransport } from './lib/cloud-transport.mjs'
+export { createCloudTransport } from './lib/cloud-transport.mjs'
 
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.txt': 'text/plain', '.json': 'application/json' }
 const hash = value => createHash('sha256').update(value).digest()
@@ -43,7 +45,12 @@ export function createWebAgentServer({ origin, username, password, site, transpo
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const root = fileURLToPath(new URL('../', import.meta.url))
-  const transport = createTransport({ binary: resolve(root, `bin/ai${process.platform === 'win32' ? '.exe' : ''}`), worker: resolve(root, 'agent/dist/worker.js'), directory: resolve(process.env.LMBOX_WEB_DATA || resolve(root, 'data')) })
+  const cloudKeys = ['LMBOX_CONTAINER_ENSURE_URL', 'LMBOX_CONTAINER_SERVICE_TOKEN', 'LMBOX_CLOUD_USER_ID']
+  const cloud = cloudKeys.some(key => process.env[key])
+  if (cloud && !cloudKeys.every(key => process.env[key])) throw new Error('Cloud mode requires the ensure URL, service token and user ID')
+  const transport = cloud
+    ? createCloudTransport({ ensureUrl: process.env.LMBOX_CONTAINER_ENSURE_URL, serviceToken: process.env.LMBOX_CONTAINER_SERVICE_TOKEN, userId: process.env.LMBOX_CLOUD_USER_ID })
+    : createTransport({ binary: resolve(root, `bin/ai${process.platform === 'win32' ? '.exe' : ''}`), worker: resolve(root, 'agent/dist/worker.js'), directory: resolve(process.env.LMBOX_WEB_DATA || resolve(root, 'data')) })
   const server = createWebAgentServer({ origin: process.env.LMBOX_WEB_ORIGIN, username: process.env.LMBOX_WEB_USERNAME, password: process.env.LMBOX_WEB_PASSWORD, site: resolve(root, 'site'), transport })
   server.listen(Number(process.env.PORT || 3102), process.env.HOST || '127.0.0.1')
   for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => { transport.close(); server.close(); server.closeAllConnections() })

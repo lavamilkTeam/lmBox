@@ -72,6 +72,7 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 ├── AGENTS.md
 ├── installer.html
 ├── vite.installer.config.ts
+├── vitest.config.ts
 ├── src/
 │   ├── AGENTS.md
 │   └── agent-frontend.md
@@ -80,6 +81,11 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── main.ts
 │   ├── installer.ts
 │   ├── features/
+│   │   ├── experience-mode/
+│   │   │   ├── index.ts
+│   │   │   ├── agent-frontend-experience-mode.md
+│   │   │   ├── lib/
+│   │   │   └── tests/
 │   │   └── help-dialog/
 │   │       ├── index.ts
 │   │       ├── agent-frontend-help-dialog.md
@@ -101,6 +107,12 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   │   │   ├── index.ts
 │   │   │   ├── agent-frontend-agent.md
 │   │   │   └── lib/
+│   │   │       └── features/
+│   │   │           └── chat-history/
+│   │   │               ├── index.ts
+│   │   │               ├── agent-frontend-chat-history.md
+│   │   │               ├── lib/
+│   │   │               └── tests/
 │   │   ├── guide/
 │   │   │   ├── index.ts
 │   │   │   ├── agent-frontend-guide.md
@@ -159,6 +171,10 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── platform/
 │   ├── contracts/
 │   └── ui/
+│       ├── experience-mode/
+│       │   ├── index.ts
+│       │   ├── agent-frontend-experience-mode.md
+│       │   └── lib/
 │       ├── account-dialog/
 │       │   ├── index.ts
 │       │   ├── agent-frontend-account-dialog.md
@@ -265,6 +281,8 @@ PR 标题字段使用自然、简洁的英文标题；正文采用上述结构�
 │   ├── web-agent/
 │   │   ├── build.mjs
 │   │   ├── server.mjs
+│   │   ├── runtime.mjs
+│   │   ├── Dockerfile
 │   │   ├── package.check.mjs
 │   │   ├── lib/
 │   │   ├── tests/

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import type { CfdRequest, CfdState } from '../frontend/contracts'
-import { selectWorkspace } from './workspace-navigation'
+import { selectWorkspace, openWorkbench } from './workspace-navigation'
 
 const fixture = JSON.parse(readFileSync(new URL('../contracts/fixtures/v1/cfd-initialized-response.json', import.meta.url), 'utf8')).state as CfdState
 // Test the UI/session lifecycle at its HTTP boundary without starting a native solver.
@@ -18,7 +18,7 @@ test('closing a background fluid tab confirms disposal, preserves it on failure 
     await route.fulfill({ json: { schemaVersion: 1, projectId: input.projectId, requestId: input.requestId, inputRevision: input.expectedRevision,
       revision: input.operation === 'close' ? input.expectedRevision + 1 : 1, ok: true, ...(input.operation === 'close' ? {} : { state: fixture }) } })
   })
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '流体力学')
   await expect(page.getByRole('button', { name: '打开或导入几何', exact: true })).toBeEnabled()
   await selectWorkspace(page, '引导界面')
@@ -57,7 +57,7 @@ test('closing waits for initialization and uses its confirmed revision', async (
     await route.fulfill({ json: { schemaVersion: 1, projectId: input.projectId, requestId: input.requestId, inputRevision: input.expectedRevision,
       revision: input.operation === 'close' ? 2 : 1, ok: true, ...(input.operation === 'close' ? {} : { state: fixture }) } })
   })
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '流体力学')
   await expect.poll(() => initialStarted).toBe(true)
   await page.getByRole('button', { name: '关闭流体力学页签', exact: true }).click()
@@ -86,7 +86,7 @@ for (const scenario of ['session_missing', 'stale_revision'] as const) {
         revision, ok: !code, ...(code ? { error: { code, message: '测试会话状态已变化' } } : {}),
         ...(scenario === 'session_missing' || input.operation === 'close' && !code ? {} : { state: { ...fixture, revision } }) } })
     })
-    await page.goto('/')
+    await openWorkbench(page)
     await selectWorkspace(page, '流体力学')
     if (scenario === 'session_missing') await expect(page.getByText('测试会话状态已变化', { exact: true })).toBeVisible()
     else await expect(page.getByRole('button', { name: '打开或导入几何', exact: true })).toBeEnabled()
@@ -111,7 +111,7 @@ test('polls scheduled during native shutdown do not run after the session is rel
     await route.fulfill({ json: { schemaVersion: 1, projectId: input.projectId, requestId: input.requestId, inputRevision: input.expectedRevision,
       revision: input.operation === 'close' ? 2 : 1, ok: true, ...(input.operation === 'close' ? {} : { state: fixture }) } })
   })
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '流体力学')
   await expect(page.getByRole('button', { name: '打开或导入几何', exact: true })).toBeEnabled()
   await page.getByRole('button', { name: '关闭流体力学页签', exact: true }).click()
@@ -135,7 +135,7 @@ test('native field layers and factual progress remain visible across result revi
     const input=route.request().postDataJSON() as CfdRequest
     await route.fulfill({json:{schemaVersion:1,projectId:input.projectId,requestId:input.requestId,inputRevision:input.expectedRevision,revision:1,ok:true,state}})
   })
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page,'流体力学')
   await page.getByRole('button',{name:'流场',exact:true}).click()
   await expect(page.getByRole('img',{name:'流体计算三维结果'})).toBeVisible()

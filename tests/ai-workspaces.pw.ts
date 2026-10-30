@@ -1,14 +1,17 @@
 import { expect, test } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
-import { selectWorkspace } from './workspace-navigation'
+import { selectWorkspace, openWorkbench } from './workspace-navigation'
 import { aiRuntimeFixture } from './ai-runtime-fixture'
 
 test('ConeCode Node agent calls the Rust workspace tool with the current task identity', async ({ page }) => {
   const runtime = await aiRuntimeFixture(page)
   try {
-    await page.goto('/')
+    await openWorkbench(page)
     await selectWorkspace(page, 'Agent')
+    await page.getByRole('button', { name: '选择模型', exact: true }).click()
+    await page.getByRole('dialog', { name: '选择模型', exact: true }).getByRole('button', { name: '对话设置', exact: true }).click()
     await expect(page.getByText('fixture-agent-model', { exact: true })).toBeVisible({ timeout: 20000 })
+    await page.getByRole('button', { name: '关闭对话设置', exact: true }).click()
     await page.getByLabel('Agent 任务', { exact: true }).fill('Fixture: inspect the Rust workspace.')
     await page.getByRole('button', { name: '发送消息', exact: true }).click()
     await expect(page.getByLabel('助手回复 1', { exact: true })).toContainText('Rust returned the current project and input revision.', { timeout: 20000 })
@@ -21,9 +24,12 @@ test('cancelling a ConeCode Agent task aborts its in-flight model request', asyn
   const runtime = await aiRuntimeFixture(page)
   runtime.slowAgent()
   try {
-    await page.goto('/')
+    await openWorkbench(page)
     await selectWorkspace(page, 'Agent')
+    await page.getByRole('button', { name: '选择模型', exact: true }).click()
+    await page.getByRole('dialog', { name: '选择模型', exact: true }).getByRole('button', { name: '对话设置', exact: true }).click()
     await expect(page.getByText('fixture-agent-model', { exact: true })).toBeVisible({ timeout: 20000 })
+    await page.getByRole('button', { name: '关闭对话设置', exact: true }).click()
     await page.getByLabel('Agent 任务', { exact: true }).fill('Fixture: wait for model cancellation.')
     await page.getByRole('button', { name: '发送消息', exact: true }).click()
     await expect.poll(() => runtime.counts().completions).toBe(1)
@@ -38,10 +44,13 @@ test('docked AI shares the Agent conversation across workspaces and full view', 
   test.setTimeout(60000)
   const runtime = await aiRuntimeFixture(page)
   try {
-    await page.goto('/')
+    await openWorkbench(page)
     const assistant = page.getByRole('region', { name: 'AI 助手', exact: true })
     await expect(assistant).toBeVisible()
+    await assistant.getByRole('button', { name: '选择模型', exact: true }).click()
+    await page.getByRole('dialog', { name: '选择模型', exact: true }).getByRole('button', { name: '对话设置', exact: true }).click()
     await expect(assistant.getByText('fixture-agent-model', { exact: true })).toBeVisible({ timeout: 20000 })
+    await assistant.getByRole('button', { name: '关闭对话设置', exact: true }).click()
     await assistant.getByLabel('Agent 任务', { exact: true }).fill('Fixture: write 42 to answer.txt.')
     await assistant.getByRole('button', { name: '发送消息', exact: true }).click()
     await expect(assistant.getByLabel('助手回复 1', { exact: true })).toContainText('answer.txt contains 42', { timeout: 20000 })
@@ -51,7 +60,8 @@ test('docked AI shares the Agent conversation across workspaces and full view', 
     await assistant.getByLabel('Agent 任务', { exact: true }).fill('Fixture follow-up:')
     await page.getByRole('tab', { name: '功能库', exact: true }).click()
     await expect(assistant.getByLabel('Agent 任务', { exact: true })).toHaveValue('Fixture follow-up:')
-    await assistant.getByRole('button', { name: '对话设置', exact: true }).click()
+    await assistant.getByRole('button', { name: '选择模型', exact: true }).click()
+    await page.getByRole('dialog', { name: '选择模型', exact: true }).getByRole('button', { name: '对话设置', exact: true }).click()
     await expect(assistant.getByRole('complementary', { name: '对话设置面板', exact: true })).toBeVisible()
     await assistant.getByRole('button', { name: '关闭对话设置', exact: true }).click()
     await page.screenshot({ path: testInfo.outputPath('docked-ai.png') })
@@ -75,7 +85,7 @@ test('docked AI shares the Agent conversation across workspaces and full view', 
 test('video canvas executes a provider workflow through real Rust and Python, saves output and preserves draft', async ({ page }, testInfo) => {
   const runtime = await aiRuntimeFixture(page)
   try {
-    await page.goto('/')
+    await openWorkbench(page)
     await selectWorkspace(page, 'ComfyUI')
     await expect(page.getByRole('button', { name: '测试提示词', exact: true })).toBeVisible()
     await page.getByRole('button', { name: '测试提示词', exact: true }).click()
@@ -108,9 +118,12 @@ test('Agent conversation carries trusted history, preserves old downloads, and s
   test.setTimeout(60000)
   const runtime = await aiRuntimeFixture(page)
   try {
-    await page.goto('/')
+    await openWorkbench(page)
     await selectWorkspace(page, 'Agent')
+    await page.getByRole('button', { name: '选择模型', exact: true }).click()
+    await page.getByRole('dialog', { name: '选择模型', exact: true }).getByRole('button', { name: '对话设置', exact: true }).click()
     await expect(page.getByText('fixture-agent-model', { exact: true })).toBeVisible({ timeout: 20000 })
+    await page.getByRole('button', { name: '关闭对话设置', exact: true }).click()
     await page.getByLabel('Agent 任务', { exact: true }).fill('Fixture: write 42 to answer.txt.')
     await page.evaluate(() => {
       const original = File.prototype.arrayBuffer
@@ -155,7 +168,8 @@ test('Agent conversation carries trusted history, preserves old downloads, and s
     await page.setViewportSize({ width: 390, height: 844 })
     await expect(page.getByLabel('Agent 任务', { exact: true })).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-    await page.getByRole('button', { name: '对话设置', exact: true }).click()
+    await page.getByRole('button', { name: '选择模型', exact: true }).click()
+    await page.getByRole('dialog', { name: '选择模型', exact: true }).getByRole('button', { name: '对话设置', exact: true }).click()
     await expect(page.getByRole('complementary', { name: '对话设置面板', exact: true })).toBeVisible()
     await page.getByRole('button', { name: '关闭对话设置', exact: true }).click()
     await page.screenshot({ path: testInfo.outputPath('agent-workspace-mobile.png') })
@@ -171,7 +185,7 @@ test('Agent conversation carries trusted history, preserves old downloads, and s
 test('video cancellation is scoped to its provider job and a draft survives workspace switching', async ({ page }) => {
   const runtime = await aiRuntimeFixture(page); runtime.slowVideo()
   try {
-    await page.goto('/')
+    await openWorkbench(page)
     await selectWorkspace(page, 'ComfyUI')
     await page.getByRole('button', { name: '测试提示词', exact: true }).click()
     await page.getByRole('button', { name: '测试云端视频', exact: true }).click()

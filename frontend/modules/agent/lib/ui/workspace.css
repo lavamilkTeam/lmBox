@@ -28,8 +28,7 @@
 .agent-prompt { resize:none; min-height:88px!important; max-height:240px!important; padding:16px!important; border:0!important; border-radius:0!important; box-shadow:none!important; outline:0!important; font-size:14px!important; line-height:1.7; }
 .agent-prompt:focus-visible { box-shadow:none!important; }
 .agent-composer-controls { display:flex; align-items:center; gap:8px; padding:8px 10px 10px; }
-.agent-model { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:auto; font-size:12px; }
-.agent-model-button { display:block!important; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+.agent-composer-status { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:auto; font-size:12px; }
 .agent-composer-controls>button { flex-shrink:0; }
 .agent-files { display:flex; flex-wrap:wrap; gap:6px; padding:12px 12px 0; margin:0; list-style:none; }
 .agent-files li { display:flex; align-items:center; gap:3px; max-width:100%; padding-left:9px; border:1px solid var(--border); border-radius:6px; }

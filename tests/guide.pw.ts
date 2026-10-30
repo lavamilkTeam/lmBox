@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test'
-import { selectWorkspace } from './workspace-navigation'
+import { selectWorkspace, openWorkbench, chooseProfessionalMode } from './workspace-navigation'
 
 test('startup hides unreleased injector; drag, zoom, move, connect and remove operate on the same graph', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
-  await page.goto('/')
+  await openWorkbench(page)
   await expect(page.getByRole('region', { name: '引导界面', exact: true })).toBeVisible()
   const library = page.getByRole('navigation', { name: '引导功能库' })
   await expect(library.getByRole('button')).toHaveCount(7)
@@ -57,7 +57,7 @@ test('startup hides unreleased injector; drag, zoom, move, connect and remove op
 })
 
 test('opening a workspace and returning preserves the draft; startup always returns to guide', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await page.getByRole('button', { name: '添加喷管初步设计' }).click()
   await page.getByRole('button', { name: '添加流体力学' }).click()
   await page.getByRole('button', { name: '喷管初步设计输出端' }).click()
@@ -68,12 +68,13 @@ test('opening a workspace and returning preserves the draft; startup always retu
   await expect(page.getByRole('article')).toHaveCount(2)
   await expect(page.getByRole('button', { name: '连接：喷管初步设计 → 流体力学' })).toHaveCount(1)
   await page.reload()
+  await chooseProfessionalMode(page)
   await expect(page.getByRole('region', { name: '引导界面', exact: true })).toBeVisible()
   await expect(page.getByRole('article')).toHaveCount(0)
 })
 
 test('search, keyboard connection cancellation and compact layout remain usable', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await page.getByRole('textbox', { name: '搜索功能' }).fill('不存在')
   await expect(page.getByText('没有匹配的功能')).toBeVisible()
   await page.getByRole('textbox', { name: '搜索功能' }).fill('喷管')
@@ -91,7 +92,7 @@ test('search, keyboard connection cancellation and compact layout remain usable'
 })
 
 test('fixed entries and dynamic workspace tabs support opening, deduplication and closing', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   const tabs = page.getByRole('tablist', { name: '工作区页签' })
   const start = tabs.getByRole('tab', { name: '开始', exact: true })
   const library = tabs.getByRole('tab', { name: '功能库', exact: true })

@@ -1,3 +1,4 @@
+import { openWorkbench } from './workspace-navigation'
 import { expect, test } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
@@ -42,7 +43,7 @@ test('native CAD, physics controls, properties and FCStd export retain original 
   }
   const physicsProperty = (name: string) => state?.document.objects.find(object => object.id === 'PhysicsModel')?.properties.find(property => property.name === name)?.value
   try {
-    await page.goto('/')
+    await openWorkbench(page)
     await page.getByRole('button', { name: '添加流体力学', exact: true }).click()
     await page.getByRole('article', { name: '流体力学', exact: true }).getByRole('button', { name: '打开流体力学', exact: true }).click()
     await waitState(value => Boolean(value.runtime.freecadVersion) && !value.busy)

@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { selectWorkspace } from './workspace-navigation'
+import { selectWorkspace, openWorkbench } from './workspace-navigation'
 
 function node(page: Page, label: string) { return page.getByRole('article', { name: label, exact: true }) }
 function reading(page: Page, label: string, probe = false) {
@@ -39,7 +39,7 @@ test('real Rust worker propagates inputs, colors wires and preserves state acros
   const workers: string[] = [], errors: string[] = []
   page.on('worker', worker => workers.push(worker.url()))
   page.on('pageerror', error => errors.push(error.message))
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '数字逻辑仿真')
   const canvas = page.getByLabel('逻辑电路画布', { exact: true })
   const initialCanvas = (await canvas.boundingBox())!
@@ -138,7 +138,7 @@ test('real Rust worker propagates inputs, colors wires and preserves state acros
 })
 
 test('clock-driven D flip-flop samples rising edges and run, pause and reset use real simulation state', async ({ page }) => {
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '数字逻辑仿真')
   await add(page, '输入开关')
   await add(page, '时钟', { x: 150, y: 300 })

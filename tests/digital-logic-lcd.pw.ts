@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { selectWorkspace } from './workspace-navigation'
+import { selectWorkspace, openWorkbench } from './workspace-navigation'
 
 const lcdLabel = '字符屏 HD44780'
 const inputPorts = ['RS', 'R/W', 'E', 'D4', 'D5', 'D6', 'D7'] as const
@@ -49,7 +49,7 @@ test('real Rust LCD accepts four-bit UI writes and renders rows, cursor, display
   const workers: string[] = [], errors: string[] = []
   page.on('worker', worker => workers.push(worker.url()))
   page.on('pageerror', error => errors.push(error.message))
-  await page.goto('/')
+  await openWorkbench(page)
   await selectWorkspace(page, '数字逻辑仿真')
   const canvas = page.getByLabel('逻辑电路画布', { exact: true })
   for (let index = 0; index < inputPorts.length; index++) {
